@@ -18,10 +18,10 @@ def create_audit_log(user_id, action, table_name, record_id=None, old_values=Non
             ip_address=request.remote_addr if request else None,
             user_agent=request.user_agent.string if request else None
         )
-        models.models.db.session.add(audit_log)
-        models.models.db.session.commit()
+        models.db.session.add(audit_log)
+        models.db.session.commit()
     except Exception as e:
-        models.models.db.session.rollback()
+        models.db.session.rollback()
         print(f"Error creating audit log: {str(e)}")
 
 def generate_monthly_report(manager_id, month_str):

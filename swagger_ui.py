@@ -152,7 +152,7 @@ def swagger_ui_index():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATTENDO API Documentation</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('swagger_ui.static', filename='swagger-ui-bundle.css') }}" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.15.5/swagger-ui.css" />
     <link rel="icon" type="image/png" href="{{ url_for('swagger_ui.static', filename='favicon-32x32.png') }}" sizes="32x32" />
     <link rel="icon" type="image/png" href="{{ url_for('swagger_ui.static', filename='favicon-16x16.png') }}" sizes="16x16" />
     <style>
@@ -316,8 +316,8 @@ def swagger_ui_index():
         <p>🏆 Ready for Hackathon Demo | 💻 <code>http://localhost:5000</code></p>
     </div>
 
-    <script src="{{ url_for('swagger_ui.static', filename='swagger-ui-bundle.js') }}"></script>
-    <script src="{{ url_for('swagger_ui.static', filename='swagger-ui-standalone-preset.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.15.5/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.15.5/swagger-ui-standalone-preset.js"></script>
     <script>
     window.onload = function() {
         const ui = SwaggerUIBundle({

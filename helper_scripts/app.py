@@ -24,11 +24,13 @@ db.init_app(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Import routes after model initialization
-from routes import *
+# Import routes and other modules after app initialization
 from import_routes import import_bp
 from notifications import start_notification_scheduler
 from swagger_ui import register_swagger_ui
+
+# Now import routes - must be after app is created to avoid circular import
+import routes
 
 # Register blueprints
 app.register_blueprint(import_bp)
@@ -38,6 +40,7 @@ register_swagger_ui(app)
 
 @login_manager.user_loader
 def load_user(user_id):
+    from models import User
     return User.query.get(int(user_id))
 
 def create_tables():
@@ -56,8 +59,31 @@ def initialize_demo_data():
     create_demo_data()
 
 if __name__ == '__main__':
+    print("\n" + "="*70)
+    print("ATTENDO - Starting Application...")
+    print("="*70)
+    
+    # Create tables and initialize demo data
+    with app.app_context():
+        create_tables()
+        print("Database initialized with demo data!")
+    
     # Start notification scheduler
     start_notification_scheduler()
+    print("Notification scheduler started!")
+    
+    print("="*70)
+    print("ATTENDO is now running!")
+    print("="*70)
+    print("\nAccess the application at:")
+    print("   Web Interface: http://localhost:5000")
+    print("   API Documentation: http://localhost:5000/api/docs")
+    print("\nLogin Credentials:")
+    print("   Admin:    admin / admin123")
+    print("   Manager:  manager1 / manager123")
+    print("   Vendor:   vendor1 / vendor123")
+    print("\nPress CTRL+C to stop the server")
+    print("="*70 + "\n")
     
     # Run the Flask app
     app.run(debug=True, host='0.0.0.0', port=5000)

@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, jsonify, session, send_file
+from flask import render_template, request, redirect, url_for, flash, jsonify, session, send_file, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from datetime import datetime, date, timedelta
 import json
@@ -10,10 +10,14 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib.styles import getSampleStyleSheet
 
-from app import app, db
+# Import models
 import models
+from models import db
 from models import User, Vendor, Manager, DailyStatus, SwipeRecord, Holiday, MismatchRecord, NotificationLog, AuditLog, SystemConfiguration, LeaveRecord, WFHRecord, UserRole, AttendanceStatus, ApprovalStatus
 from utils import create_audit_log, generate_monthly_report, import_swipe_data, detect_mismatches
+
+# We'll get app from current_app context when routes are registered
+from flask import current_app as app
 
 @app.route('/')
 def index():

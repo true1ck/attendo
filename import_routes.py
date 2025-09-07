@@ -5,7 +5,11 @@ from datetime import datetime, date
 import os
 import pandas as pd
 from models import UserRole, SwipeRecord, LeaveRecord, WFHRecord, MismatchRecord, Vendor
-from app import db
+try:
+    from app_old import db
+except ImportError:
+    from flask_sqlalchemy import SQLAlchemy
+    db = SQLAlchemy()
 # Import utils functions - we'll handle this inside functions to avoid circular imports
 # from utils import import_swipe_data, import_leave_data, import_wfh_data, detect_mismatches, generate_monthly_report
 
