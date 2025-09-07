@@ -25,6 +25,9 @@ class MismatchRecord(db.Model):
     approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     approved_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Relationship
+    vendor = db.relationship('Vendor', backref='mismatch_records')
     
     def __repr__(self):
         return f'<MismatchRecord {self.vendor.vendor_id} - {self.mismatch_date}>'

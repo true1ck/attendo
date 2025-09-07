@@ -22,9 +22,9 @@ def create_demo_data():
     
     # Create Manager Users
     managers_data = [
-        {'name': 'Sarah Johnson', 'email': 'sarah.johnson@attendo.com', 'dept': 'ATD_WCS_MSE7_MS1', 'team': 'Team Alpha'},
-        {'name': 'Michael Chen', 'email': 'michael.chen@attendo.com', 'dept': 'ATD_WCS_MSE7_MS2', 'team': 'Team Beta'},
-        {'name': 'Emily Davis', 'email': 'emily.davis@attendo.com', 'dept': 'ATD_WCS_MSE7_MS3', 'team': 'Team Gamma'}
+        {'name': 'Sarah Johnson', 'email': 'sarah.johnson@attendo.com', 'phone': '+1-555-0101', 'dept': 'ATD_WCS_MSE7_MS1', 'team': 'Team Alpha', 'mgr_id': 'M001'},
+        {'name': 'Michael Chen', 'email': 'michael.chen@attendo.com', 'phone': '+1-555-0102', 'dept': 'ATD_WCS_MSE7_MS2', 'team': 'Team Beta', 'mgr_id': 'M002'},
+        {'name': 'Emily Davis', 'email': 'emily.davis@attendo.com', 'phone': '+1-555-0103', 'dept': 'ATD_WCS_MSE7_MS3', 'team': 'Team Gamma', 'mgr_id': 'M003'}
     ]
     
     managers = []
@@ -43,10 +43,13 @@ def create_demo_data():
         
         # Create Manager Profile
         manager = Manager(
+            manager_id=mgr_data['mgr_id'],
             user_id=user.id,
             full_name=mgr_data['name'],
             department=mgr_data['dept'],
-            team_name=mgr_data['team']
+            team_name=mgr_data['team'],
+            email=mgr_data['email'],
+            phone=mgr_data['phone']
         )
         models.db.session.add(manager)
         managers.append(manager)
@@ -99,7 +102,7 @@ def create_demo_data():
             company=vendor_data['company'],
             band=vendor_data['band'],
             location='BL-A-5F',
-            manager_id=manager.id if manager else None
+            manager_id=manager.manager_id if manager else None
         )
         models.db.session.add(vendor)
         vendors.append(vendor)

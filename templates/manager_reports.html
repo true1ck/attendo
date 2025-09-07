@@ -1,0 +1,358 @@
+{% extends "base_fixed.html" %}
+
+{% block title %}Team Reports - {{ manager.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .vendor-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .audit-item {
+        border-left: 4px solid #007bff;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .audit-create {
+        border-left-color: #28a745;
+    }
+    
+    .audit-update {
+        border-left-color: #ffc107;
+    }
+    
+    .audit-delete {
+        border-left-color: #dc3545;
+    }
+    
+    .audit-approve {
+        border-left-color: #17a2b8;
+    }
+    
+    .date-filter-card {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+    
+    .progress-bar-custom {
+        height: 8px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="mb-1">
+                        <i class="fas fa-chart-line me-2"></i>Team Reports & Audit History
+                    </h1>
+                    <p class="text-muted mb-0">{{ manager.team_name }} - {{ manager.full_name }}</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary me-2" onclick="exportFullReport()">
+                        <i class="fas fa-file-export me-1"></i>Export Full Report
+                    </button>
+                    <button class="btn btn-outline-success" onclick="exportAuditLog()">
+                        <i class="fas fa-history me-1"></i>Export Audit Log
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="date-filter-card">
+                <form method="GET" id="dateForm">
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate" name="start_date" 
+                                   value="{{ start_date }}" onchange="updateReport()">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate" name="end_date" 
+                                   value="{{ end_date }}" onchange="updateReport()">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-primary" onclick="setQuickRange('7')">
+                                Last 7 Days
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-primary" onclick="setQuickRange('30')">
+                                Last 30 Days
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="report-card">
+                <h3 class="mb-1">{{ summary_stats.total_submissions }}</h3>
+                <small>Total Submissions</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="report-card">
+                <h3 class="mb-1">{{ summary_stats.avg_attendance_rate }}%</h3>
+                <small>Avg Attendance Rate</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="report-card">
+                <h3 class="mb-1">{{ summary_stats.submission_rate }}%</h3>
+                <small>Submission Rate</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="report-card">
+                <h3 class="mb-1">{{ summary_stats.total_pending }}</h3>
+                <small>Pending Approvals</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Report Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>Team Attendance Report
+                        <small class="text-muted">({{ start_date }} to {{ end_date }})</small>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Vendor</th>
+                                    <th>Department</th>
+                                    <th>Company</th>
+                                    <th class="text-center">Office Days</th>
+                                    <th class="text-center">WFH Days</th>
+                                    <th class="text-center">Leave Days</th>
+                                    <th class="text-center">Pending</th>
+                                    <th class="text-center">Attendance Rate</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in report_data %}
+                                {% set vendor = data.vendor %}
+                                <tr class="vendor-row">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle bg-primary me-2">
+                                                {{ vendor.vendor_id[:2] }}
+                                            </div>
+                                            <div>
+                                                <strong>{{ vendor.full_name }}</strong><br>
+                                                <small class="text-muted">{{ vendor.vendor_id }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ vendor.department }}</td>
+                                    <td>{{ vendor.company }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success">{{ data.office_days }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ data.wfh_days }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">{{ data.leave_days }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if data.pending_days > 0 %}
+                                            <span class="badge bg-warning">{{ data.pending_days }}</span>
+                                        {% else %}
+                                            <span class="text-muted">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <div class="progress progress-bar-custom me-2" style="width: 60px;">
+                                                <div class="progress-bar bg-{{ 'success' if data.attendance_rate >= 90 else 'warning' if data.attendance_rate >= 70 else 'danger' }}" 
+                                                     style="width: {{ data.attendance_rate }}%"></div>
+                                            </div>
+                                            <small><strong>{{ data.attendance_rate }}%</strong></small>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewVendorDetails('{{ vendor.vendor_id }}')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit History -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Audit History
+                        <small class="text-muted">(Last 50 activities)</small>
+                    </h5>
+                </div>
+                <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                    {% if audit_logs %}
+                        {% for audit in audit_logs %}
+                        <div class="audit-item audit-{{ audit.action.lower() }}">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3">
+                                            {% if audit.action == 'CREATE' %}
+                                                <i class="fas fa-plus-circle text-success"></i>
+                                            {% elif audit.action == 'UPDATE' %}
+                                                <i class="fas fa-edit text-warning"></i>
+                                            {% elif audit.action == 'DELETE' %}
+                                                <i class="fas fa-trash text-danger"></i>
+                                            {% elif audit.action == 'APPROVE' %}
+                                                <i class="fas fa-check-circle text-info"></i>
+                                            {% elif audit.action == 'REJECT' %}
+                                                <i class="fas fa-times-circle text-danger"></i>
+                                            {% else %}
+                                                <i class="fas fa-cog text-secondary"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <strong>{{ audit.action }}</strong> on {{ audit.table_name.replace('_', ' ').title() }}
+                                            {% if audit.record_id %}
+                                                <small class="text-muted">(ID: {{ audit.record_id }})</small>
+                                            {% endif %}
+                                            <br>
+                                            <small class="text-muted">
+                                                by User ID {{ audit.user_id }}
+                                                {% if audit.ip_address %}
+                                                    from {{ audit.ip_address }}
+                                                {% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% if audit.new_values %}
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <strong>Changes:</strong> {{ audit.new_values[:100] }}{% if audit.new_values|length > 100 %}...{% endif %}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <small class="text-muted">
+                                        {{ audit.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Audit History</h5>
+                            <p class="text-muted">No activities found for the selected date range.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateReport() {
+    document.getElementById('dateForm').submit();
+}
+
+function setQuickRange(days) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - parseInt(days));
+    
+    document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+    document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+    
+    updateReport();
+}
+
+function exportFullReport() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    window.open(`/api/export/team-report?start_date=${startDate}&end_date=${endDate}&format=excel`, '_blank');
+}
+
+function exportAuditLog() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    window.open(`/api/export/audit-log?start_date=${startDate}&end_date=${endDate}&format=excel`, '_blank');
+}
+
+function viewVendorDetails(vendorId) {
+    // Navigate to vendor detail page
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    window.location.href = `/manager/vendor/${vendorId}/details?start_date=${startDate}&end_date=${endDate}`;
+}
+
+// Avatar circle CSS
+const avatarStyle = `
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+    }
+`;
+
+// Add styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = avatarStyle;
+document.head.appendChild(styleSheet);
+</script>
+{% endblock %}

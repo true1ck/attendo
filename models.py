@@ -67,12 +67,13 @@ class Vendor(db.Model):
     company = db.Column(db.String(100), nullable=False)  # ABC Solutions
     band = db.Column(db.String(10), nullable=False)  # B2, B3, etc.
     location = db.Column(db.String(50), nullable=False)  # BL-A-5F
-    manager_id = db.Column(db.Integer, db.ForeignKey('managers.id'), nullable=True)
+    manager_id = db.Column(db.String(50), db.ForeignKey('managers.manager_id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
     daily_statuses = db.relationship('DailyStatus', backref='vendor', lazy='dynamic')
     swipe_records = db.relationship('SwipeRecord', backref='vendor', lazy='dynamic')
+    mismatch_records = db.relationship('MismatchRecord', backref='vendor', lazy='dynamic')
     
     def __repr__(self):
         return f'<Vendor {self.vendor_id} - {self.full_name}>'
@@ -82,10 +83,13 @@ class Manager(db.Model):
     __tablename__ = 'managers'
     
     id = db.Column(db.Integer, primary_key=True)
+    manager_id = db.Column(db.String(50), unique=True, nullable=False)  # Manager ID like M001, M002
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     full_name = db.Column(db.String(100), nullable=False)
     department = db.Column(db.String(100), nullable=False)
     team_name = db.Column(db.String(100))
+    email = db.Column(db.String(120))  # For notifications
+    phone = db.Column(db.String(20))   # For SMS notifications
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -109,6 +113,7 @@ class DailyStatus(db.Model):
     approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     approved_at = db.Column(db.DateTime)
     rejection_reason = db.Column(db.Text)
+    manager_comments = db.Column(db.Text)
     
     # Index for efficient queries
     __table_args__ = (db.Index('idx_vendor_date', 'vendor_id', 'status_date'),)
@@ -243,3 +248,18 @@ class WFHRecord(db.Model):
     
     def __repr__(self):
         return f'<WFHRecord {self.vendor.vendor_id} - {self.start_date} to {self.end_date}>'
+
+class EmailNotificationLog(db.Model):
+    """Log of email notifications sent to managers"""
+    __tablename__ = 'email_notification_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    manager_id = db.Column(db.String(50), db.ForeignKey('managers.manager_id'), nullable=False)
+    notification_type = db.Column(db.String(50), nullable=False)  # PENDING_SUMMARY, COMPLETE_SUMMARY, URGENT_REMINDER, SMS_ALERT, etc.
+    recipient = db.Column(db.String(120), nullable=False)  # Email or phone number
+    message = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), nullable=False)  # SENT, FAILED
+    sent_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<EmailNotificationLog {self.manager_id} - {self.notification_type} - {self.status}>'
