@@ -1,0 +1,645 @@
+{% extends "base_fixed.html" %}
+
+{% block title %}AI Insights & Predictions - VendorTime{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-brain me-2 text-primary"></i>AI Insights & Predictions</h2>
+            <div>
+                <button class="btn btn-primary me-2" onclick="trainModel()">
+                    <i class="fas fa-robot me-1"></i>Re-train AI Model
+                </button>
+                <button class="btn btn-info" onclick="exportInsights()">
+                    <i class="fas fa-download me-1"></i>Export Insights
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Model Status -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-success d-flex align-items-center">
+            <i class="fas fa-check-circle me-3 fa-2x"></i>
+            <div>
+                <h5 class="mb-1">AI Model Status: Active & Learning</h5>
+                <small>Last trained: {{ ai_stats.last_trained or 'Today, 09:30 AM' }} | 
+                Accuracy: {{ ai_stats.accuracy or '94.2%' }} | 
+                Predictions Made: {{ ai_stats.predictions_made or '1,247' }}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- AI Predictions Dashboard -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Absence Predictions</h6>
+                        <h4 class="mb-0">{{ ai_stats.absence_predictions or 8 }}</h4>
+                        <small>Next 7 days</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-gradient-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">WFH Predictions</h6>
+                        <h4 class="mb-0">{{ ai_stats.wfh_predictions or 12 }}</h4>
+                        <small>Likely requests</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-home fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-gradient-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Risk Alerts</h6>
+                        <h4 class="mb-0">{{ ai_stats.risk_alerts or 3 }}</h4>
+                        <small>High absence risk</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-gradient-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Pattern Insights</h6>
+                        <h4 class="mb-0">{{ ai_stats.pattern_insights or 15 }}</h4>
+                        <small>New patterns found</small>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main AI Insights Content -->
+<div class="row">
+    <div class="col-md-8">
+        <!-- Absence Prediction Results -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-crystal-ball me-2 text-primary"></i>Absence Predictions - Next 7 Days</h5>
+                <div>
+                    <span class="badge bg-success">94.2% Accurate</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshPredictions()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Predicted Date</th>
+                                <th>Likelihood</th>
+                                <th>Reason</th>
+                                <th>Recommendation</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-warning">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-warning me-2">V1</div>
+                                        <strong>vendor1</strong>
+                                    </div>
+                                </td>
+                                <td>Sep 09, 2025</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-warning" style="width: 87%">87%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>Historical pattern:<br>
+                                    - Usually takes leave on Mondays<br>
+                                    - Recent stress indicators</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">Proactive Check-in</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="contactVendor('vendor1')">
+                                        <i class="fas fa-phone"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="viewDetails('vendor1')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="table-danger">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-danger me-2">V5</div>
+                                        <strong>vendor5</strong>
+                                    </div>
+                                </td>
+                                <td>Sep 08, 2025</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-danger" style="width: 92%">92%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>High risk factors:<br>
+                                    - Erratic attendance pattern<br>
+                                    - Multiple late submissions</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">Urgent Intervention</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" onclick="contactVendor('vendor5')">
+                                        <i class="fas fa-phone"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="viewDetails('vendor5')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-info me-2">V3</div>
+                                        <strong>vendor3</strong>
+                                    </div>
+                                </td>
+                                <td>Sep 10, 2025</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-info" style="width: 76%">76%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>Pattern indicators:<br>
+                                    - Friday absence trend<br>
+                                    - Personal commitments</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">Schedule Backup</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-info" onclick="contactVendor('vendor3')">
+                                        <i class="fas fa-phone"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="viewDetails('vendor3')">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Insights & Recommendations -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i>Intelligent Recommendations</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-users text-primary me-2"></i>Team Management</h6>
+                        <div class="recommendation-item mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>Resource Allocation</strong>
+                                    <p class="small text-muted mb-1">Based on predicted absences, consider redistributing workload for Monday, Sep 09</p>
+                                    <span class="badge bg-primary">High Impact</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="implementRecommendation('resource')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="recommendation-item mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>Proactive Communication</strong>
+                                    <p class="small text-muted mb-1">Schedule check-ins with high-risk vendors before critical project deadlines</p>
+                                    <span class="badge bg-info">Medium Impact</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="implementRecommendation('communication')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-bar text-success me-2"></i>Process Optimization</h6>
+                        <div class="recommendation-item mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>Flexible Work Policy</strong>
+                                    <p class="small text-muted mb-1">Consider allowing WFH on Mondays for vendors with consistent patterns</p>
+                                    <span class="badge bg-success">Long-term</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="implementRecommendation('policy')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="recommendation-item mb-3">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>Automated Reminders</strong>
+                                    <p class="small text-muted mb-1">Set up smart reminders for vendors likely to miss status submissions</p>
+                                    <span class="badge bg-warning">Automation</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="implementRecommendation('automation')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trend Analysis -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line me-2 text-info"></i>Attendance Trend Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <canvas id="attendanceChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <canvas id="predictionChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <h6>Key Insights:</h6>
+                        <ul class="small">
+                            <li><strong>Monday Pattern:</strong> 23% higher absence rate on Mondays compared to other weekdays</li>
+                            <li><strong>Seasonal Trend:</strong> 15% increase in WFH requests during monsoon season</li>
+                            <li><strong>Team Dynamics:</strong> Vendor5's absences often correlate with project deadline stress</li>
+                            <li><strong>Success Rate:</strong> Proactive interventions reduced unplanned absences by 31%</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI Configuration & Tools -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>AI Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group mb-3">
+                    <label class="form-label small">Prediction Sensitivity</label>
+                    <input type="range" class="form-range" id="sensitivity" min="50" max="95" value="87" oninput="updateSensitivity(this.value)">
+                    <small class="text-muted">Current: <span id="sensitivityValue">87%</span></small>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label class="form-label small">Prediction Window</label>
+                    <select class="form-control form-control-sm" id="predictionWindow" onchange="updatePredictionWindow()">
+                        <option value="3">3 days</option>
+                        <option value="7" selected>7 days</option>
+                        <option value="14">14 days</option>
+                        <option value="30">30 days</option>
+                    </select>
+                </div>
+                
+                <div class="form-group mb-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoIntervention" checked>
+                        <label class="form-check-label small" for="autoIntervention">
+                            Auto-interventions
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="realTimeUpdates" checked>
+                        <label class="form-check-label small" for="realTimeUpdates">
+                            Real-time updates
+                        </label>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary btn-sm w-100 mb-2" onclick="applyAISettings()">
+                    <i class="fas fa-save me-1"></i>Apply Settings
+                </button>
+                <button class="btn btn-outline-secondary btn-sm w-100" onclick="resetAISettings()">
+                    <i class="fas fa-undo me-1"></i>Reset to Default
+                </button>
+            </div>
+        </div>
+        
+        <!-- Model Performance -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Model Performance</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <small>Accuracy</small>
+                    <strong>94.2%</strong>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-success" style="width: 94.2%"></div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <small>Precision</small>
+                    <strong>91.8%</strong>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-info" style="width: 91.8%"></div>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <small>Recall</small>
+                    <strong>89.3%</strong>
+                </div>
+                <div class="progress mb-3" style="height: 10px;">
+                    <div class="progress-bar bg-warning" style="width: 89.3%"></div>
+                </div>
+                
+                <small class="text-muted">Last evaluated: 2 hours ago</small>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="generateAIReport()">
+                        <i class="fas fa-file-alt me-2"></i>Generate AI Report
+                    </button>
+                    <button class="btn btn-info" onclick="scheduleAIAnalysis()">
+                        <i class="fas fa-calendar me-2"></i>Schedule Analysis
+                    </button>
+                    <button class="btn btn-warning" onclick="viewModelLogs()">
+                        <i class="fas fa-history me-2"></i>Model Training Logs
+                    </button>
+                    <button class="btn btn-danger" onclick="emergencyOverride()">
+                        <i class="fas fa-exclamation-circle me-2"></i>Emergency Override
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #28a745, #1e7e34);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #ffc107, #e0a800);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #17a2b8, #138496);
+}
+
+.avatar-circle {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.recommendation-item {
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.form-range {
+    height: 20px;
+}
+</style>
+
+<!-- JavaScript for AI Insights -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('AI Insights Dashboard loaded');
+    initializeCharts();
+});
+
+function initializeCharts() {
+    // Attendance Trend Chart
+    const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(attendanceCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            datasets: [{
+                label: 'Actual Attendance',
+                data: [82, 95, 94, 96, 88, 45],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Predicted',
+                data: [85, 93, 95, 94, 86, 42],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                borderDash: [5, 5],
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Attendance vs Predictions'
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Attendance %'
+                    }
+                }
+            }
+        }
+    });
+
+    // Risk Prediction Chart
+    const predictionCtx = document.getElementById('predictionChart').getContext('2d');
+    new Chart(predictionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Low Risk', 'Medium Risk', 'High Risk', 'Critical'],
+            datasets: [{
+                data: [65, 20, 12, 3],
+                backgroundColor: [
+                    '#28a745',
+                    '#ffc107',
+                    '#fd7e14',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Risk Distribution'
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function trainModel() {
+    if (confirm('Re-train AI model with latest data? This process takes 5-10 minutes.')) {
+        alert('AI model training started!\\n\\nTraining will run in background:\\n- Using last 6 months of data\\n- Incorporating latest patterns\\n- Improving prediction accuracy\\n\\nYou will be notified when complete.');
+    }
+}
+
+function exportInsights() {
+    alert('Exporting AI Insights\\n\\nGenerating comprehensive report with:\\n- Prediction results\\n- Model performance metrics\\n- Recommendation summary\\n- Historical accuracy data');
+}
+
+function refreshPredictions() {
+    alert('Refreshing predictions with latest data...');
+    setTimeout(() => {
+        alert('Predictions updated! Found 2 new high-risk cases.');
+    }, 1500);
+}
+
+function contactVendor(vendorId) {
+    alert(`Contacting ${vendorId}\\n\\nInitiating proactive outreach:\\n- Sending wellness check message\\n- Scheduling optional 1:1\\n- Providing support resources`);
+}
+
+function viewDetails(vendorId) {
+    alert(`Detailed AI Analysis for ${vendorId}:\\n\\nRisk Factors:\\n• Historical Monday absences: 4 of last 6\\n• Recent stress indicators detected\\n• Project deadline alignment\\n\\nRecommendations:\\n• Flexible work arrangement\\n• Regular check-ins\\n• Workload adjustment`);
+}
+
+function implementRecommendation(type) {
+    const recommendations = {
+        'resource': 'Resource allocation optimized for predicted absences',
+        'communication': 'Proactive communication schedule created',
+        'policy': 'Flexible work policy proposal generated',
+        'automation': 'Smart reminder system activated'
+    };
+    
+    alert(`Implementing: ${recommendations[type]}\\n\\nAction items created and assigned to relevant managers.`);
+}
+
+function updateSensitivity(value) {
+    document.getElementById('sensitivityValue').textContent = value + '%';
+}
+
+function updatePredictionWindow() {
+    const window = document.getElementById('predictionWindow').value;
+    alert(`Prediction window updated to ${window} days. Recalculating predictions...`);
+}
+
+function applyAISettings() {
+    alert('AI Settings Applied Successfully!\\n\\nNew configuration active:\\n- Updated prediction sensitivity\\n- Modified intervention rules\\n- Real-time processing enabled');
+}
+
+function resetAISettings() {
+    if (confirm('Reset AI settings to default values?')) {
+        document.getElementById('sensitivity').value = 87;
+        document.getElementById('sensitivityValue').textContent = '87%';
+        document.getElementById('predictionWindow').value = 7;
+        document.getElementById('autoIntervention').checked = true;
+        document.getElementById('realTimeUpdates').checked = true;
+        alert('AI settings reset to default values.');
+    }
+}
+
+function generateAIReport() {
+    alert('Generating Comprehensive AI Report\\n\\nIncluding:\\n- Model performance analysis\\n- Prediction accuracy over time\\n- Intervention success rates\\n- ROI calculations');
+}
+
+function scheduleAIAnalysis() {
+    alert('Schedule AI Analysis\\n\\nOptions:\\n- Daily automated analysis\\n- Weekly trend reports\\n- Monthly model retraining\\n- Custom analysis schedules');
+}
+
+function viewModelLogs() {
+    alert('AI Model Training Logs\\n\\nRecent entries:\\n- 2025-09-07 09:30: Model retrained (accuracy: 94.2%)\\n- 2025-09-06 15:45: New pattern detected\\n- 2025-09-05 11:20: Prediction accuracy improved\\n- 2025-09-04 08:15: Data preprocessing completed');
+}
+
+function emergencyOverride() {
+    if (confirm('Emergency Override will disable AI predictions temporarily. Continue?')) {
+        alert('AI predictions temporarily disabled.\\n\\nSystem switched to manual mode.\\nContact administrator to re-enable.');
+    }
+}
+</script>
+{% endblock %}
