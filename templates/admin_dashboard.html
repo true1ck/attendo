@@ -1,0 +1,404 @@
+{% extends "base_fixed.html" %}
+
+{% block title %}Admin Dashboard - VendorTime{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-cog me-2"></i>Admin Dashboard</h2>
+            <div>
+                <button class="btn btn-success me-2">
+                    <i class="fas fa-user-plus me-1"></i>Add Vendor
+                </button>
+                <button class="btn btn-primary">
+                    <i class="fas fa-cogs me-1"></i>System Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Overview Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white" style="background: linear-gradient(135deg, var(--attendo-primary) 0%, var(--attendo-accent) 100%);">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Vendors</h6>
+                        <h4 class="mb-0">{{ system_stats.total_vendors or 45 }}</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Active Managers</h6>
+                        <h4 class="mb-0">{{ system_stats.total_managers or 8 }}</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-user-tie fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Today's Submissions</h6>
+                        <h4 class="mb-0">{{ system_stats.todays_submissions or 38 }}</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">System Issues</h6>
+                        <h4 class="mb-0">{{ system_stats.system_issues or 3 }}</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row">
+    <!-- Vendor Management -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-users-cog me-2"></i>Vendor Management</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="refreshVendors()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Vendor ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Manager</th>
+                                <th>Status</th>
+                                <th>Last Login</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>V001</td>
+                                <td>vendor1</td>
+                                <td>vendor1@attendo.com</td>
+                                <td>manager1</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>2025-09-07 09:15</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editVendor('V001')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deactivateVendor('V001')">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>V002</td>
+                                <td>vendor2</td>
+                                <td>vendor2@attendo.com</td>
+                                <td>manager1</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>2025-09-07 08:45</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editVendor('V002')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deactivateVendor('V002')">
+                                            <i class="fas fa-ban"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>V003</td>
+                                <td>vendor3</td>
+                                <td>vendor3@attendo.com</td>
+                                <td>manager2</td>
+                                <td><span class="badge bg-warning">Inactive</span></td>
+                                <td>2025-09-05 16:30</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editVendor('V003')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="activateVendor('V003')">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Configuration -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>System Configuration</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar-alt me-2"></i>Holiday Management</h6>
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                Independence Day
+                                <span class="badge bg-primary">Aug 15, 2025</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                Gandhi Jayanti
+                                <span class="badge bg-primary">Oct 2, 2025</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="manageHolidays()">
+                            <i class="fas fa-plus me-1"></i>Manage Holidays
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-bell me-2"></i>Notification Settings</h6>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="dailyReminders" checked>
+                            <label class="form-check-label" for="dailyReminders">
+                                Daily Reminders (9:30 AM)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="managerAlerts" checked>
+                            <label class="form-check-label" for="managerAlerts">
+                                Manager Alerts
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="mismatchAlerts" checked>
+                            <label class="form-check-label" for="mismatchAlerts">
+                                Mismatch Alerts
+                            </label>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success mt-2" onclick="saveNotificationSettings()">
+                            <i class="fas fa-save me-1"></i>Save Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions & Reports -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="importSwipeData()">
+                        <i class="fas fa-upload me-2"></i>Import Swipe Data
+                    </button>
+                    <button class="btn btn-primary" onclick="generateSystemReport()">
+                        <i class="fas fa-chart-line me-2"></i>Generate System Report
+                    </button>
+                    <button class="btn btn-info" onclick="exportAllData()">
+                        <i class="fas fa-download me-2"></i>Export All Data
+                    </button>
+                    <button class="btn btn-primary" onclick="viewAIInsights()">
+                        <i class="fas fa-brain me-2"></i>AI Insights
+                    </button>
+                    <button class="btn btn-warning" onclick="runReconciliation()">
+                        <i class="fas fa-sync me-2"></i>Run Reconciliation
+                    </button>
+                    <button class="btn btn-danger" onclick="viewAuditLogs()">
+                        <i class="fas fa-shield-alt me-2"></i>View Audit Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activities -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activities</h5>
+            </div>
+            <div class="card-body">
+                <div class="activity-item">
+                    <div class="d-flex">
+                        <div class="activity-icon bg-success">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-1">New vendor added</h6>
+                            <small class="text-muted">vendor4 by admin - 2h ago</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="activity-item mt-3">
+                    <div class="d-flex">
+                        <div class="activity-icon bg-warning">
+                            <i class="fas fa-exclamation"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-1">Mismatch detected</h6>
+                            <small class="text-muted">vendor2 swipe vs status - 4h ago</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="activity-item mt-3">
+                    <div class="d-flex">
+                        <div class="activity-icon bg-info">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-1">Data imported</h6>
+                            <small class="text-muted">Swipe data for Sept - 6h ago</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Admin Profile -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Admin Info</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Admin:</strong> {{ current_user.username }}</p>
+                <p><strong>Email:</strong> {{ current_user.email }}</p>
+                <p><strong>Role:</strong> {{ current_user.role.value.title() }}</p>
+                <p><strong>System Version:</strong> v1.0.0</p>
+                <p><strong>Last Login:</strong> {{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else 'First time' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+}
+
+.activity-item {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+</style>
+
+<!-- JavaScript for Admin Dashboard -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin Dashboard loaded');
+});
+
+function refreshVendors() {
+    console.log('Refreshing vendor list');
+    alert('Vendor list refreshed! (Demo)');
+    location.reload();
+}
+
+function editVendor(vendorId) {
+    alert('Edit vendor ' + vendorId + ' (Demo) - This would open a vendor edit modal/form');
+}
+
+function deactivateVendor(vendorId) {
+    if (confirm('Are you sure you want to deactivate vendor ' + vendorId + '?')) {
+        console.log('Deactivating vendor:', vendorId);
+        alert('Vendor deactivated! (Demo)');
+        location.reload();
+    }
+}
+
+function activateVendor(vendorId) {
+    if (confirm('Are you sure you want to activate vendor ' + vendorId + '?')) {
+        console.log('Activating vendor:', vendorId);
+        alert('Vendor activated! (Demo)');
+        location.reload();
+    }
+}
+
+function manageHolidays() {
+    alert('Holiday Management (Demo) - This would open a holiday management interface');
+}
+
+function saveNotificationSettings() {
+    alert('Notification settings saved! (Demo)');
+}
+
+function importSwipeData() {
+    window.location.href = '/admin/import';
+}
+
+function generateSystemReport() {
+    window.location.href = '/admin/reports';
+}
+
+function exportAllData() {
+    alert('Exporting all system data (Demo) - This would generate and download complete data export');
+}
+
+function runReconciliation() {
+    if (confirm('Run reconciliation process for all vendors?')) {
+        alert('Reconciliation started! (Demo) - This would match swipe data with status submissions');
+    }
+}
+
+function viewAuditLogs() {
+    alert('Audit Logs (Demo) - This would show all system activities and changes');
+}
+
+function viewAIInsights() {
+    window.location.href = '/admin/ai-insights';
+}
+</script>
+{% endblock %}

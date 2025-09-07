@@ -1,0 +1,899 @@
+openapi: 3.0.3
+info:
+  title: ATTENDO - Workforce Management API
+  description: |
+    **ATTENDO** is a comprehensive AI-powered workforce management platform that streamlines attendance tracking, vendor management, and analytics.
+    
+    ## Features
+    - 🔐 **Role-based Authentication** (Admin/Manager/Vendor)
+    - 🤖 **AI-Powered Predictions** with 94.2% accuracy
+    - 📊 **Real-time Analytics** and reporting
+    - 📥 **Data Import/Export** capabilities
+    - 🔔 **Notification System** with Teams integration
+    - 🏢 **Multi-vendor Management** across departments
+    - 📈 **Interactive Charts** and visualizations
+    - 🔍 **Complete Audit Trail** for compliance
+    
+    ## Authentication
+    Login with session-based authentication using these test credentials:
+    - **Admin**: `admin` / `admin123`
+    - **Manager**: `manager1` / `manager123` 
+    - **Vendor**: `vendor1` / `vendor123`
+    
+  version: 1.0.0
+  contact:
+    name: ATTENDO Team
+    email: demo@attendo.com
+    url: https://attendo.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Development Server
+
+tags:
+  - name: Authentication
+    description: User login and session management
+  - name: Admin Dashboard
+    description: Administrative functions and system management
+  - name: Manager Dashboard
+    description: Team management and approval workflows
+  - name: Vendor Dashboard
+    description: Individual vendor operations and status submission
+  - name: AI & Analytics
+    description: AI-powered predictions and insights
+  - name: Charts & Visualization
+    description: Real-time chart data for dashboards
+  - name: Reports & Export
+    description: Report generation and data export functionality
+  - name: Data Import
+    description: File import and reconciliation features
+  - name: Notifications
+    description: Notification management and delivery
+
+paths:
+  # Authentication Endpoints
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: User Login
+      description: Authenticate user and create session
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                  description: Username (admin/manager1/vendor1)
+                password:
+                  type: string
+                  example: admin123
+                  description: Password (admin123/manager123/vendor123)
+      responses:
+        '302':
+          description: Login successful - redirects to appropriate dashboard
+        '200':
+          description: Invalid credentials - returns to login page
+
+  /logout:
+    get:
+      tags:
+        - Authentication
+      summary: User Logout
+      description: End user session and redirect to login
+      responses:
+        '302':
+          description: Logout successful - redirect to login
+
+  # Admin Dashboard APIs
+  /admin/dashboard:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Admin Dashboard
+      description: Get system overview and statistics for administrators
+      responses:
+        '200':
+          description: Admin dashboard data
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/dashboard/stats:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Dashboard Statistics
+      description: Get real-time dashboard statistics based on user role
+      responses:
+        '200':
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/AdminStats'
+                  - $ref: '#/components/schemas/ManagerStats'
+                  - $ref: '#/components/schemas/VendorStats'
+              examples:
+                admin:
+                  summary: Admin Statistics
+                  value:
+                    total_users: 7
+                    total_vendors: 5
+                    total_managers: 1
+                manager:
+                  summary: Manager Statistics  
+                  value:
+                    team_size: 5
+                    pending_approvals: 3
+                vendor:
+                  summary: Vendor Statistics
+                  value:
+                    total_statuses: 25
+                    pending_mismatches: 0
+
+  /admin/vendors:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Manage Vendors
+      description: Get vendor management interface with all vendor profiles
+      responses:
+        '200':
+          description: Vendor management page
+
+  /admin/holidays:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Holiday Management
+      description: View and manage system holidays
+      responses:
+        '200':
+          description: Holiday management interface
+
+  /admin/add-holiday:
+    post:
+      tags:
+        - Admin Dashboard
+      summary: Add Holiday
+      description: Add a new holiday to the system calendar
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - holiday_date
+                - name
+              properties:
+                holiday_date:
+                  type: string
+                  format: date
+                  example: "2025-03-08"
+                name:
+                  type: string
+                  example: "International Women's Day"
+                description:
+                  type: string
+                  example: "Celebrating women's achievements"
+      responses:
+        '302':
+          description: Holiday added successfully
+
+  /admin/audit-logs:
+    get:
+      tags:
+        - Admin Dashboard
+      summary: Audit Logs
+      description: View comprehensive system audit trail
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+      responses:
+        '200':
+          description: Audit logs interface
+
+  # Manager Dashboard APIs
+  /manager/dashboard:
+    get:
+      tags:
+        - Manager Dashboard
+      summary: Manager Dashboard
+      description: Get team overview and pending approvals
+      responses:
+        '200':
+          description: Manager dashboard with team data
+
+  /manager/approve-status/{status_id}:
+    post:
+      tags:
+        - Manager Dashboard
+      summary: Approve/Reject Status
+      description: Approve or reject vendor daily status submissions
+      parameters:
+        - name: status_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+                  example: approve
+                reason:
+                  type: string
+                  example: "Status approved after verification"
+      responses:
+        '302':
+          description: Status processed successfully
+
+  /manager/team-report:
+    get:
+      tags:
+        - Manager Dashboard
+      summary: Team Report
+      description: Generate attendance report for manager's team
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+          example: "2025-01"
+          description: Report month in YYYY-MM format
+      responses:
+        '200':
+          description: Team attendance report
+
+  # Vendor Dashboard APIs
+  /vendor/dashboard:
+    get:
+      tags:
+        - Vendor Dashboard
+      summary: Vendor Dashboard
+      description: Get personal dashboard with status submission interface
+      responses:
+        '200':
+          description: Vendor dashboard with personal data
+
+  /vendor/submit-status:
+    post:
+      tags:
+        - Vendor Dashboard
+      summary: Submit Daily Status
+      description: Submit daily attendance status with location and comments
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - status_date
+                - status
+              properties:
+                status_date:
+                  type: string
+                  format: date
+                  example: "2025-01-07"
+                status:
+                  type: string
+                  enum: 
+                    - in_office_full
+                    - in_office_half
+                    - wfh_full
+                    - wfh_half
+                    - leave_full
+                    - leave_half
+                    - absent
+                  example: in_office_full
+                location:
+                  type: string
+                  example: "BL-A-5F"
+                comments:
+                  type: string
+                  example: "Working on new feature development"
+      responses:
+        '302':
+          description: Status submitted successfully
+
+  # AI & Analytics APIs
+  /admin/ai-insights:
+    get:
+      tags:
+        - AI & Analytics
+      summary: AI Insights Dashboard
+      description: View AI-powered analytics and predictions interface
+      responses:
+        '200':
+          description: AI insights dashboard
+
+  /api/ai/refresh-predictions:
+    post:
+      tags:
+        - AI & Analytics
+      summary: Refresh AI Predictions
+      description: Generate fresh AI predictions for absence risk analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Predictions refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  predictions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AIPrediction'
+                  updated_at:
+                    type: string
+                    example: "14:30:15"
+
+  /api/ai/train-model:
+    post:
+      tags:
+        - AI & Analytics
+      summary: Train AI Model
+      description: Retrain the AI model with latest data (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Model training completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "AI model retrained successfully!"
+                  new_accuracy:
+                    type: string
+                    example: "95.1%"
+                  training_time:
+                    type: string
+                    example: "2.3 seconds"
+                  data_points:
+                    type: integer
+                    example: 1247
+
+  /api/ai/export-insights:
+    post:
+      tags:
+        - AI & Analytics
+      summary: Export AI Insights
+      description: Export AI insights and predictions to Excel file
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Insights exported successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "AI insights exported successfully!"
+                  filename:
+                    type: string
+                    example: "ai_insights_20250107_143015.xlsx"
+
+  # Chart Data APIs
+  /api/charts/attendance-trends:
+    get:
+      tags:
+        - Charts & Visualization
+      summary: Attendance Trends Data
+      description: Get attendance trend data for Chart.js line charts (last 30 days)
+      responses:
+        '200':
+          description: Chart data for attendance trends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChartData'
+              example:
+                labels: ["2024-12-08", "2024-12-09", "2024-12-10"]
+                datasets:
+                  - label: "In Office"
+                    data: [15, 18, 12]
+                    backgroundColor: "#16a34a"
+                    borderColor: "#16a34a"
+                    fill: false
+                  - label: "Work From Home"
+                    data: [8, 5, 10]
+                    backgroundColor: "#3b82f6"
+                    borderColor: "#3b82f6"
+                    fill: false
+
+  /api/charts/team-performance:
+    get:
+      tags:
+        - Charts & Visualization
+      summary: Team Performance Data
+      description: Get team performance metrics for manager/admin charts
+      responses:
+        '200':
+          description: Team performance data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamPerformance'
+
+  /api/charts/status-distribution:
+    get:
+      tags:
+        - Charts & Visualization
+      summary: Status Distribution Data
+      description: Get status distribution data for pie charts (current month)
+      responses:
+        '200':
+          description: Status distribution pie chart data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PieChartData'
+
+  # Reports & Export APIs
+  /admin/reports-dashboard:
+    get:
+      tags:
+        - Reports & Export
+      summary: Reports Dashboard
+      description: Access advanced reporting interface with export options
+      responses:
+        '200':
+          description: Reports dashboard interface
+
+  /api/reports/generate:
+    post:
+      tags:
+        - Reports & Export
+      summary: Generate Report
+      description: Generate attendance reports on-demand in various formats
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - report_type
+                - month
+                - format
+              properties:
+                report_type:
+                  type: string
+                  enum: [monthly, weekly, daily]
+                  example: monthly
+                month:
+                  type: string
+                  pattern: '^\d{4}-\d{2}$'
+                  example: "2025-01"
+                format:
+                  type: string
+                  enum: [excel, pdf, csv]
+                  example: excel
+                manager_id:
+                  type: integer
+                  example: 1
+                  description: Optional - specific manager for admin users
+      responses:
+        '200':
+          description: Report generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Report generated successfully!"
+                  filename:
+                    type: string
+                    example: "monthly_report_2025-01_143015.xlsx"
+                  records:
+                    type: integer
+                    example: 125
+                  download_url:
+                    type: string
+                    example: "/export/monthly-report/excel?month=2025-01"
+
+  /api/reports/schedule:
+    post:
+      tags:
+        - Reports & Export
+      summary: Schedule Report
+      description: Schedule automatic report generation and delivery
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - report_type
+                - frequency
+                - recipients
+              properties:
+                report_type:
+                  type: string
+                  enum: [monthly, weekly, daily]
+                  example: monthly
+                frequency:
+                  type: string
+                  enum: [daily, weekly, monthly]
+                  example: monthly
+                recipients:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  example: ["manager1@attendo.com", "admin@attendo.com"]
+      responses:
+        '200':
+          description: Report scheduled successfully
+
+  /export/monthly-report/{format}:
+    get:
+      tags:
+        - Reports & Export
+      summary: Export Monthly Report
+      description: Download monthly attendance report in specified format
+      parameters:
+        - name: format
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [excel, pdf, csv]
+          example: excel
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: string
+            pattern: '^\d{4}-\d{2}$'
+          example: "2025-01"
+        - name: manager_id
+          in: query
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: File download
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  # Data Import APIs
+  /import/:
+    get:
+      tags:
+        - Data Import
+      summary: Import Dashboard
+      description: Access data import interface with statistics
+      responses:
+        '200':
+          description: Import dashboard interface
+
+  /import/statistics:
+    get:
+      tags:
+        - Data Import
+      summary: Import Statistics
+      description: Get current month import statistics
+      responses:
+        '200':
+          description: Import statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  statistics:
+                    $ref: '#/components/schemas/ImportStats'
+
+  /import/reconcile:
+    post:
+      tags:
+        - Data Import
+      summary: Run Reconciliation
+      description: Execute automatic reconciliation to detect mismatches
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Reconciliation completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Reconciliation complete! Found 3 new mismatches."
+                  mismatches:
+                    type: integer
+                    example: 3
+
+  /import/sample-templates:
+    get:
+      tags:
+        - Data Import
+      summary: Download Templates
+      description: Download sample Excel templates for data import
+      parameters:
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [swipe, leave, wfh]
+          example: swipe
+          description: Template type (swipe/leave/wfh)
+      responses:
+        '200':
+          description: Template file download
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+  # Notifications API
+  /api/notifications/unread:
+    get:
+      tags:
+        - Notifications
+      summary: Get Unread Notifications
+      description: Retrieve all unread notifications for current user
+      responses:
+        '200':
+          description: List of unread notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+
+components:
+  schemas:
+    AdminStats:
+      type: object
+      properties:
+        total_users:
+          type: integer
+          example: 7
+        total_vendors:
+          type: integer
+          example: 5
+        total_managers:
+          type: integer
+          example: 1
+
+    ManagerStats:
+      type: object
+      properties:
+        team_size:
+          type: integer
+          example: 5
+        pending_approvals:
+          type: integer
+          example: 3
+
+    VendorStats:
+      type: object
+      properties:
+        total_statuses:
+          type: integer
+          example: 25
+        pending_mismatches:
+          type: integer
+          example: 0
+
+    AIPrediction:
+      type: object
+      properties:
+        vendor_name:
+          type: string
+          example: "Vendor 1 Name"
+        vendor_id:
+          type: string
+          example: "VND001"
+        risk_score:
+          type: integer
+          example: 75
+        confidence:
+          type: string
+          example: "high"
+        factors:
+          type: array
+          items:
+            type: string
+          example: ["High leave rate: 15.0%", "Monday pattern risk"]
+
+    ChartData:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+          example: ["2024-12-08", "2024-12-09", "2024-12-10"]
+        datasets:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+                example: "In Office"
+              data:
+                type: array
+                items:
+                  type: integer
+                example: [15, 18, 12]
+              backgroundColor:
+                type: string
+                example: "#16a34a"
+
+    PieChartData:
+      type: object
+      properties:
+        labels:
+          type: array
+          items:
+            type: string
+          example: ["In Office", "Work From Home", "On Leave", "Absent"]
+        datasets:
+          type: array
+          items:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  type: integer
+                example: [65, 15, 8, 2]
+              backgroundColor:
+                type: array
+                items:
+                  type: string
+                example: ["#16a34a", "#3b82f6", "#d97706", "#dc2626"]
+
+    TeamPerformance:
+      type: object
+      properties:
+        vendor_name:
+          type: string
+          example: "Vendor 1 Name"
+        submission_rate:
+          type: number
+          format: float
+          example: 95.5
+        approval_rate:
+          type: number
+          format: float
+          example: 98.2
+        total_submissions:
+          type: integer
+          example: 22
+
+    ImportStats:
+      type: object
+      properties:
+        swipe_records:
+          type: integer
+          example: 150
+        leave_records:
+          type: integer
+          example: 25
+        wfh_records:
+          type: integer
+          example: 45
+        mismatches:
+          type: integer
+          example: 3
+        last_updated:
+          type: string
+          example: "2025-01-07 14:30:15"
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        type:
+          type: string
+          example: "daily_reminder"
+        message:
+          type: string
+          example: "Reminder: Please submit your daily attendance status"
+        sent_at:
+          type: string
+          format: date-time
+          example: "2025-01-07T09:00:00Z"

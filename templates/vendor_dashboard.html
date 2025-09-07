@@ -1,0 +1,169 @@
+{% extends "base_fixed.html" %}
+
+{% block title %}Vendor Dashboard - VendorTime{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-tachometer-alt me-2"></i>Vendor Dashboard</h2>
+            <button class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Submit Status
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Today's Status</h6>
+                        <h4 class="mb-0">Not Submitted</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">This Month</h6>
+                        <h4 class="mb-0">18 Days</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-calendar-check fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Pending Approval</h6>
+                        <h4 class="mb-0">2</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-hourglass-half fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Mismatches</h6>
+                        <h4 class="mb-0">1</h4>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Status History</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Approval</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-09-06</td>
+                                <td><span class="badge bg-success">In Office - Full</span></td>
+                                <td>BL-A-5F</td>
+                                <td><span class="badge bg-warning">Pending</span></td>
+                                <td><button class="btn btn-sm btn-outline-primary">Edit</button></td>
+                            </tr>
+                            <tr>
+                                <td>2025-09-05</td>
+                                <td><span class="badge bg-info">WFH - Full</span></td>
+                                <td>Home</td>
+                                <td><span class="badge bg-success">Approved</span></td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>2025-09-04</td>
+                                <td><span class="badge bg-success">In Office - Full</span></td>
+                                <td>BL-A-5F</td>
+                                <td><span class="badge bg-success">Approved</span></td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Submit Today's Status
+                    </button>
+                    <button class="btn btn-outline-secondary">
+                        <i class="fas fa-calendar me-2"></i>View Calendar
+                    </button>
+                    <button class="btn btn-outline-info">
+                        <i class="fas fa-chart-bar me-2"></i>Monthly Report
+                    </button>
+                    <button class="btn btn-outline-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i>Resolve Mismatches
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Info -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i>Profile Info</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Vendor ID:</strong> {{ current_user.username }}</p>
+                <p><strong>Email:</strong> {{ current_user.email }}</p>
+                <p><strong>Role:</strong> {{ current_user.role.value.title() }}</p>
+                <p><strong>Last Login:</strong> {{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else 'First time' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

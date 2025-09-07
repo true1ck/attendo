@@ -1,0 +1,957 @@
+{
+	"info": {
+		"_postman_id": "attendo-api-collection",
+		"name": "ATTENDO - Workforce Management API",
+		"description": "Complete API collection for testing ATTENDO platform functionality",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "attendo-team"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication",
+			"item": [
+				{
+					"name": "Login Admin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Login successful\", function () {",
+									"    pm.response.to.have.status(302);",
+									"});",
+									"",
+									"// Save session cookies for subsequent requests",
+									"pm.cookies.jar().get(\"localhost\", \"session\", function (error, cookie) {",
+									"    if (cookie) {",
+									"        pm.globals.set(\"session_cookie\", cookie.value);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "admin123",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Login Manager",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "manager1",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "manager123",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Login Vendor",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "vendor1",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "vendor123",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/logout",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"logout"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Dashboard APIs",
+			"item": [
+				{
+					"name": "Dashboard Stats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has stats\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_users');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/dashboard/stats",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"stats"
+							]
+						}
+					}
+				},
+				{
+					"name": "Admin Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"dashboard"
+							]
+						}
+					}
+				},
+				{
+					"name": "Manager Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/manager/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"manager",
+								"dashboard"
+							]
+						}
+					}
+				},
+				{
+					"name": "Vendor Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/vendor/dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"vendor",
+								"dashboard"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🤖 AI & Analytics",
+			"item": [
+				{
+					"name": "AI Insights Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/ai-insights",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"ai-insights"
+							]
+						}
+					}
+				},
+				{
+					"name": "Refresh AI Predictions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Predictions refreshed\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success', true);",
+									"    pm.expect(jsonData).to.have.property('predictions');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/ai/refresh-predictions",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"ai",
+								"refresh-predictions"
+							]
+						}
+					}
+				},
+				{
+					"name": "Train AI Model",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/ai/train-model",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"ai",
+								"train-model"
+							]
+						}
+					}
+				},
+				{
+					"name": "Export AI Insights",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/ai/export-insights",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"ai",
+								"export-insights"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📈 Chart Data APIs",
+			"item": [
+				{
+					"name": "Attendance Trends",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Chart data returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('labels');",
+									"    pm.expect(jsonData).to.have.property('datasets');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/charts/attendance-trends",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"charts",
+								"attendance-trends"
+							]
+						}
+					}
+				},
+				{
+					"name": "Team Performance",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/charts/team-performance",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"charts",
+								"team-performance"
+							]
+						}
+					}
+				},
+				{
+					"name": "Status Distribution",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/charts/status-distribution",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"charts",
+								"status-distribution"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Reports & Export",
+			"item": [
+				{
+					"name": "Reports Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/reports-dashboard",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"reports-dashboard"
+							]
+						}
+					}
+				},
+				{
+					"name": "Generate Report",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Report generated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success', true);",
+									"    pm.expect(jsonData).to.have.property('filename');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"report_type\": \"monthly\",\n  \"month\": \"2025-01\",\n  \"format\": \"excel\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/reports/generate",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"reports",
+								"generate"
+							]
+						}
+					}
+				},
+				{
+					"name": "Schedule Report",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"report_type\": \"monthly\",\n  \"frequency\": \"monthly\",\n  \"recipients\": [\"manager1@attendo.com\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/reports/schedule",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"reports",
+								"schedule"
+							]
+						}
+					}
+				},
+				{
+					"name": "Report History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/reports/history",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"reports",
+								"history"
+							]
+						}
+					}
+				},
+				{
+					"name": "Export Monthly Report (Excel)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/export/monthly-report/excel?month=2025-01",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"export",
+								"monthly-report",
+								"excel"
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "2025-01"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Export Monthly Report (PDF)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/export/monthly-report/pdf?month=2025-01",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"export",
+								"monthly-report",
+								"pdf"
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "2025-01"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📥 Data Import",
+			"item": [
+				{
+					"name": "Import Dashboard",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/import/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"import",
+								""
+							]
+						}
+					}
+				},
+				{
+					"name": "Import Statistics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/import/statistics",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"import",
+								"statistics"
+							]
+						}
+					}
+				},
+				{
+					"name": "Run Reconciliation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/import/reconcile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"import",
+								"reconcile"
+							]
+						}
+					}
+				},
+				{
+					"name": "View Mismatches",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/import/mismatches",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"import",
+								"mismatches"
+							]
+						}
+					}
+				},
+				{
+					"name": "Download Swipe Template",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/import/sample-templates?type=swipe",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"import",
+								"sample-templates"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "swipe"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Download Leave Template",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/import/sample-templates?type=leave",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"import",
+								"sample-templates"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "leave"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "👤 Vendor Operations",
+			"item": [
+				{
+					"name": "Submit Daily Status",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "status_date",
+									"value": "2025-01-07",
+									"type": "text"
+								},
+								{
+									"key": "status",
+									"value": "in_office_full",
+									"type": "text"
+								},
+								{
+									"key": "location",
+									"value": "BL-A-5F",
+									"type": "text"
+								},
+								{
+									"key": "comments",
+									"value": "Working on new feature development",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/vendor/submit-status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"vendor",
+								"submit-status"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "👨‍💼 Manager Operations",
+			"item": [
+				{
+					"name": "Team Report",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/manager/team-report?month=2025-01",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"manager",
+								"team-report"
+							],
+							"query": [
+								{
+									"key": "month",
+									"value": "2025-01"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "👨‍💻 Admin Operations",
+			"item": [
+				{
+					"name": "Manage Vendors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/vendors",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"vendors"
+							]
+						}
+					}
+				},
+				{
+					"name": "Manage Holidays",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/holidays",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"holidays"
+							]
+						}
+					}
+				},
+				{
+					"name": "Add Holiday",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "holiday_date",
+									"value": "2025-03-08",
+									"type": "text"
+								},
+								{
+									"key": "name",
+									"value": "Women's Day",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "International Women's Day",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/add-holiday",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"add-holiday"
+							]
+						}
+					}
+				},
+				{
+					"name": "Audit Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/audit-logs",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"audit-logs"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔔 Notifications",
+			"item": [
+				{
+					"name": "Get Unread Notifications",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/notifications/unread",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"notifications",
+								"unread"
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		}
+	]
+}
