@@ -123,7 +123,7 @@ def test_data():
             'schedule_report': {
                 'report_type': 'monthly',
                 'frequency': 'monthly',
-                'recipients': ['manager1@attendo.com']
+                'recipients': ['manager1@company.com']
             }
         },
         'status_options': [
@@ -151,7 +151,7 @@ def swagger_ui_index():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATTENDO API Documentation</title>
+    <title>Workforce Management API Documentation</title>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@4.15.5/swagger-ui.css" />
     <link rel="icon" type="image/png" href="{{ url_for('swagger_ui.static', filename='favicon-32x32.png') }}" sizes="32x32" />
     <link rel="icon" type="image/png" href="{{ url_for('swagger_ui.static', filename='favicon-16x16.png') }}" sizes="16x16" />

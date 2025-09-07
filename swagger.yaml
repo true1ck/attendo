@@ -21,13 +21,6 @@ info:
     - **Vendor**: `vendor1` / `vendor123`
     
   version: 1.0.0
-  contact:
-    name: ATTENDO Team
-    email: demo@attendo.com
-    url: https://attendo.com
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: http://localhost:5000

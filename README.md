@@ -1,301 +1,208 @@
-# 🎯 ATTENDO - Super Easy Setup Guide
+# 🎯 ATTENDO - Workforce Management Platform
 
-> **Making attendance tracking as easy as playing a video game!** 🎮
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com)
+[![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-orange.svg)](https://www.sqlalchemy.org)
 
-## 🌟 What is ATTENDO?
+A comprehensive workforce management platform that streamlines attendance tracking, vendor management, and analytics for modern enterprises.
 
-ATTENDO is like a digital attendance book that helps:
-- **Workers** mark if they're in office, working from home, or on vacation
-- **Managers** see who's working where and approve attendance
-- **Admins** get cool reports and manage everything
+## 🚀 Features
 
-Think of it like a smart diary that everyone in a company can use! 📖✨
+### 🔐 Authentication & Authorization
+- Role-based Access Control (Admin/Manager/Vendor)
+- Session Management with secure login/logout
+- Multi-tenant Architecture
 
-## 🚀 How to Run ATTENDO (Super Easy!)
+### 📊 Dashboard & Reporting
+- Real-time Dashboards for all user roles
+- Interactive Charts and visualizations
+- Monthly Attendance Reports with Excel export
+- Comprehensive audit trail
+- Custom Report Scheduling
 
-### Step 1: Get the Code 📥
-1. Click the green "Code" button at the top
-2. Click "Download ZIP" 
-3. Extract the ZIP file to your computer
-4. Open Command Prompt (Windows) or Terminal (Mac/Linux)
-5. Navigate to the extracted folder:
+### 👥 Vendor Management
+- Multi-vendor Support across departments
+- Attendance Status Submission (Office/WFH/Leave)
+- Manager Approval Workflows
+- Mismatch Detection between web status and swipe data
+- Holiday Management
+
+### 🔔 Notifications & Integrations
+- Email Alerts for pending approvals
+- Background Job Scheduling
+- Real-time Status Updates
+
+### 📱 API & Documentation
+- RESTful API with comprehensive endpoints
+- Interactive Swagger UI for API testing
+- OpenAPI 3.0 Specification
+
+## 🛠️ Technology Stack
+
+### Backend
+- **Python 3.8+** - Core programming language
+- **Flask 3.0** - Web framework
+- **SQLAlchemy 2.0** - ORM and database toolkit
+- **Flask-Login** - User session management
+- **APScheduler** - Background job scheduling
+
+### Frontend
+- **Bootstrap 5** - Responsive UI framework
+- **Chart.js** - Interactive data visualizations
+- **jQuery** - DOM manipulation and AJAX
+
+### Database
+- **SQLite** - Development database (easily replaceable)
+- **Support for PostgreSQL/MySQL** - Production ready
+
+### API Documentation
+- **Swagger UI** - Interactive API documentation
+- **OpenAPI 3.0** - API specification standard
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8 or higher
+- pip (Python package manager)
+
+### Installation
+
+1. **Clone the repository**
 ```bash
-cd attendo
+git clone <repository-url>
+cd vendor-timesheet-tool
 ```
 
-### Step 2: Set Up Python 🐍
+2. **Install dependencies**
 ```bash
-# Create a special Python space (like a sandbox)
-python -m venv venv
-
-# Enter the sandbox
-# For Windows:
-venv\Scripts\activate
-# For Mac/Linux:
-source venv/bin/activate
-```
-
-### Step 3: Install the Magic Tools 🛠️
-```bash
-# Install all the tools ATTENDO needs
 pip install -r requirements.txt
 ```
 
-### Step 4: Start ATTENDO! 🎉
+3. **Run the application**
 ```bash
-# Wake up ATTENDO!
 python app.py
 ```
 
-### Step 5: Open Your Web Browser 🌐
-Go to: **http://localhost:5000**
+4. **Access the application**
+- Web Interface: http://localhost:5000
+- API Documentation: http://localhost:5000/api/docs
 
-**🎊 CONGRATULATIONS! ATTENDO is now running! 🎊**
+### Test Credentials
+- **Admin:** `admin` / `admin123`
+- **Manager:** `manager1` / `manager123`
+- **Vendor:** `vendor1` / `vendor123`
 
----
+## 📖 API Documentation
 
-## 🎮 How to Use ATTENDO
+The complete API documentation is available via Swagger UI at `/api/docs` when the application is running.
 
-### 🔐 Login Accounts (Pre-loaded Demo Data)
+### Key Endpoints
 
-| Role | Username | Password | What They Can Do |
-|------|----------|----------|------------------|
-| **Admin** 👑 | `admin` | `admin123` | See everything, manage system, AI insights |
-| **Manager** 👔 | `manager1` | `manager123` | See team, approve attendance, reports |
-| **Worker** 👤 | `vendor1` | `vendor123` | Mark attendance, see personal history |
+#### Authentication
+- `POST /login` - User authentication
+- `GET /logout` - User logout
 
-### 📱 What Each Person Can Do
+#### Admin APIs
+- `GET /api/dashboard/stats` - System statistics
+- `POST /admin/add-holiday` - Add system holidays
 
-#### 👤 **Workers (Vendors) - The Basic Users**
-1. 🔑 Login with: `vendor1` / `vendor123`
-2. 📍 Click "Submit Today's Status"
-3. 🏢 Choose your status:
-   - **In Office** (full day or half day)
-   - **Work from Home** (full day or half day)
-   - **On Leave** (vacation, sick day, etc.)
-   - **Absent** (didn't work)
-4. 💬 Add a comment (optional)
-5. ✅ Click "Submit Status"!
+#### Manager APIs
+- `POST /manager/approve-status/{id}` - Approve/reject vendor status
+- `GET /manager/team-report` - Generate team reports
 
-#### 👔 **Managers - The Team Leaders**
-1. 🔑 Login with: `manager1` / `manager123`
-2. 👥 See your entire team's attendance
-3. ✅ Approve or ❌ reject attendance requests
-4. 📊 View team reports and colorful charts
-5. 📧 Get notifications about your team
+#### Vendor APIs
+- `POST /vendor/submit-status` - Submit daily attendance status
+- `GET /vendor/dashboard` - Personal dashboard
 
-#### 👑 **Admins - The Super Users**
-1. 🔑 Login with: `admin` / `admin123`
-2. 🌍 See EVERYTHING in the system
-3. 🎉 Add holidays and special dates
-4. 👥 Manage all users and teams
-5. 🤖 View AI predictions (who might be absent)
-6. 📈 Generate fancy reports and export them
-7. 📊 See system-wide analytics
+#### Analytics & Reports
+- `GET /api/charts/attendance-trends` - Chart data
+- `GET /api/export/monthly-report` - Export reports
 
----
+## 🏗️ Architecture
 
-## 🎯 Cool Features to Try Right Now!
+### Project Structure
+```
+vendor-timesheet-tool/
+├── app.py                 # Main application entry point
+├── models.py             # Database models and schemas
+├── swagger_ui.py         # Swagger UI configuration
+├── demo_data.py          # Sample data initialization
+├── notifications.py      # Notification system
+├── utils.py              # Utility functions
+├── import_routes.py      # Data import functionality
+├── templates/            # HTML templates
+├── static/              # Static assets (CSS, JS, images)
+├── helper_scripts/      # Development and utility scripts
+├── requirements.txt     # Python dependencies
+├── swagger.yaml         # OpenAPI specification
+└── README.md           # This file
+```
 
-### 🤖 AI Predictions (Super Cool!)
-1. Login as Admin (`admin` / `admin123`)
-2. Click on "AI Insights" 
-3. See magic predictions of who might be absent
-4. Watch AI analyze attendance patterns! 🧠✨
+### Database Schema
+- **Users & Authentication** - User accounts with role-based permissions
+- **Vendor Management** - Vendor profiles and company information
+- **Attendance Tracking** - Daily status submissions and approvals
+- **Reporting & Analytics** - Historical data and trend analysis
+- **System Configuration** - Holidays, notifications, and settings
 
-### 📊 Beautiful Charts
-1. Any user can see charts
-2. Click on dashboard sections
-3. Watch colorful graphs come to life
-4. See attendance trends over time 📈
+## 🔧 Configuration
 
-### 📱 Interactive API Playground
-1. Go to: **http://localhost:5000/api/docs**
-2. Play with the API like a video game 🎮
-3. Test all features interactively
-4. No coding needed - just point and click!
+### Environment Variables
+Create a `.env` file in the root directory:
 
-### 📄 Export Reports (For Grown-ups)
-1. Login as Manager or Admin
-2. Click "Generate Report"
-3. Download Excel or PDF files 📑
-4. Share with your team instantly!
+```env
+SECRET_KEY=your-secret-key-here
+DATABASE_URL=sqlite:///vendor_timesheet.db
+DEBUG=True
+```
 
----
+### Database Setup
+The application automatically creates and initializes the database with sample data on first run.
 
-## 🆘 Help! Something Went Wrong!
+For production, update the `DATABASE_URL` in your environment variables.
 
-### 😱 "Python not found"
-**Fix:** Download Python from https://python.org (choose the latest version)
+## 🧪 Testing
 
-### 😱 "Port 5000 already in use"
-**Fix:** Someone else is using that port. Try:
+### Manual Testing
+1. Start the application: `python app.py`
+2. Open Swagger UI: http://localhost:5000/api/docs
+3. Use the test credentials provided
+4. Click "Try it out" on any endpoint
+
+## 🚀 Deployment
+
+### Local Development
 ```bash
-# Kill whatever is using port 5000
-netstat -ano | findstr :5000
-# Then restart ATTENDO
 python app.py
 ```
 
-### 😱 "Permission denied"
-**Fix:** 
-- **Windows:** Right-click Command Prompt → "Run as Administrator"
-- **Mac/Linux:** Add `sudo` before commands
-
-### 😱 "Module not found" 
-**Fix:** Make sure you did Step 2 and 3:
+### Production Deployment
+1. **Update configuration** for production database
+2. **Set environment variables** for security
+3. **Use WSGI server** like Gunicorn:
 ```bash
-# Make sure you're in the sandbox
-venv\Scripts\activate  # Windows
-# or
-source venv/bin/activate  # Mac/Linux
-
-# Then install everything again
-pip install -r requirements.txt
+gunicorn -w 4 -b 0.0.0.0:8000 app:app
 ```
 
-### 😱 "Nothing happens when I click"
-**Fix:** 
-1. Check if you're using the right username/password
-2. Try refreshing the web page (F5)
-3. Clear your browser cache
-
----
-
-## 🌟 Pro Tips for Power Users
-
-### 🐳 Docker (Advanced - Like Magic Containers)
-If you know Docker:
-```bash
-cd deployment/docker
-docker-compose up -d
-# Visit http://localhost:5000
+### Docker Support
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 5000
+CMD ["python", "app.py"]
 ```
 
-### ☸️ Kubernetes (Super Advanced)
-For cloud deployment:
-```bash
-kubectl apply -f deployment/kubernetes/
-```
+## 🤝 Contributing
 
-### 🔧 Change Settings
-Edit `src/attendo/config/settings.py` to customize ATTENDO
-
----
-
-## 📁 What's Inside This Project
-
-```
-📦 ATTENDO/
-├── 🎯 app.py                 # ← START HERE! Main file to run
-├── 📋 requirements.txt       # List of tools needed
-├── 🏗️ src/attendo/           # Main application code
-│   ├── 🧠 core/              # Brain of the application
-│   ├── 🗃️ models/            # Database structure
-│   ├── 🌐 api/               # Web services
-│   ├── ⚙️ services/          # Background tasks
-│   └── 🎨 web/               # Pretty web pages
-├── 🧪 tests/                 # Tests to make sure it works
-├── 🚀 deployment/            # Ways to put it online
-├── 📚 docs/                  # Detailed instructions
-├── ⚙️ config/                # Settings
-├── 📊 static/                # Images and styles
-└── 📝 templates/             # Web page layouts
-```
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit your changes (`git commit -am 'Add new feature'`)
+4. Push to the branch (`git push origin feature/new-feature`)
+5. Create a Pull Request
 
 ---
 
-## 🎬 Demo Video Walkthrough
-
-### 👤 For Workers:
-1. 🔑 Login → 📍 Mark Attendance → ✅ Submit → 🎉 Done!
-
-### 👔 For Managers: 
-1. 🔑 Login → 👥 See Team → ✅ Approve Requests → 📊 View Reports
-
-### 👑 For Admins:
-1. 🔑 Login → 🌍 System Overview → 🤖 AI Insights → 📈 Analytics
-
-**It's that simple!** 🚀
-
----
-
-## 🏆 Why ATTENDO is Special
-
-### ✨ Built for MediaTek Hackathon 2025
-- 🏗️ **Enterprise-Grade:** Built like software at Google or Microsoft
-- 🔒 **Bank-Level Security:** Your data is super safe
-- ⚡ **Lightning Fast:** Loads in milliseconds
-- 🌍 **Works Everywhere:** Phone, tablet, computer, anywhere!
-- 🤖 **AI-Powered:** Smart predictions and insights
-- 📊 **Beautiful Charts:** Data visualization that's actually pretty
-- 🎮 **User-Friendly:** Easier than ordering pizza online
-
-### 🌟 Technical Excellence
-- ✅ Modern Python architecture
-- ✅ RESTful APIs with Swagger documentation
-- ✅ Docker & Kubernetes ready
-- ✅ Comprehensive testing suite
-- ✅ Professional documentation
-- ✅ Mobile-responsive design
-
----
-
-## 🤝 Want to Contribute?
-
-1. 🍴 Fork this project
-2. 🌿 Create a new branch
-3. ✏️ Make your changes
-4. 🧪 Test everything
-5. 📤 Send a Pull Request
-
-**Even small improvements are welcome!** 💪
-
----
-
-## 📞 Need More Help?
-
-### 💬 Quick Support
-- 🐛 **Found a bug?** Create an issue on GitHub
-- 💡 **Have an idea?** Create a feature request
-- ❓ **Stuck?** Check the troubleshooting section above
-
-### 📧 Contact
-- **Technical Issues:** Use GitHub Issues
-- **Business Inquiries:** Email through GitHub profile
-
----
-
-## 🎉 Success Stories
-
-> *"I set up ATTENDO in 5 minutes and now our whole team uses it!"* - Happy User ⭐⭐⭐⭐⭐
-
-> *"The AI predictions actually work - it predicted I'd be sick before I knew!"* - Amazed Manager 🤖
-
-> *"Finally, an attendance system that doesn't make me want to cry!"* - Relieved Admin 😄
-
----
-
-## 📜 License
-
-**MIT License** - You can use this for anything, even commercial projects! 🎉
-
----
-
-## 🌟 Show Some Love!
-
-If ATTENDO helped you, please:
-1. ⭐ **Star this repository**
-2. 🐦 **Share on social media**
-3. 👥 **Tell your friends**
-4. 💖 **Leave a comment**
-
----
-
-**🎯 ATTENDO - Making Attendance Awesome Since 2025! 🚀**
-
-> *Built with ❤️ for MediaTek Hackathon 2025*
-
----
-
-**🎮 Remember: If you can use a smartphone, you can run ATTENDO!**
+**A professional workforce management solution for modern enterprises**
