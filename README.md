@@ -163,6 +163,27 @@ For production, update the `DATABASE_URL` in your environment variables.
 
 ## 🧪 Testing
 
+### Quick test with Test_DATA
+A ready-to-use Test_DATA folder is included for validating imports and reconciliation:
+
+1) Start the app
+```bash
+pip install -r requirements.txt
+python app.py
+```
+
+2) Open the Import Dashboard at http://localhost:5000/import/
+- Import Swipe Data → select Test_DATA/swipe_data.csv
+- Import Leave Data → select Test_DATA/leave_data.csv
+- Import WFH Data → select Test_DATA/wfh_data.csv
+
+3) Validate imports
+- Click "Validate Imported Data" to see duplicate counts and overlaps
+
+4) Run reconciliation
+- Go to http://localhost:5000/admin/reconciliation and click "Run Reconciliation"
+- Review the summary and open the detailed mismatch viewer
+
 ### Manual Testing
 1. Start the application: `python app.py`
 2. Open Swagger UI: http://localhost:5000/api/docs

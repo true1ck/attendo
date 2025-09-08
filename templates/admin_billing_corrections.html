@@ -1,0 +1,58 @@
+{% extends "base_fixed.html" %}
+{% block title %}Billing Corrections{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-5">
+    <div class="card mb-3">
+      <div class="card-header"><i class="fas fa-balance-scale me-2"></i>Add Offset Correction</div>
+      <div class="card-body">
+        <form method="post" action="/admin/billing-corrections">
+          <div class="mb-2">
+            <label class="form-label">Vendor ID</label>
+            <input class="form-control" name="vendor_id" placeholder="e.g., EMP001" required />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-control" name="date" required />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Corrected Hours</label>
+            <input type="number" step="0.25" class="form-control" name="corrected_hours" placeholder="e.g., 8.0" required />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Reason</label>
+            <input class="form-control" name="reason" placeholder="Short reason" />
+          </div>
+          <button class="btn btn-primary">Record Correction</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-7">
+    <div class="card">
+      <div class="card-header"><i class="fas fa-history me-2"></i>Recent Corrections</div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-striped">
+            <thead><tr><th>Time</th><th>Vendor</th><th>Date</th><th>Hours</th><th>Reason</th></tr></thead>
+            <tbody>
+              {% for c in corrections %}
+              {% set data = c.new_values and c.new_values | safe %}
+              <tr>
+                <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M:%S') if c.created_at else '-' }}</td>
+                <td>{{ (data and (data|loadjson).vendor_id) if false else (c.new_values or '') }}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted">Note: Corrections are logged in Audit Logs with action BILLING_CORRECTION.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, send_file
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import os
 import pandas as pd
 from models import UserRole, SwipeRecord, LeaveRecord, WFHRecord, MismatchRecord, Vendor
@@ -72,12 +72,12 @@ def import_swipe():
         try:
             if 'file' not in request.files:
                 flash('No file selected', 'error')
-                return redirect(request.url)
+                return redirect(url_for('import_routes.import_dashboard'))
             
             file = request.files['file']
             if file.filename == '':
                 flash('No file selected', 'error')
-                return redirect(request.url)
+                return redirect(url_for('import_routes.import_dashboard'))
             
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
@@ -104,14 +104,15 @@ def import_swipe():
                 else:
                     flash('No new records imported. Data may already exist or file format is incorrect.', 'warning')
                 
-                return redirect(url_for('import.import_dashboard'))
+                return redirect(url_for('import_routes.import_dashboard'))
             else:
                 flash('Invalid file type. Please upload Excel (.xlsx, .xls) or CSV files only.', 'error')
                 
         except Exception as e:
             flash(f'Error importing file: {str(e)}', 'error')
+        return redirect(url_for('import_routes.import_dashboard'))
     
-    return render_template('import_swipe.html')
+    return redirect(url_for('import_routes.import_dashboard'))
 
 @import_bp.route('/leave-data', methods=['GET', 'POST'])
 @login_required
@@ -122,12 +123,12 @@ def import_leaves():
         try:
             if 'file' not in request.files:
                 flash('No file selected', 'error')
-                return redirect(request.url)
+                return redirect(url_for('import_routes.import_dashboard'))
             
             file = request.files['file']
             if file.filename == '':
                 flash('No file selected', 'error')
-                return redirect(request.url)
+                return redirect(url_for('import_routes.import_dashboard'))
             
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
@@ -144,14 +145,15 @@ def import_leaves():
                 else:
                     flash('No new records imported.', 'warning')
                 
-                return redirect(url_for('import.import_dashboard'))
+                return redirect(url_for('import_routes.import_dashboard'))
             else:
                 flash('Invalid file type. Please upload Excel files only.', 'error')
                 
         except Exception as e:
             flash(f'Error importing file: {str(e)}', 'error')
+        return redirect(url_for('import_routes.import_dashboard'))
     
-    return render_template('import_leaves.html')
+    return redirect(url_for('import_routes.import_dashboard'))
 
 @import_bp.route('/wfh-data', methods=['GET', 'POST'])
 @login_required
@@ -162,12 +164,12 @@ def import_wfh():
         try:
             if 'file' not in request.files:
                 flash('No file selected', 'error')
-                return redirect(request.url)
+                return redirect(url_for('import_routes.import_dashboard'))
             
             file = request.files['file']
             if file.filename == '':
                 flash('No file selected', 'error')
-                return redirect(request.url)
+                return redirect(url_for('import_routes.import_dashboard'))
             
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
@@ -184,14 +186,15 @@ def import_wfh():
                 else:
                     flash('No new records imported.', 'warning')
                 
-                return redirect(url_for('import.import_dashboard'))
+                return redirect(url_for('import_routes.import_dashboard'))
             else:
                 flash('Invalid file type. Please upload Excel files only.', 'error')
                 
         except Exception as e:
             flash(f'Error importing file: {str(e)}', 'error')
+        return redirect(url_for('import_routes.import_dashboard'))
     
-    return render_template('import_wfh.html')
+    return redirect(url_for('import_routes.import_dashboard'))
 
 @import_bp.route('/reconcile', methods=['POST'])
 @login_required
@@ -278,7 +281,7 @@ def download_templates():
     
     else:
         flash('Invalid template type', 'error')
-        return redirect(url_for('import.import_dashboard'))
+        return redirect(url_for('import_routes.import_dashboard'))
     
     # Create DataFrame and save as Excel
     df = pd.DataFrame(sample_data)
@@ -330,3 +333,41 @@ def import_statistics():
             'success': False,
             'message': f'Error fetching statistics: {str(e)}'
         })
+
+@import_bp.route('/validate', methods=['POST'])
+@login_required
+@admin_required
+def validate_imports():
+    """Validate imported data: find duplicates, unknown vendors, overlaps"""
+    try:
+        # Duplicates in swipe records (same vendor/date)
+        from sqlalchemy import func
+        duplicates = (db.session
+            .query(SwipeRecord.vendor_id, SwipeRecord.attendance_date, func.count('*').label('c'))
+            .group_by(SwipeRecord.vendor_id, SwipeRecord.attendance_date)
+            .having(func.count('*') > 1)
+            .all())
+        dup_count = len(duplicates)
+        # Unknown vendors are filtered during import; count records with vendor_id null shouldn't exist
+        unknown_vendors = 0
+        # Overlaps: days that appear both in LeaveRecord and WFHRecord for same vendor
+        overlaps = 0
+        leave_map = {}
+        for lr in LeaveRecord.query.all():
+            d = lr.start_date
+            while d <= lr.end_date:
+                leave_map.setdefault((lr.vendor_id, d), True)
+                d += timedelta(days=1)
+        for wr in WFHRecord.query.all():
+            d = wr.start_date
+            while d <= wr.end_date:
+                if leave_map.get((wr.vendor_id, d)):
+                    overlaps += 1
+                d += timedelta(days=1)
+        return jsonify({'success': True, 'stats': {
+            'swipe_duplicates': dup_count,
+            'unknown_vendors': unknown_vendors,
+            'leave_wfh_overlaps': overlaps
+        }})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})

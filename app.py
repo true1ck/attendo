@@ -79,7 +79,7 @@ def initialize_demo_data():
 
 # Import all the route functions directly here
 from models import User, Vendor, Manager, DailyStatus, SwipeRecord, Holiday, MismatchRecord, NotificationLog, AuditLog, SystemConfiguration, LeaveRecord, WFHRecord, UserRole, AttendanceStatus, ApprovalStatus
-from utils import create_audit_log, generate_monthly_report, import_swipe_data, detect_mismatches
+from utils import create_audit_log, generate_monthly_report, import_swipe_data, detect_mismatches, set_system_config, get_system_config
 
 @app.route('/')
 def index():
@@ -200,6 +200,235 @@ def admin_dashboard():
                          total_vendors=total_vendors,
                          total_managers=total_managers,
                          total_statuses_today=total_statuses_today)
+
+# Admin: Holidays management page
+@app.route('/admin/holidays')
+@login_required
+def admin_holidays():
+    if current_user.role != UserRole.ADMIN:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    holidays = Holiday.query.order_by(Holiday.holiday_date.asc()).all()
+    return render_template('admin_holidays.html', holidays=holidays)
+
+# Admin: Audit logs page
+@app.route('/admin/audit-logs')
+@login_required
+def admin_audit_logs():
+    if current_user.role != UserRole.ADMIN:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    logs = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(200).all()
+    return render_template('admin_audit_logs.html', logs=logs)
+
+# Admin: Teams & Groups
+@app.route('/admin/teams')
+@login_required
+def admin_teams():
+    if current_user.role != UserRole.ADMIN:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    managers = Manager.query.all()
+    # Build summary by manager and department
+    team_data = []
+    for m in managers:
+        members = m.team_vendors.all() if m.team_vendors else []
+        dept_counts = {}
+        for v in members:
+            dept_counts[v.department] = dept_counts.get(v.department, 0) + 1
+        team_data.append({'manager': m, 'members': members, 'dept_counts': dept_counts})
+    return render_template('admin_teams.html', team_data=team_data)
+
+# Admin: Reconciliation report page
+@app.route('/admin/reconciliation')
+@login_required
+def admin_reconciliation():
+    if current_user.role != UserRole.ADMIN:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    # Load latest mismatches (limit for performance)
+    mismatches = MismatchRecord.query.order_by(MismatchRecord.mismatch_date.desc()).limit(500).all()
+    total = len(mismatches)
+    pending = len([m for m in mismatches if m.manager_approval == ApprovalStatus.PENDING])
+    approved = len([m for m in mismatches if m.manager_approval == ApprovalStatus.APPROVED])
+    rejected = len([m for m in mismatches if m.manager_approval == ApprovalStatus.REJECTED])
+    summary = {
+        'total': total,
+        'pending': pending,
+        'approved': approved,
+        'rejected': rejected
+    }
+    return render_template('admin_reconciliation.html', mismatches=mismatches, summary=summary)
+
+# Admin: Billing corrections (offsets)
+@app.route('/admin/billing-corrections', methods=['GET', 'POST'])
+@login_required
+def admin_billing_corrections():
+    if current_user.role != UserRole.ADMIN:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        try:
+            vendor_id = request.form['vendor_id']
+            date_str = request.form['date']
+            corrected_hours = float(request.form['corrected_hours'])
+            reason = request.form.get('reason', '')
+            vendor = Vendor.query.filter_by(vendor_id=vendor_id).first()
+            if not vendor:
+                flash('Vendor not found', 'error')
+                return redirect(url_for('admin_billing_corrections'))
+            # Log correction in audit log (no new table)
+            create_audit_log(current_user.id,
+                             'BILLING_CORRECTION',
+                             'billing',
+                             vendor.id,
+                             {},
+                             {'vendor_id': vendor_id,
+                              'date': date_str,
+                              'corrected_hours': corrected_hours,
+                              'reason': reason})
+            flash('Billing correction recorded', 'success')
+        except Exception as e:
+            flash(f'Error recording correction: {str(e)}', 'error')
+    # Show last 50 corrections from audit logs
+    corrections = AuditLog.query.filter(AuditLog.action == 'BILLING_CORRECTION').order_by(AuditLog.created_at.desc()).limit(50).all()
+    return render_template('admin_billing_corrections.html', corrections=corrections)
+
+# Admin: Vendors JSON for dashboard table
+@app.route('/admin/vendors.json')
+@login_required
+def admin_vendors_json():
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    vendors = Vendor.query.join(User).order_by(Vendor.vendor_id.asc()).all()
+    data = []
+    for v in vendors:
+        data.append({
+            'vendor_id': v.vendor_id,
+            'name': v.full_name,
+            'email': v.user_account.email if v.user_account else '',
+            'manager': v.manager_id or '-',
+            'status': 'Active' if (v.user_account and v.user_account.is_active) else 'Inactive',
+            'last_login': v.user_account.last_login.strftime('%Y-%m-%d %H:%M') if (v.user_account and v.user_account.last_login) else '-'
+        })
+    return jsonify({'vendors': data})
+
+# Admin: Add a vendor (JSON)
+@app.route('/admin/vendor', methods=['POST'])
+@login_required
+def admin_add_vendor():
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    try:
+        payload = request.get_json(silent=True) or request.form
+        employee_id = payload.get('vendor_id') or payload.get('employee_id')
+        full_name = payload.get('full_name') or payload.get('employee_name')
+        email = payload.get('email') or f"{employee_id}@company.com"
+        department = payload.get('department', '')
+        company = payload.get('company') or payload.get('business_unit', '')
+        band = payload.get('band', 'B1')
+        location = payload.get('location') or payload.get('floor_unit', '')
+        manager_id = payload.get('manager_id')
+        password = payload.get('password', 'vendor123')
+        if not employee_id or not full_name:
+            return jsonify({'error': 'vendor_id and full_name are required'}), 400
+        # Create user
+        user = User(username=employee_id, email=email, role=UserRole.VENDOR, is_active=True)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.flush()
+        # Ensure manager exists if provided
+        if manager_id and not Manager.query.filter_by(manager_id=manager_id).first():
+            mgr_user = User(username=f"mgr_{manager_id}", email=f"{manager_id}@company.com", role=UserRole.MANAGER, is_active=True)
+            mgr_user.set_password('manager123')
+            db.session.add(mgr_user)
+            db.session.flush()
+            mgr = Manager(manager_id=manager_id, user_id=mgr_user.id, full_name=manager_id, department=department)
+            db.session.add(mgr)
+        # Create vendor
+        vendor = Vendor(user_id=user.id, vendor_id=employee_id, full_name=full_name, department=department,
+                        company=company, band=band, location=location, manager_id=manager_id)
+        db.session.add(vendor)
+        db.session.commit()
+        create_audit_log(current_user.id, 'CREATE', 'vendors', vendor.id, {}, {'vendor_id': employee_id})
+        return jsonify({'success': True, 'message': 'Vendor created'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Admin: Update vendor
+@app.route('/admin/vendor/<vendor_id>/update', methods=['POST'])
+@login_required
+def admin_update_vendor(vendor_id):
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    try:
+        v = Vendor.query.filter_by(vendor_id=vendor_id).first_or_404()
+        payload = request.get_json(silent=True) or request.form
+        old = {'full_name': v.full_name, 'department': v.department, 'company': v.company, 'band': v.band, 'location': v.location, 'manager_id': v.manager_id}
+        v.full_name = payload.get('full_name', v.full_name)
+        v.department = payload.get('department', v.department)
+        v.company = payload.get('company', v.company)
+        v.band = payload.get('band', v.band)
+        v.location = payload.get('location', v.location)
+        v.manager_id = payload.get('manager_id', v.manager_id)
+        if v.user_account:
+            v.user_account.email = payload.get('email', v.user_account.email)
+        db.session.commit()
+        create_audit_log(current_user.id, 'UPDATE', 'vendors', v.id, old, {'full_name': v.full_name})
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Admin: Activate/Deactivate vendor
+@app.route('/admin/vendor/<vendor_id>/activate', methods=['POST'])
+@login_required
+def admin_activate_vendor(vendor_id):
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    v = Vendor.query.filter_by(vendor_id=vendor_id).first_or_404()
+    if v.user_account:
+        v.user_account.is_active = True
+        db.session.commit()
+        create_audit_log(current_user.id, 'UPDATE', 'users', v.user_account.id, {'is_active': False}, {'is_active': True})
+    return jsonify({'success': True})
+
+@app.route('/admin/vendor/<vendor_id>/deactivate', methods=['POST'])
+@login_required
+def admin_deactivate_vendor(vendor_id):
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    v = Vendor.query.filter_by(vendor_id=vendor_id).first_or_404()
+    if v.user_account:
+        v.user_account.is_active = False
+        db.session.commit()
+        create_audit_log(current_user.id, 'UPDATE', 'users', v.user_account.id, {'is_active': True}, {'is_active': False})
+    return jsonify({'success': True})
+
+# Admin: System settings (notification toggles, weekends)
+@app.route('/admin/system-settings', methods=['GET', 'POST'])
+@login_required
+def admin_system_settings():
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    if request.method == 'GET':
+        return jsonify({
+            'dailyReminders': get_system_config('dailyReminders', 'true') == 'true',
+            'managerAlerts': get_system_config('managerAlerts', 'true') == 'true',
+            'mismatchAlerts': get_system_config('mismatchAlerts', 'true') == 'true',
+            'weekend_days': get_system_config('weekend_days', '[5,6]')
+        })
+    # POST save
+    daily = 'true' if (request.form.get('dailyReminders') in ['true', 'on', '1']) else 'false'
+    mgr = 'true' if (request.form.get('managerAlerts') in ['true', 'on', '1']) else 'false'
+    mm = 'true' if (request.form.get('mismatchAlerts') in ['true', 'on', '1']) else 'false'
+    set_system_config('dailyReminders', daily, 'Daily reminder notifications', current_user.id)
+    set_system_config('managerAlerts', mgr, 'Manager alerts', current_user.id)
+    set_system_config('mismatchAlerts', mm, 'Mismatch alerts', current_user.id)
+    if request.form.get('weekend_days'):
+        set_system_config('weekend_days', request.form.get('weekend_days'), 'Weekend days indices', current_user.id)
+    return jsonify({'success': True})
 
 @app.route('/manager/dashboard')
 @login_required

@@ -107,10 +107,13 @@ def generate_monthly_report(manager_id, month_str):
         return []
 
 def import_swipe_data(file_path):
-    """Import attendance swipe machine data from Excel file"""
+    """Import attendance swipe machine data from Excel or CSV file"""
     try:
-        # Read Excel file
-        df = pd.read_excel(file_path)
+        # Read file based on extension
+        if file_path.lower().endswith('.csv'):
+            df = pd.read_csv(file_path)
+        else:
+            df = pd.read_excel(file_path)
         
         records_imported = 0
         
@@ -177,76 +180,114 @@ def import_swipe_data(file_path):
         return 0
 
 def detect_mismatches():
-    """Detect mismatches between web status and swipe data"""
+    """Detect mismatches between vendor entries, swipe data and leave/WFH approvals
+    Rules:
+    - InOffice (full/half): must have swipe AP on that date; missing swipe => mismatch
+    - WFH (full/half): should not have swipe AP; if swipe AP exists => mismatch; if no WFHRecord covering date => mismatch
+    - Leave (full/half): must have LeaveRecord covering date; if swipe AP exists => mismatch
+    - Missing vendor entry when swipe AP exists => mismatch
+    Only considers last 60 days and approved statuses
+    """
     try:
-        # Get all vendors
         vendors = Vendor.query.all()
         mismatches_found = 0
-        
+        start_date = date.today() - timedelta(days=60)
         for vendor in vendors:
-            # Get recent daily statuses (last 30 days)
-            recent_date = date.today() - timedelta(days=30)
+            # Approved statuses window
             statuses = DailyStatus.query.filter(
                 DailyStatus.vendor_id == vendor.id,
-                DailyStatus.status_date >= recent_date,
+                DailyStatus.status_date >= start_date,
                 DailyStatus.approval_status == ApprovalStatus.APPROVED
             ).all()
-            
-            for status in statuses:
-                # Get corresponding swipe record
-                swipe_record = SwipeRecord.query.filter_by(
-                    vendor_id=vendor.id,
-                    attendance_date=status.status_date
-                ).first()
-                
-                if not swipe_record:
-                    continue
-                
-                # Check for mismatches
-                mismatch_detected = False
-                web_status = status.status
-                swipe_status = swipe_record.attendance_status
-                
-                # Define mismatch conditions
-                if web_status in [AttendanceStatus.IN_OFFICE_FULL, AttendanceStatus.IN_OFFICE_HALF]:
-                    # Web says in office, but swipe says absent
-                    if swipe_status == 'AA':  # Absent
-                        mismatch_detected = True
-                elif web_status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]:
-                    # Web says on leave, but swipe shows present
-                    if swipe_status == 'AP':  # Present
-                        mismatch_detected = True
-                
-                if mismatch_detected:
-                    # Check if mismatch record already exists
-                    existing_mismatch = MismatchRecord.query.filter_by(
-                        vendor_id=vendor.id,
-                        mismatch_date=status.status_date
-                    ).first()
-                    
-                    if not existing_mismatch:
-                        mismatch_record = MismatchRecord(
-                            vendor_id=vendor.id,
-                            mismatch_date=status.status_date,
-                            web_status=web_status,
-                            swipe_status=swipe_status
-                        )
-                        models.db.session.add(mismatch_record)
+            # Build quick date map
+            status_by_date = {s.status_date: s for s in statuses}
+            # Get swipe records in window
+            swipes = SwipeRecord.query.filter(
+                SwipeRecord.vendor_id == vendor.id,
+                SwipeRecord.attendance_date >= start_date
+            ).all()
+            swipe_by_date = {s.attendance_date: s for s in swipes}
+            # Leave records -> expand to date set
+            leave_recs = LeaveRecord.query.filter(
+                LeaveRecord.vendor_id == vendor.id,
+                LeaveRecord.start_date >= start_date
+            ).all()
+            leave_dates = set()
+            for lr in leave_recs:
+                d = lr.start_date
+                while d <= lr.end_date:
+                    leave_dates.add(d)
+                    d += timedelta(days=1)
+            # WFH records -> expand to date set
+            wfh_recs = WFHRecord.query.filter(
+                WFHRecord.vendor_id == vendor.id,
+                WFHRecord.start_date >= start_date
+            ).all()
+            wfh_dates = set()
+            for wr in wfh_recs:
+                d = wr.start_date
+                while d <= wr.end_date:
+                    wfh_dates.add(d)
+                    d += timedelta(days=1)
+            # Union of relevant dates
+            all_dates = set(status_by_date.keys()) | set(swipe_by_date.keys()) | leave_dates | wfh_dates
+            for d in all_dates:
+                s = status_by_date.get(d)
+                swipe = swipe_by_date.get(d)
+                # Case: missing vendor entry but swipe AP exists
+                if not s and swipe and swipe.attendance_status == 'AP':
+                    if not MismatchRecord.query.filter_by(vendor_id=vendor.id, mismatch_date=d).first():
+                        mm = MismatchRecord(vendor_id=vendor.id, mismatch_date=d, web_status=None, swipe_status='AP')
+                        models.db.session.add(mm)
                         mismatches_found += 1
-        
+                    continue
+                if not s:
+                    continue
+                web_status = s.status
+                swipe_status = swipe.attendance_status if swipe else 'AA'
+                detail = None
+                detected = False
+                # In office must have swipe AP
+                if web_status in [AttendanceStatus.IN_OFFICE_FULL, AttendanceStatus.IN_OFFICE_HALF]:
+                    if swipe_status != 'AP':
+                        detected = True
+                        detail = 'In-Office status but no swipe present'
+                # WFH should not have swipe AP and must have WFH approval
+                elif web_status in [AttendanceStatus.WFH_FULL, AttendanceStatus.WFH_HALF]:
+                    if swipe_status == 'AP':
+                        detected = True
+                        detail = 'WFH marked but swipe shows present'
+                    elif d not in wfh_dates:
+                        detected = True
+                        detail = 'WFH marked but no WFH approval record'
+                # Leave should have leave record and no AP swipe
+                elif web_status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]:
+                    if d not in leave_dates:
+                        detected = True
+                        detail = 'Leave marked but no approved Leave record'
+                    elif swipe_status == 'AP':
+                        detected = True
+                        detail = 'Leave marked but swipe shows present'
+                if detected:
+                    if not MismatchRecord.query.filter_by(vendor_id=vendor.id, mismatch_date=d).first():
+                        mm = MismatchRecord(vendor_id=vendor.id, mismatch_date=d, web_status=web_status, swipe_status=swipe_status, manager_comments=detail)
+                        models.db.session.add(mm)
+                        mismatches_found += 1
         models.db.session.commit()
         print(f"Detected {mismatches_found} new mismatches")
         return mismatches_found
-        
     except Exception as e:
         models.db.session.rollback()
         print(f"Error detecting mismatches: {str(e)}")
         return 0
 
 def import_leave_data(file_path):
-    """Import leave data from Excel file"""
+    """Import leave data from Excel or CSV file"""
     try:
-        df = pd.read_excel(file_path)
+        if file_path.lower().endswith('.csv'):
+            df = pd.read_csv(file_path)
+        else:
+            df = pd.read_excel(file_path)
         records_imported = 0
         
         for _, row in df.iterrows():
@@ -296,9 +337,12 @@ def import_leave_data(file_path):
         return 0
 
 def import_wfh_data(file_path):
-    """Import Work From Home data from Excel file"""
+    """Import Work From Home data from Excel or CSV file"""
     try:
-        df = pd.read_excel(file_path)
+        if file_path.lower().endswith('.csv'):
+            df = pd.read_csv(file_path)
+        else:
+            df = pd.read_excel(file_path)
         records_imported = 0
         
         for _, row in df.iterrows():

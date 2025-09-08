@@ -1,0 +1,39 @@
+{% extends "base_fixed.html" %}
+{% block title %}Teams & Groups{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><i class="fas fa-users me-2"></i>Managers and Teams</div>
+  <div class="card-body">
+    {% for item in team_data %}
+      <div class="mb-4">
+        <h5>{{ item.manager.full_name }} <small class="text-muted">({{ item.manager.team_name or 'Team' }})</small></h5>
+        <p class="mb-1"><strong>Members:</strong> {{ item.members|length }}</p>
+        <p class="mb-2"><strong>Departments:</strong>
+          {% for dept, cnt in item.dept_counts.items() %}
+            <span class="badge bg-secondary me-1">{{ dept }}: {{ cnt }}</span>
+          {% endfor %}
+        </p>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead><tr><th>Vendor ID</th><th>Name</th><th>Department</th><th>Company</th><th>Band</th><th>Location</th></tr></thead>
+            <tbody>
+              {% for v in item.members %}
+              <tr>
+                <td>{{ v.vendor_id }}</td>
+                <td>{{ v.full_name }}</td>
+                <td>{{ v.department }}</td>
+                <td>{{ v.company }}</td>
+                <td>{{ v.band }}</td>
+                <td>{{ v.location }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <hr />
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+

@@ -231,18 +231,18 @@
                 <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
             </div>
             <div class="card-body">
-                <div class="d-grid gap-2">
+<div class="d-grid gap-2">
                     <button class="btn btn-success" onclick="importSwipeData()">
-                        <i class="fas fa-upload me-2"></i>Import Swipe Data
+                        <i class="fas fa-upload me-2"></i>Import Swipe/Leave/WFH Data
                     </button>
                     <button class="btn btn-primary" onclick="generateSystemReport()">
-                        <i class="fas fa-chart-line me-2"></i>Generate System Report
+                        <i class="fas fa-chart-line me-2"></i>Monthly Reports
                     </button>
-                    <button class="btn btn-info" onclick="exportAllData()">
-                        <i class="fas fa-download me-2"></i>Export All Data
+                    <button class="btn btn-secondary" onclick="window.location.href='/admin/teams'">
+                        <i class="fas fa-users me-2"></i>View Teams & Groups
                     </button>
-                    <button class="btn btn-primary" onclick="viewAIInsights()">
-                        <i class="fas fa-brain me-2"></i>AI Insights
+                    <button class="btn btn-info" onclick="window.location.href='/admin/billing-corrections'">
+                        <i class="fas fa-balance-scale me-2"></i>Billing Corrections
                     </button>
                     <button class="btn btn-warning" onclick="runReconciliation()">
                         <i class="fas fa-sync me-2"></i>Run Reconciliation
@@ -338,49 +338,92 @@
 <!-- JavaScript for Admin Dashboard -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Admin Dashboard loaded');
+    // Load vendors into table body dynamically
+    refreshVendors();
 });
 
 function refreshVendors() {
-    console.log('Refreshing vendor list');
-    alert('Vendor list refreshed! (Demo)');
-    location.reload();
+    fetch('/admin/vendors.json')
+      .then(r => r.json())
+      .then(d => {
+        const tbody = document.querySelector('table.table tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        (d.vendors || []).forEach(v => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${v.vendor_id}</td>
+            <td>${v.name}</td>
+            <td>${v.email}</td>
+            <td>${v.manager}</td>
+            <td><span class="badge ${v.status==='Active'?'bg-success':'bg-warning'}">${v.status}</span></td>
+            <td>${v.last_login}</td>
+            <td>
+              <div class="btn-group" role="group">
+                <button class="btn btn-sm btn-outline-primary" onclick="editVendor('${v.vendor_id}')"><i class="fas fa-edit"></i></button>
+                ${v.status==='Active'
+                  ? `<button class="btn btn-sm btn-outline-danger" onclick="deactivateVendor('${v.vendor_id}')"><i class="fas fa-ban"></i></button>`
+                  : `<button class="btn btn-sm btn-outline-success" onclick="activateVendor('${v.vendor_id}')"><i class="fas fa-check"></i></button>`}
+              </div>
+            </td>`;
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(e => console.error('Failed to load vendors', e));
 }
 
 function editVendor(vendorId) {
-    alert('Edit vendor ' + vendorId + ' (Demo) - This would open a vendor edit modal/form');
+    const full_name = prompt('Enter full name for ' + vendorId + ' (leave blank to keep)') || '';
+    const email = prompt('Enter email for ' + vendorId + ' (leave blank to keep)') || '';
+    const department = prompt('Enter department (leave blank to keep)') || '';
+    const company = prompt('Enter company (leave blank to keep)') || '';
+    const band = prompt('Enter band (leave blank to keep)') || '';
+    const location = prompt('Enter location (leave blank to keep)') || '';
+    const manager_id = prompt('Enter manager id (leave blank to keep)') || '';
+    const form = new FormData();
+    if (full_name) form.append('full_name', full_name);
+    if (email) form.append('email', email);
+    if (department) form.append('department', department);
+    if (company) form.append('company', company);
+    if (band) form.append('band', band);
+    if (location) form.append('location', location);
+    if (manager_id) form.append('manager_id', manager_id);
+    fetch(`/admin/vendor/${vendorId}/update`, { method: 'POST', body: form })
+      .then(r => r.json()).then(d => { if (d.success) refreshVendors(); else alert(d.error || 'Update failed'); });
 }
 
 function deactivateVendor(vendorId) {
-    if (confirm('Are you sure you want to deactivate vendor ' + vendorId + '?')) {
-        console.log('Deactivating vendor:', vendorId);
-        alert('Vendor deactivated! (Demo)');
-        location.reload();
-    }
+    if (!confirm('Deactivate vendor ' + vendorId + '?')) return;
+    fetch(`/admin/vendor/${vendorId}/deactivate`, { method: 'POST' })
+      .then(r => r.json()).then(d => { if (d.success) refreshVendors(); else alert(d.error || 'Failed'); });
 }
 
 function activateVendor(vendorId) {
-    if (confirm('Are you sure you want to activate vendor ' + vendorId + '?')) {
-        console.log('Activating vendor:', vendorId);
-        alert('Vendor activated! (Demo)');
-        location.reload();
-    }
+    if (!confirm('Activate vendor ' + vendorId + '?')) return;
+    fetch(`/admin/vendor/${vendorId}/activate`, { method: 'POST' })
+      .then(r => r.json()).then(d => { if (d.success) refreshVendors(); else alert(d.error || 'Failed'); });
 }
 
 function manageHolidays() {
-    alert('Holiday Management (Demo) - This would open a holiday management interface');
+    window.location.href = '/admin/holidays';
 }
 
 function saveNotificationSettings() {
-    alert('Notification settings saved! (Demo)');
+    const form = new FormData();
+    form.append('dailyReminders', document.getElementById('dailyReminders').checked ? 'true' : 'false');
+    form.append('managerAlerts', document.getElementById('managerAlerts').checked ? 'true' : 'false');
+    form.append('mismatchAlerts', document.getElementById('mismatchAlerts').checked ? 'true' : 'false');
+    fetch('/admin/system-settings', { method: 'POST', body: form })
+      .then(r => r.json()).then(d => { if (d.success) alert('Notification settings saved!'); else alert('Failed to save'); });
 }
 
 function importSwipeData() {
-    window.location.href = '/admin/import';
+    window.location.href = '/import/';
 }
 
 function generateSystemReport() {
-    window.location.href = '/admin/reports';
+    const month = new Date().toISOString().slice(0,7);
+    window.location.href = '/monthly-report?month=' + month;
 }
 
 function exportAllData() {
@@ -388,17 +431,22 @@ function exportAllData() {
 }
 
 function runReconciliation() {
-    if (confirm('Run reconciliation process for all vendors?')) {
-        alert('Reconciliation started! (Demo) - This would match swipe data with status submissions');
-    }
+    // Redirect to the dedicated reconciliation page; running is only allowed there
+    window.location.href = '/admin/reconciliation';
 }
 
+function openReconciliationReport(){ window.location.href = '/admin/reconciliation'; }
+
 function viewAuditLogs() {
-    alert('Audit Logs (Demo) - This would show all system activities and changes');
+    window.location.href = '/admin/audit-logs';
+}
+
+function manageHolidays() {
+    window.location.href = '/admin/holidays';
 }
 
 function viewAIInsights() {
-    window.location.href = '/admin/ai-insights';
+    window.location.href = '/monthly-report';
 }
 </script>
 {% endblock %}
