@@ -187,6 +187,11 @@ def admin_dashboard():
     total_managers = Manager.query.count()
     total_statuses_today = DailyStatus.query.filter_by(status_date=date.today()).count()
     
+    # Upcoming holidays (next 5)
+    upcoming_holidays = Holiday.query.filter(
+        Holiday.holiday_date >= date.today()
+    ).order_by(Holiday.holiday_date.asc()).limit(5).all()
+    
     # Create system stats object for template
     system_stats = {
         'total_vendors': total_vendors,
@@ -199,7 +204,8 @@ def admin_dashboard():
                          system_stats=system_stats,
                          total_vendors=total_vendors,
                          total_managers=total_managers,
-                         total_statuses_today=total_statuses_today)
+                         total_statuses_today=total_statuses_today,
+                         upcoming_holidays=upcoming_holidays)
 
 # Admin: Holidays management page
 @app.route('/admin/holidays')
@@ -220,6 +226,51 @@ def admin_audit_logs():
         return redirect(url_for('index'))
     logs = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(200).all()
     return render_template('admin_audit_logs.html', logs=logs)
+
+# Shared: Holiday Calendar view (Vendor, Manager, Admin)
+@app.route('/holiday-calendar')
+@login_required
+def holiday_calendar_view():
+    """Render the shared holiday calendar page for all roles"""
+    # Default to current month on load; client will fetch via API
+    today_str = date.today().strftime('%Y-%m')
+    return render_template('holiday_calendar.html', current_month=today_str)
+
+# Shared: Holidays API
+@app.route('/api/holidays')
+@login_required
+def api_list_holidays():
+    """Return holidays as JSON. Optional start/end date (inclusive) in YYYY-MM-DD.
+    If not provided, returns all holidays.
+    """
+    try:
+        start_str = request.args.get('start')
+        end_str = request.args.get('end')
+        query = Holiday.query
+        if start_str and end_str:
+            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_str, '%Y-%m-%d').date()
+            query = query.filter(Holiday.holiday_date >= start_date, Holiday.holiday_date <= end_date)
+        elif start_str:
+            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+            query = query.filter(Holiday.holiday_date >= start_date)
+        elif end_str:
+            end_date = datetime.strptime(end_str, '%Y-%m-%d').date()
+            query = query.filter(Holiday.holiday_date <= end_date)
+        holidays = query.order_by(Holiday.holiday_date.asc()).all()
+        return jsonify({
+            'status': 'success',
+            'holidays': [
+                {
+                    'id': h.id,
+                    'date': h.holiday_date.isoformat(),
+                    'name': h.name,
+                    'description': h.description or ''
+                } for h in holidays
+            ]
+        })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 # Admin: Teams & Groups
 @app.route('/admin/teams')
@@ -313,7 +364,25 @@ def admin_vendors_json():
         })
     return jsonify({'vendors': data})
 
-# Admin: Add a vendor (JSON)
+# Admin: Managers JSON for dropdowns
+@app.route('/admin/managers.json')
+@login_required
+def admin_managers_json():
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    managers = Manager.query.join(User, Manager.user_id == User.id).order_by(Manager.full_name.asc()).all()
+    items = []
+    for m in managers:
+        items.append({
+            'manager_id': m.manager_id,
+            'full_name': m.full_name,
+            'email': m.user_account.email if m.user_account else '',
+            'department': m.department,
+            'team_name': m.team_name or ''
+        })
+    return jsonify({'managers': items})
+
+# Admin: Add a vendor (JSON or form)
 @app.route('/admin/vendor', methods=['POST'])
 @login_required
 def admin_add_vendor():
@@ -321,37 +390,111 @@ def admin_add_vendor():
         return jsonify({'error': 'Access denied'}), 403
     try:
         payload = request.get_json(silent=True) or request.form
-        employee_id = payload.get('vendor_id') or payload.get('employee_id')
-        full_name = payload.get('full_name') or payload.get('employee_name')
-        email = payload.get('email') or f"{employee_id}@company.com"
-        department = payload.get('department', '')
-        company = payload.get('company') or payload.get('business_unit', '')
-        band = payload.get('band', 'B1')
-        location = payload.get('location') or payload.get('floor_unit', '')
-        manager_id = payload.get('manager_id')
-        password = payload.get('password', 'vendor123')
+        employee_id = (payload.get('vendor_id') or payload.get('employee_id') or '').strip()
+        full_name = (payload.get('full_name') or payload.get('employee_name') or '').strip()
+        email = (payload.get('email') or (f"{employee_id}@company.com" if employee_id else '')).strip()
+        department = (payload.get('department') or '').strip()
+        company = (payload.get('company') or payload.get('business_unit') or '').strip()
+        band = (payload.get('band') or 'B1').strip()
+        location = (payload.get('location') or payload.get('floor_unit') or '').strip()
+        manager_id = (payload.get('manager_id') or '').strip() or None
+        password = (payload.get('password') or 'vendor123')
+
+        # Basic validation
         if not employee_id or not full_name:
             return jsonify({'error': 'vendor_id and full_name are required'}), 400
+
+        # Uniqueness checks
+        if Vendor.query.filter_by(vendor_id=employee_id).first() or User.query.filter_by(username=employee_id).first():
+            return jsonify({'error': 'Vendor ID already exists'}), 400
+        if email and User.query.filter_by(email=email).first():
+            return jsonify({'error': 'Email already in use'}), 400
+
+        # Require existing manager if provided
+        if manager_id:
+            mgr = Manager.query.filter_by(manager_id=manager_id).first()
+            if not mgr:
+                return jsonify({'error': 'Selected manager does not exist'}), 400
+
         # Create user
-        user = User(username=employee_id, email=email, role=UserRole.VENDOR, is_active=True)
+        user = User(username=employee_id, email=email or f"{employee_id}@company.com", role=UserRole.VENDOR, is_active=True)
         user.set_password(password)
         db.session.add(user)
         db.session.flush()
-        # Ensure manager exists if provided
-        if manager_id and not Manager.query.filter_by(manager_id=manager_id).first():
-            mgr_user = User(username=f"mgr_{manager_id}", email=f"{manager_id}@company.com", role=UserRole.MANAGER, is_active=True)
-            mgr_user.set_password('manager123')
-            db.session.add(mgr_user)
-            db.session.flush()
-            mgr = Manager(manager_id=manager_id, user_id=mgr_user.id, full_name=manager_id, department=department)
-            db.session.add(mgr)
+
         # Create vendor
-        vendor = Vendor(user_id=user.id, vendor_id=employee_id, full_name=full_name, department=department,
-                        company=company, band=band, location=location, manager_id=manager_id)
+        vendor = Vendor(
+            user_id=user.id,
+            vendor_id=employee_id,
+            full_name=full_name,
+            department=department,
+            company=company,
+            band=band,
+            location=location,
+            manager_id=manager_id
+        )
         db.session.add(vendor)
         db.session.commit()
-        create_audit_log(current_user.id, 'CREATE', 'vendors', vendor.id, {}, {'vendor_id': employee_id})
+        create_audit_log(current_user.id, 'CREATE', 'vendors', vendor.id, {}, {
+            'vendor_id': employee_id,
+            'full_name': full_name,
+            'manager_id': manager_id
+        })
         return jsonify({'success': True, 'message': 'Vendor created'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# Admin: Add a manager (JSON or form)
+@app.route('/admin/manager', methods=['POST'])
+@login_required
+def admin_add_manager():
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    try:
+        payload = request.get_json(silent=True) or request.form
+        manager_id = (payload.get('manager_id') or '').strip()
+        full_name = (payload.get('full_name') or '').strip()
+        email = (payload.get('email') or (f"{manager_id}@company.com" if manager_id else '')).strip()
+        department = (payload.get('department') or '').strip()
+        team_name = (payload.get('team_name') or '').strip()
+        phone = (payload.get('phone') or '').strip()
+        password = (payload.get('password') or 'manager123')
+
+        if not manager_id or not full_name:
+            return jsonify({'error': 'manager_id and full_name are required'}), 400
+
+        # Uniqueness checks
+        if Manager.query.filter_by(manager_id=manager_id).first() or User.query.filter_by(username=manager_id).first():
+            return jsonify({'error': 'Manager ID already exists'}), 400
+        if email and User.query.filter_by(email=email).first():
+            return jsonify({'error': 'Email already in use'}), 400
+
+        # Create manager user
+        user = User(username=manager_id, email=email or f"{manager_id}@company.com", role=UserRole.MANAGER, is_active=True)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.flush()
+
+        # Create manager profile
+        manager = Manager(
+            manager_id=manager_id,
+            user_id=user.id,
+            full_name=full_name,
+            department=department,
+            team_name=team_name,
+            email=email or None,
+            phone=phone or None
+        )
+        db.session.add(manager)
+        db.session.commit()
+
+        create_audit_log(current_user.id, 'CREATE', 'managers', manager.id, {}, {
+            'manager_id': manager_id,
+            'full_name': full_name,
+            'department': department
+        })
+        return jsonify({'success': True, 'message': 'Manager created'})
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
@@ -801,18 +944,15 @@ def api_monthly_report_data():
     month = request.args.get('month', date.today().strftime('%Y-%m'))
     
     try:
+        # Common month parsing
+        year, month_num = map(int, month.split('-'))
+        start_date = date(year, month_num, 1)
+        end_date = (date(year + 1, 1, 1) - timedelta(days=1)) if month_num == 12 else (date(year, month_num + 1, 1) - timedelta(days=1))
+
         if current_user.role == UserRole.VENDOR:
             vendor = current_user.vendor_profile
             if not vendor:
                 return jsonify({'error': 'Vendor profile not found'}), 404
-            
-            # Parse month string
-            year, month_num = map(int, month.split('-'))
-            start_date = date(year, month_num, 1)
-            if month_num == 12:
-                end_date = date(year + 1, 1, 1) - timedelta(days=1)
-            else:
-                end_date = date(year, month_num + 1, 1) - timedelta(days=1)
             
             # Get vendor's statuses for the month
             statuses = DailyStatus.query.filter(
@@ -858,6 +998,7 @@ def api_monthly_report_data():
             
             return jsonify({
                 'success': True,
+                'user_type': 'vendor',
                 'vendor_name': vendor.full_name,
                 'vendor_id': vendor.vendor_id,
                 'month': month,
@@ -872,9 +1013,181 @@ def api_monthly_report_data():
                 }
             })
         
-        else:
-            # For managers and admins - return team/all data
-            return jsonify({'error': 'Manager/Admin reports not implemented yet'}), 501
+        elif current_user.role == UserRole.MANAGER:
+            manager = current_user.manager_profile
+            if not manager:
+                return jsonify({'error': 'Manager profile not found'}), 404
+            
+            team_vendors = manager.team_vendors.all() if manager.team_vendors else []
+            vendor_ids = [v.id for v in team_vendors]
+            team_size = len(vendor_ids)
+            
+            # If no team members
+            if team_size == 0:
+                return jsonify({
+                    'success': True,
+                    'user_type': 'manager',
+                    'month': month,
+                    'status_breakdown': {},
+                    'approval_breakdown': {'pending': 0, 'approved': 0, 'rejected': 0},
+                    'daily_data': [],
+                    'summary': {
+                        'total_working_days': 0,
+                        'submitted_days': 0,
+                        'attendance_rate': 0,
+                        'pending_approvals': 0
+                    }
+                })
+            
+            # Get statuses for team
+            statuses = DailyStatus.query.filter(
+                DailyStatus.vendor_id.in_(vendor_ids),
+                DailyStatus.status_date >= start_date,
+                DailyStatus.status_date <= end_date
+            ).all()
+            
+            status_counts = {}
+            approval_counts = {'pending': 0, 'approved': 0, 'rejected': 0}
+            from collections import defaultdict
+            statuses_by_date = defaultdict(list)
+            for s in statuses:
+                status_counts[s.status.value] = status_counts.get(s.status.value, 0) + 1
+                approval_counts[s.approval_status.value] += 1
+                statuses_by_date[s.status_date].append(s)
+            
+            # Working days
+            total_working_days = 0
+            submitted_working_statuses = 0
+            daily_data = []
+            d = start_date
+            while d <= end_date:
+                is_weekend = d.weekday() >= 5
+                is_holiday = Holiday.query.filter_by(holiday_date=d).first() is not None
+                if not is_weekend and not is_holiday:
+                    total_working_days += 1
+                    day_statuses = statuses_by_date.get(d, [])
+                    submitted_working_statuses += len(day_statuses)
+                    # Aggregate to categories
+                    counts = {'in_office_full': 0, 'wfh_full': 0, 'leave_full': 0, 'absent': 0}
+                    present_vendor_ids = set()
+                    for ds in day_statuses:
+                        present_vendor_ids.add(ds.vendor_id)
+                        if ds.status in [AttendanceStatus.IN_OFFICE_FULL, AttendanceStatus.IN_OFFICE_HALF]:
+                            counts['in_office_full'] += 1
+                        elif ds.status in [AttendanceStatus.WFH_FULL, AttendanceStatus.WFH_HALF]:
+                            counts['wfh_full'] += 1
+                        elif ds.status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]:
+                            counts['leave_full'] += 1
+                        elif ds.status == AttendanceStatus.ABSENT:
+                            counts['absent'] += 1
+                    # Count implicit absences (no submission)
+                    counts['absent'] += max(0, team_size - len(present_vendor_ids))
+                    # Choose dominant category with tie-breaker order
+                    order = ['in_office_full', 'wfh_full', 'leave_full', 'absent']
+                    dominant = max(order, key=lambda k: (counts[k], -order.index(k)))
+                    daily_data.append({'date': d.strftime('%Y-%m-%d'), 'status': dominant, 'location': 'Various'})
+                d += timedelta(days=1)
+            
+            potential_entries = total_working_days * team_size
+            attendance_rate = (submitted_working_statuses / potential_entries * 100) if potential_entries > 0 else 0
+            
+            return jsonify({
+                'success': True,
+                'user_type': 'manager',
+                'month': month,
+                'status_breakdown': status_counts,
+                'approval_breakdown': approval_counts,
+                'daily_data': daily_data,
+                'summary': {
+                    'total_working_days': total_working_days,
+                    'submitted_days': submitted_working_statuses,
+                    'attendance_rate': round(attendance_rate, 1),
+                    'pending_approvals': approval_counts['pending']
+                }
+            })
+        
+        else:  # Admin
+            # All vendors
+            all_vendors = Vendor.query.all()
+            vendor_ids = [v.id for v in all_vendors]
+            total_vendors = len(vendor_ids)
+            if total_vendors == 0:
+                return jsonify({
+                    'success': True,
+                    'user_type': 'admin',
+                    'month': month,
+                    'status_breakdown': {},
+                    'approval_breakdown': {'pending': 0, 'approved': 0, 'rejected': 0},
+                    'daily_data': [],
+                    'summary': {
+                        'total_working_days': 0,
+                        'submitted_days': 0,
+                        'attendance_rate': 0,
+                        'pending_approvals': 0
+                    }
+                })
+            
+            statuses = DailyStatus.query.filter(
+                DailyStatus.vendor_id.in_(vendor_ids),
+                DailyStatus.status_date >= start_date,
+                DailyStatus.status_date <= end_date
+            ).all()
+            
+            status_counts = {}
+            approval_counts = {'pending': 0, 'approved': 0, 'rejected': 0}
+            from collections import defaultdict
+            statuses_by_date = defaultdict(list)
+            for s in statuses:
+                status_counts[s.status.value] = status_counts.get(s.status.value, 0) + 1
+                approval_counts[s.approval_status.value] += 1
+                statuses_by_date[s.status_date].append(s)
+            
+            total_working_days = 0
+            submitted_working_statuses = 0
+            daily_data = []
+            d = start_date
+            while d <= end_date:
+                is_weekend = d.weekday() >= 5
+                is_holiday = Holiday.query.filter_by(holiday_date=d).first() is not None
+                if not is_weekend and not is_holiday:
+                    total_working_days += 1
+                    day_statuses = statuses_by_date.get(d, [])
+                    submitted_working_statuses += len(day_statuses)
+                    counts = {'in_office_full': 0, 'wfh_full': 0, 'leave_full': 0, 'absent': 0}
+                    present_vendor_ids = set()
+                    for ds in day_statuses:
+                        present_vendor_ids.add(ds.vendor_id)
+                        if ds.status in [AttendanceStatus.IN_OFFICE_FULL, AttendanceStatus.IN_OFFICE_HALF]:
+                            counts['in_office_full'] += 1
+                        elif ds.status in [AttendanceStatus.WFH_FULL, AttendanceStatus.WFH_HALF]:
+                            counts['wfh_full'] += 1
+                        elif ds.status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]:
+                            counts['leave_full'] += 1
+                        elif ds.status == AttendanceStatus.ABSENT:
+                            counts['absent'] += 1
+                    counts['absent'] += max(0, total_vendors - len(present_vendor_ids))
+                    order = ['in_office_full', 'wfh_full', 'leave_full', 'absent']
+                    dominant = max(order, key=lambda k: (counts[k], -order.index(k)))
+                    daily_data.append({'date': d.strftime('%Y-%m-%d'), 'status': dominant, 'location': 'Various'})
+                d += timedelta(days=1)
+            
+            potential_entries = total_working_days * total_vendors
+            attendance_rate = (submitted_working_statuses / potential_entries * 100) if potential_entries > 0 else 0
+            
+            return jsonify({
+                'success': True,
+                'user_type': 'admin',
+                'month': month,
+                'status_breakdown': status_counts,
+                'approval_breakdown': approval_counts,
+                'daily_data': daily_data,
+                'summary': {
+                    'total_working_days': total_working_days,
+                    'submitted_days': submitted_working_statuses,
+                    'attendance_rate': round(attendance_rate, 1),
+                    'pending_approvals': approval_counts['pending']
+                }
+            })
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -1437,11 +1750,23 @@ def api_add_holiday():
         new_holiday = Holiday(
             holiday_date=holiday_date,
             name=name,
-            description=description
+            description=description,
+            created_by=current_user.id
         )
         
         db.session.add(new_holiday)
         db.session.commit()
+        
+        # Optional: audit log
+        try:
+            create_audit_log(current_user.id, 'CREATE', 'holidays', new_holiday.id, {}, {
+                'holiday_date': holiday_date.isoformat(),
+                'name': name,
+                'description': description
+            })
+        except Exception:
+            # Audit log failure should not block the main operation
+            pass
         
         return jsonify({
             'status': 'success',
@@ -1453,6 +1778,93 @@ def api_add_holiday():
             }
         })
         
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/holiday/<int:holiday_id>/update', methods=['POST'])
+@login_required
+def api_update_holiday(holiday_id):
+    """Update an existing holiday"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        holiday = Holiday.query.get(holiday_id)
+        if not holiday:
+            return jsonify({'error': 'Holiday not found'}), 404
+        
+        # Support form posts
+        holiday_date_str = request.form.get('holiday_date')
+        name = request.form.get('name')
+        description = request.form.get('description', '')
+        
+        if not holiday_date_str or not name:
+            return jsonify({'error': 'holiday_date and name are required'}), 400
+        
+        new_date = datetime.strptime(holiday_date_str, '%Y-%m-%d').date()
+        
+        # Uniqueness check for date if changed
+        if new_date != holiday.holiday_date:
+            dup = Holiday.query.filter(Holiday.holiday_date == new_date, Holiday.id != holiday_id).first()
+            if dup:
+                return jsonify({'error': 'Another holiday already exists for this date'}), 400
+        
+        old_values = {
+            'holiday_date': holiday.holiday_date.isoformat(),
+            'name': holiday.name,
+            'description': holiday.description or ''
+        }
+        
+        holiday.holiday_date = new_date
+        holiday.name = name
+        holiday.description = description
+        
+        db.session.commit()
+        
+        try:
+            create_audit_log(current_user.id, 'UPDATE', 'holidays', holiday.id, old_values, {
+                'holiday_date': holiday.holiday_date.isoformat(),
+                'name': holiday.name,
+                'description': holiday.description or ''
+            })
+        except Exception:
+            pass
+        
+        return jsonify({'status': 'success', 'message': 'Holiday updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/admin/holiday/<int:holiday_id>/delete', methods=['POST'])
+@login_required
+def api_delete_holiday(holiday_id):
+    """Delete an existing holiday"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        holiday = Holiday.query.get(holiday_id)
+        if not holiday:
+            return jsonify({'error': 'Holiday not found'}), 404
+        
+        old_values = {
+            'holiday_date': holiday.holiday_date.isoformat(),
+            'name': holiday.name,
+            'description': holiday.description or ''
+        }
+        
+        db.session.delete(holiday)
+        db.session.commit()
+        
+        try:
+            create_audit_log(current_user.id, 'DELETE', 'holidays', holiday_id, old_values, {})
+        except Exception:
+            pass
+        
+        return jsonify({'status': 'success', 'message': 'Holiday deleted successfully'})
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': str(e)}), 500

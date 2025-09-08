@@ -1,0 +1,232 @@
+{% extends "base_fixed.html" %}
+{% block title %}Holiday Calendar{% endblock %}
+{% block content %}
+<div class="row mb-3">
+  <div class="col-12 d-flex justify-content-between align-items-center">
+    <h2 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Holiday Calendar</h2>
+    <div class="d-flex align-items-center">
+      <button class="btn btn-outline-secondary me-2" id="btnPrev"><i class="fas fa-chevron-left"></i></button>
+      <input type="month" class="form-control" id="monthPicker" style="max-width: 220px;">
+      <button class="btn btn-outline-secondary ms-2" id="btnNext"><i class="fas fa-chevron-right"></i></button>
+      <button class="btn btn-outline-primary ms-3" id="btnToday">Today</button>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0" id="monthTitle">Calendar</h5>
+      </div>
+      <div class="card-body">
+        <div class="calendar-grid">
+          <div class="calendar-header">Sun</div>
+          <div class="calendar-header">Mon</div>
+          <div class="calendar-header">Tue</div>
+          <div class="calendar-header">Wed</div>
+          <div class="calendar-header">Thu</div>
+          <div class="calendar-header">Fri</div>
+          <div class="calendar-header">Sat</div>
+          <div id="calendarCells" class="calendar-cells"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-list me-2"></i>Holidays This Month</h5>
+      </div>
+      <div class="card-body">
+        <ul class="list-group" id="holidayList">
+          <li class="list-group-item text-muted" id="noHolidaysMsg">No holidays this month</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.calendar-header {
+  text-align: center;
+  font-weight: 600;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+.calendar-cells {
+  display: contents;
+}
+.day-cell {
+  min-height: 90px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 6px;
+  position: relative;
+}
+.day-num {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.9rem;
+  color: #666;
+}
+.day-today {
+  border-color: var(--attendo-primary, #0d6efd);
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
+}
+.holiday-badge {
+  display: inline-block;
+  background: #e7f1ff;
+  color: #0d6efd;
+  border: 1px solid #b6d4fe;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  margin-top: 24px;
+}
+.muted { color: #bbb; }
+</style>
+
+<script>
+(function(){
+  const monthInput = document.getElementById('monthPicker');
+  const btnPrev = document.getElementById('btnPrev');
+  const btnNext = document.getElementById('btnNext');
+  const btnToday = document.getElementById('btnToday');
+  const monthTitle = document.getElementById('monthTitle');
+  const calendarCells = document.getElementById('calendarCells');
+  const holidayList = document.getElementById('holidayList');
+  const noHolidaysMsg = document.getElementById('noHolidaysMsg');
+  const initialMonth = '{{ current_month }}'; // YYYY-MM
+
+  function pad(n){ return n.toString().padStart(2,'0'); }
+  function formatMonthTitle(d){
+    return d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+  }
+  function getMonthRange(year, month){
+    const start = new Date(year, month-1, 1);
+    const end = new Date(year, month, 0); // last day of month
+    return { start, end };
+  }
+  function iso(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function sameDate(a,b){ return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+
+  async function fetchHolidays(startDate, endDate){
+    const qs = `?start=${iso(startDate)}&end=${iso(endDate)}`;
+    const resp = await fetch('/api/holidays' + qs);
+    const data = await resp.json();
+    if (data.status !== 'success') throw new Error(data.message || 'Failed to load holidays');
+    // Map date->array of holidays on that date
+    const map = {};
+    for (const h of data.holidays){
+      map[h.date] = map[h.date] || [];
+      map[h.date].push(h);
+    }
+    return map;
+  }
+
+  function renderList(holidaysMap, range){
+    holidayList.innerHTML = '';
+    const items = [];
+    const d = new Date(range.start);
+    while (d <= range.end){
+      const key = iso(d);
+      if (holidaysMap[key]){
+        for (const h of holidaysMap[key]){
+          items.push(h);
+        }
+      }
+      d.setDate(d.getDate()+1);
+    }
+    if (!items.length){
+      const li = document.createElement('li');
+      li.className = 'list-group-item text-muted';
+      li.textContent = 'No holidays this month';
+      holidayList.appendChild(li);
+      return;
+    }
+    for (const h of items){
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      const dObj = new Date(h.date + 'T00:00:00');
+      li.innerHTML = `<span>${h.name}${h.description?` <small class="text-muted">- ${h.description}</small>`:''}</span>` +
+                     `<span class="badge bg-primary">${dObj.toLocaleDateString(undefined,{month:'short', day:'numeric'})}</span>`;
+      holidayList.appendChild(li);
+    }
+  }
+
+  function renderCalendar(year, month, holidaysMap){
+    const today = new Date();
+    const { start, end } = getMonthRange(year, month);
+    monthTitle.textContent = formatMonthTitle(start);
+
+    // Build grid: find first day index (0=Sun..6=Sat), fill blanks
+    const firstDayIndex = start.getDay();
+    const daysInMonth = end.getDate();
+    calendarCells.innerHTML = '';
+
+    for (let i=0; i<firstDayIndex; i++){
+      const cell = document.createElement('div');
+      cell.className = 'day-cell muted';
+      calendarCells.appendChild(cell);
+    }
+
+    for (let day=1; day<=daysInMonth; day++){
+      const cellDate = new Date(year, month-1, day);
+      const cell = document.createElement('div');
+      cell.className = 'day-cell' + (sameDate(cellDate, today) ? ' day-today' : '');
+      const num = document.createElement('div');
+      num.className = 'day-num';
+      num.textContent = day;
+      cell.appendChild(num);
+
+      const key = iso(cellDate);
+      if (holidaysMap[key]){
+        for (const h of holidaysMap[key]){
+          const badge = document.createElement('div');
+          badge.className = 'holiday-badge';
+          badge.textContent = h.name;
+          badge.title = h.description || '';
+          cell.appendChild(badge);
+        }
+      }
+
+      calendarCells.appendChild(cell);
+    }
+
+    renderList(holidaysMap, { start, end });
+  }
+
+  async function load(monthStr){
+    // monthStr: YYYY-MM
+    const [y, m] = monthStr.split('-').map(Number);
+    monthInput.value = `${y}-${pad(m)}`;
+    const { start, end } = getMonthRange(y, m);
+    const holidaysMap = await fetchHolidays(start, end);
+    renderCalendar(y, m, holidaysMap);
+  }
+
+  function shiftMonth(delta){
+    const [y, m] = monthInput.value.split('-').map(Number);
+    const d = new Date(y, m-1+delta, 1);
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}`;
+  }
+
+  // Events
+  monthInput.addEventListener('change', () => load(monthInput.value));
+  btnPrev.addEventListener('click', () => load(shiftMonth(-1)));
+  btnNext.addEventListener('click', () => load(shiftMonth(1)));
+  btnToday.addEventListener('click', () => load(new Date().toISOString().slice(0,7)));
+
+  // Init
+  load(initialMonth);
+})();
+</script>
+{% endblock %}
+

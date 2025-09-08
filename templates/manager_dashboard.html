@@ -304,7 +304,7 @@
                         <i class="fas fa-bullhorn me-2"></i>Send Daily Reminders
                     </button>
                     <button class="btn btn-outline-secondary" onclick="viewTeamCalendar()">
-                        <i class="fas fa-calendar me-2"></i>Team Calendar
+                        <i class="fas fa-calendar me-2"></i>Holiday Calendar
                     </button>
                     <button class="btn btn-outline-info" onclick="generateReport()">
                         <i class="fas fa-chart-bar me-2"></i>Weekly Report
@@ -511,7 +511,8 @@ function sendBulkReminders() {
 }
 
 function viewTeamCalendar() {
-    alert('Team Calendar view (Demo) - This would show a calendar view of all team member statuses');
+    // Navigate to shared holiday calendar
+    window.location.href = '/holiday-calendar';
 }
 
 function generateReport() {
