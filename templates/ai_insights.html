@@ -669,20 +669,47 @@ function resetAISettings() {
 }
 
 function generateAIReport() {
-    alert('Generating Comprehensive AI Report\\n\\nIncluding:\\n- Model performance analysis\\n- Prediction accuracy over time\\n- Intervention success rates\\n- ROI calculations');
+    const params = new URLSearchParams({ window: '7', format: 'excel' });
+    window.open('/api/ai/report?' + params.toString(), '_blank');
 }
 
-function scheduleAIAnalysis() {
-    alert('Schedule AI Analysis\\n\\nOptions:\\n- Daily automated analysis\\n- Weekly trend reports\\n- Monthly model retraining\\n- Custom analysis schedules');
+async function scheduleAIAnalysis() {
+    try {
+        const res = await fetch('/api/ai/schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ schedule: 'daily' })
+        });
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Failed to schedule');
+        alert(data.message || 'Scheduled successfully');
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
 }
 
-function viewModelLogs() {
-    alert('AI Model Training Logs\\n\\nRecent entries:\\n- 2025-09-07 09:30: Model retrained (accuracy: 94.2%)\\n- 2025-09-06 15:45: New pattern detected\\n- 2025-09-05 11:20: Prediction accuracy improved\\n- 2025-09-04 08:15: Data preprocessing completed');
+async function viewModelLogs() {
+    try {
+        const res = await fetch('/api/ai/model-logs');
+        const data = await res.json();
+        if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Failed to fetch logs');
+        const lines = (data.logs || []).map(l => `${l.timestamp} - ${l.action} (${l.table})`).slice(0, 10);
+        alert('Recent AI Logs\n\n' + (lines.join('\n') || 'No logs available'));
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
 }
 
-function emergencyOverride() {
+async function emergencyOverride() {
     if (confirm('Emergency Override will disable AI predictions temporarily. Continue?')) {
-        alert('AI predictions temporarily disabled.\\n\\nSystem switched to manual mode.\\nContact administrator to re-enable.');
+        try {
+            const res = await fetch('/api/ai/override', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enable: false }) });
+            const data = await res.json();
+            if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Failed to override');
+            alert('AI predictions temporarily disabled. System switched to manual mode.');
+        } catch (e) {
+            alert('Error: ' + e.message);
+        }
     }
 }
 </script>

@@ -777,6 +777,116 @@ def manager_ai_insights():
         # Fallback to template with no data (will show demo placeholders)
         return render_template('ai_insights.html', ai_stats={}, predictions=[], risk_distribution={})
 
+# AI quick action APIs (report, schedule, logs, override)
+@app.route('/api/ai/report')
+@login_required
+def api_ai_report():
+    """Generate an AI insights report for the manager's team (Excel or JSON)."""
+    if current_user.role != UserRole.MANAGER:
+        return jsonify({'error': 'Access denied'}), 403
+    manager = current_user.manager_profile
+    if not manager:
+        return jsonify({'error': 'Manager profile not found'}), 404
+
+    window = request.args.get('window', default='7')
+    fmt = request.args.get('format', default='excel')
+    try:
+        prediction_window = max(3, min(30, int(window)))
+    except Exception:
+        prediction_window = 7
+
+    predictions, ai_stats, _ = generate_ai_insights(manager.id, prediction_window_days=prediction_window)
+
+    # Prepare tabular rows
+    rows = []
+    for p in predictions:
+        rows.append({
+            'Vendor Name': p['vendor_name'],
+            'Vendor ID': p['vendor_id'],
+            'Predicted Date': p['predicted_date'],
+            'Likelihood %': p['likelihood'],
+            'Risk Level': p['risk_level'],
+            'Recommendation': p['recommendation'],
+            'Reasons': '; '.join(p['reasons'])
+        })
+
+    if fmt == 'excel' and rows:
+        import pandas as pd
+        from io import BytesIO
+        from flask import send_file
+        df = pd.DataFrame(rows)
+        meta = pd.DataFrame([
+            {'Metric': 'Absence Predictions', 'Value': ai_stats.get('absence_predictions')},
+            {'Metric': 'WFH Predictions', 'Value': ai_stats.get('wfh_predictions')},
+            {'Metric': 'Risk Alerts', 'Value': ai_stats.get('risk_alerts')},
+            {'Metric': 'Predictions Made', 'Value': ai_stats.get('predictions_made')},
+            {'Metric': 'Last Trained', 'Value': ai_stats.get('last_trained')},
+        ])
+        buf = BytesIO()
+        with pd.ExcelWriter(buf, engine='openpyxl') as writer:
+            meta.to_excel(writer, sheet_name='Summary', index=False)
+            df.to_excel(writer, sheet_name='Predictions', index=False)
+        buf.seek(0)
+        filename = f"ai_report_{date.today().isoformat()}_w{prediction_window}.xlsx"
+        try:
+            create_audit_log(current_user.id, 'EXPORT', 'ai_report', None, None, {'window': prediction_window})
+        except Exception:
+            pass
+        return send_file(buf, as_attachment=True, download_name=filename,
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    # Default JSON
+    return jsonify({'status': 'success', 'ai_stats': ai_stats, 'predictions': rows})
+
+@app.route('/api/ai/schedule', methods=['POST'])
+@login_required
+def api_ai_schedule():
+    if current_user.role != UserRole.MANAGER:
+        return jsonify({'error': 'Access denied'}), 403
+    schedule = request.json.get('schedule', 'daily') if request.is_json else request.form.get('schedule', 'daily')
+    try:
+        set_system_config('ai_schedule', schedule, 'AI analysis schedule', current_user.id)
+        create_audit_log(current_user.id, 'UPDATE', 'ai_schedule', None, None, {'schedule': schedule})
+        return jsonify({'status': 'success', 'message': f'Scheduled AI analysis: {schedule}'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route('/api/ai/model-logs')
+@login_required
+def api_ai_model_logs():
+    if current_user.role not in [UserRole.MANAGER, UserRole.ADMIN]:
+        return jsonify({'error': 'Access denied'}), 403
+    # Return recent audit logs related to AI or exports as a simple log source
+    logs = AuditLog.query.order_by(AuditLog.created_at.desc()).limit(20).all()
+    data = []
+    for log in logs:
+        data.append({
+            'timestamp': log.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'action': log.action,
+            'table': log.table_name,
+            'user_id': log.user_id
+        })
+    return jsonify({'status': 'success', 'logs': data})
+
+@app.route('/api/ai/override', methods=['POST'])
+@login_required
+def api_ai_override():
+    if current_user.role not in [UserRole.MANAGER, UserRole.ADMIN]:
+        return jsonify({'error': 'Access denied'}), 403
+    enable = None
+    if request.is_json:
+        enable = request.json.get('enable')
+    if enable is None:
+        enable = request.form.get('enable')
+    # default: toggle off
+    enabled = False if (enable is None) else (str(enable).lower() in ['true', '1', 'yes'])
+    try:
+        set_system_config('ai_enabled', 'true' if enabled else 'false', 'Emergency override toggle', current_user.id)
+        create_audit_log(current_user.id, 'UPDATE', 'ai_enabled', None, None, {'enabled': enabled})
+        return jsonify({'status': 'success', 'enabled': enabled})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 # ============= API ROUTES FOR SWAGGER =============
 
 @app.route('/api/dashboard/stats')
@@ -1553,6 +1663,165 @@ def manager_reports():
                          summary_stats=summary_stats,
                          start_date=start_date,
                          end_date=end_date)
+
+# Export team report for selected date range (Excel or JSON)
+@app.route('/api/export/team-report')
+@login_required
+def api_export_team_report():
+    if current_user.role != UserRole.MANAGER:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    manager = current_user.manager_profile
+    if not manager:
+        return jsonify({'error': 'Manager profile not found'}), 404
+    
+    start_date_str = request.args.get('start_date', (date.today() - timedelta(days=30)).strftime('%Y-%m-%d'))
+    end_date_str = request.args.get('end_date', date.today().strftime('%Y-%m-%d'))
+    format_type = request.args.get('format', 'excel')
+    
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except Exception:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+    
+    team_vendors = manager.team_vendors.all() if manager.team_vendors else []
+    rows = []
+    
+    # Compute working days in period
+    working_days_period = 0
+    cur = start_date
+    while cur <= end_date:
+        if cur.weekday() < 5 and (Holiday.query.filter_by(holiday_date=cur).first() is None):
+            working_days_period += 1
+        cur += timedelta(days=1)
+    
+    for v in team_vendors:
+        statuses = DailyStatus.query.filter(
+            DailyStatus.vendor_id == v.id,
+            DailyStatus.status_date >= start_date,
+            DailyStatus.status_date <= end_date
+        ).all()
+        total_days = len(statuses)
+        office_days = len([s for s in statuses if s.status in [AttendanceStatus.IN_OFFICE_FULL, AttendanceStatus.IN_OFFICE_HALF]])
+        wfh_days = len([s for s in statuses if s.status in [AttendanceStatus.WFH_FULL, AttendanceStatus.WFH_HALF]])
+        leave_days = len([s for s in statuses if s.status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]])
+        pending_days = len([s for s in statuses if s.approval_status == ApprovalStatus.PENDING])
+        attendance_rate = round((total_days / working_days_period * 100), 1) if working_days_period > 0 else 0
+        rows.append({
+            'Vendor Name': v.full_name,
+            'Vendor ID': v.vendor_id,
+            'Department': v.department,
+            'Company': v.company,
+            'Office Days': office_days,
+            'WFH Days': wfh_days,
+            'Leave Days': leave_days,
+            'Pending Days': pending_days,
+            'Working Days': working_days_period,
+            'Attendance Rate (%)': attendance_rate
+        })
+    
+    if format_type == 'excel' and rows:
+        import pandas as pd
+        from io import BytesIO
+        from flask import send_file
+        df = pd.DataFrame(rows)
+        excel_buffer = BytesIO()
+        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Team Report', index=False)
+        excel_buffer.seek(0)
+        filename = f"team_report_{start_date_str}_to_{end_date_str}.xlsx"
+        return send_file(excel_buffer, as_attachment=True, download_name=filename,
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    
+    return jsonify({'status': 'success', 'data': rows, 'start_date': start_date_str, 'end_date': end_date_str})
+
+# Export audit log for selected date range
+@app.route('/api/export/audit-log')
+@login_required
+def api_export_audit_log():
+    if current_user.role != UserRole.MANAGER:
+        return jsonify({'error': 'Access denied'}), 403
+    manager = current_user.manager_profile
+    if not manager:
+        return jsonify({'error': 'Manager profile not found'}), 404
+    start_date_str = request.args.get('start_date', (date.today() - timedelta(days=30)).strftime('%Y-%m-%d'))
+    end_date_str = request.args.get('end_date', date.today().strftime('%Y-%m-%d'))
+    format_type = request.args.get('format', 'excel')
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except Exception:
+        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+    
+    team_vendors = manager.team_vendors.all() if manager.team_vendors else []
+    logs = AuditLog.query.filter(
+        AuditLog.user_id.in_([manager.user_id] + [v.user_id for v in team_vendors]),
+        AuditLog.created_at >= datetime.combine(start_date, datetime.min.time()),
+        AuditLog.created_at <= datetime.combine(end_date, datetime.max.time())
+    ).order_by(AuditLog.created_at.asc()).all()
+    
+    rows = []
+    for log in logs:
+        rows.append({
+            'Timestamp': log.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'Action': log.action,
+            'Table': log.table_name,
+            'Record ID': log.record_id or '',
+            'User ID': log.user_id,
+            'Old Values': (log.old_values or '')[:200],
+            'New Values': (log.new_values or '')[:200]
+        })
+    
+    if format_type == 'excel' and rows:
+        import pandas as pd
+        from io import BytesIO
+        from flask import send_file
+        df = pd.DataFrame(rows)
+        excel_buffer = BytesIO()
+        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Audit Log', index=False)
+        excel_buffer.seek(0)
+        filename = f"audit_log_{start_date_str}_to_{end_date_str}.xlsx"
+        return send_file(excel_buffer, as_attachment=True, download_name=filename,
+                         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    
+    return jsonify({'status': 'success', 'data': rows, 'start_date': start_date_str, 'end_date': end_date_str})
+
+# Vendor details for a given date range (manager view)
+@app.route('/manager/vendor/<string:vendor_id>/details')
+@login_required
+def manager_vendor_details(vendor_id):
+    if current_user.role != UserRole.MANAGER:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    manager = current_user.manager_profile
+    vendor = Vendor.query.filter_by(vendor_id=vendor_id).first()
+    if not vendor or vendor.manager_id != manager.manager_id:
+        flash('Vendor not found in your team', 'error')
+        return redirect(url_for('manager_reports'))
+    
+    start_date_str = request.args.get('start_date', (date.today() - timedelta(days=30)).strftime('%Y-%m-%d'))
+    end_date_str = request.args.get('end_date', date.today().strftime('%Y-%m-%d'))
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except Exception:
+        start_date = date.today() - timedelta(days=30)
+        end_date = date.today()
+    
+    statuses = DailyStatus.query.filter(
+        DailyStatus.vendor_id == vendor.id,
+        DailyStatus.status_date >= start_date,
+        DailyStatus.status_date <= end_date
+    ).order_by(DailyStatus.status_date.asc()).all()
+    
+    return render_template('manager_vendor_details.html',
+                           manager=manager,
+                           vendor=vendor,
+                           statuses=statuses,
+                           start_date=start_date,
+                           end_date=end_date)
 
 @app.route('/vendor/edit-status/<int:status_id>', methods=['GET', 'POST'])
 @login_required
