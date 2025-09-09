@@ -14,9 +14,9 @@
                 <button class="btn btn-outline-success me-2" data-bs-toggle="modal" data-bs-target="#addManagerModal">
                     <i class="fas fa-user-tie me-1"></i>Add Manager
                 </button>
-                <button class="btn btn-primary">
+<a class="btn btn-primary" href="/admin/system-settings">
                     <i class="fas fa-cogs me-1"></i>System Settings
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -366,6 +366,9 @@
                     <button class="btn btn-warning" onclick="runReconciliation()">
                         <i class="fas fa-sync me-2"></i>Run Reconciliation
                     </button>
+                    <button class="btn btn-outline-info" onclick="refreshExcelNotifications()">
+                        <i class="fas fa-file-excel me-2"></i>Refresh Excel Notifications
+                    </button>
                     <button class="btn btn-danger" onclick="viewAuditLogs()">
                         <i class="fas fa-shield-alt me-2"></i>View Audit Logs
                     </button>
@@ -647,6 +650,45 @@ async function onAddManagerSubmit(e){
 
 function viewAIInsights() {
     window.location.href = '/monthly-report';
+}
+
+async function refreshExcelNotifications() {
+    if (!confirm('This will refresh all Excel notification sheets with today\'s pending vendors only. Continue?')) {
+        return;
+    }
+    
+    // Show loading state
+    const btn = event.target;
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+    
+    try {
+        const response = await fetch('/api/power-automate/daily-reset', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                'force': true
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.status === 'success') {
+            alert(`Excel notifications refreshed successfully!\n\nDate: ${data.date}\nPending vendors updated: ${data.pending_count || 'N/A'}\n\nPower Automate will now show only today's pending vendors.`);
+        } else {
+            throw new Error(data.message || data.error || 'Failed to refresh Excel notifications');
+        }
+    } catch (error) {
+        console.error('Error refreshing Excel notifications:', error);
+        alert('Error refreshing Excel notifications: ' + error.message);
+    } finally {
+        // Restore button state
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
 }
 </script>
 {% endblock %}

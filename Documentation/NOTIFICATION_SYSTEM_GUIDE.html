@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATTENDO Notification System - Complete Guide</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            margin-bottom: 40px;
+            border-radius: 10px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .nav-menu {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+
+        .nav-menu h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            transition: color 0.3s ease;
+        }
+
+        .nav-menu h3:hover {
+            color: #5a67d8;
+        }
+
+        .nav-toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-toggle-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .nav-content {
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .nav-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .nav-content.expanded {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+        .nav-menu ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .nav-menu a {
+            color: #555;
+            text-decoration: none;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .nav-menu a:hover {
+            background-color: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .notification-card {
+            background: white;
+            margin-bottom: 40px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .notification-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+
+        .notification-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .notification-icon {
+            font-size: 3rem;
+            margin-right: 20px;
+            opacity: 0.8;
+        }
+
+        .notification-title h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .notification-subtitle {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-item h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-item p {
+            color: #555;
+            margin: 0;
+        }
+
+        .trigger-list {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .trigger-list h4 {
+            color: #0066cc;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .trigger-list ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .trigger-list li {
+            padding: 8px 0;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        .trigger-list li::before {
+            content: '⏰';
+            position: absolute;
+            left: 0;
+            top: 8px;
+        }
+
+        .recipients-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin: 2px;
+            font-weight: 500;
+        }
+
+        .recipients-badge.vendor { background: #28a745; }
+        .recipients-badge.manager { background: #007bff; }
+        .recipients-badge.admin { background: #dc3545; }
+        .recipients-badge.all { background: #6f42c1; }
+
+        .delivery-methods {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .delivery-method {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .delivery-method.teams { border-color: #6264a7; color: #6264a7; }
+
+        .config-options {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .config-options h5 {
+            color: #856404;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .config-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+
+        .config-list li {
+            list-style: none;
+            padding: 4px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .config-list li::before {
+            content: '⚙️';
+            position: absolute;
+            left: 0;
+            top: 4px;
+        }
+
+        .summary-table {
+            margin: 40px 0;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+
+        .summary-table h2 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            padding: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .features-section {
+            background: white;
+            padding: 40px 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            margin: 40px 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .footer {
+            background: #2c3e50;
+            color: white;
+            padding: 40px 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .footer h3 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .footer p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .notification-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .notification-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-menu ul {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .breadcrumb {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Unified Navigation Header -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 20px 80px; position: relative; overflow: hidden;">
+        <!-- Wave Pattern -->
+        <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 120px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+            <path fill="#f0f2f5" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
+        <!-- Decorative Elements -->
+        <div style="position: absolute; top: 20px; right: 20px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(40px);"></div>
+        <div style="position: absolute; bottom: 50px; left: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.08); border-radius: 50%; filter: blur(60px);"></div>
+        
+        <div style="text-align: center; position: relative; z-index: 1;">
+            <h1 style="color: white; font-size: 3rem; margin-bottom: 10px; font-weight: 600; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                <i class="fas fa-book-open" style="margin-right: 15px; font-size: 2.5rem; vertical-align: middle;"></i>ATTENDO Documentation
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 1.2rem; font-weight: 300; letter-spacing: 0.5px;">Complete User Guide & System Documentation</p>
+        </div>
+    </div>
+    
+    <!-- Navigation Cards -->
+    <div style="max-width: 1600px; margin: -50px auto 40px; position: relative; z-index: 10; padding: 0 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+            <!-- Vendor Guide Card -->
+            <a href="./vendor_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#6c757d'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #6c757d; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Vendor Guide</h3>
+                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Daily attendance submission, status tracking, and reports</p>
+                </div>
+            </a>
+            
+            <!-- Manager Guide Card -->
+            <a href="./manager_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#28a745'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user-tie" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #28a745; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Manager Guide</h3>
+                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Team management, approvals, and AI insights</p>
+                </div>
+            </a>
+            
+            <!-- Admin Guide Card -->
+            <a href="./admin_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#dc3545'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user-shield" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #dc3545; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Admin Guide</h3>
+                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">System configuration and user management</p>
+                </div>
+            </a>
+            
+            <!-- Notifications Card - Active -->
+            <a href="./NOTIFICATION_SYSTEM_GUIDE.html" style="text-decoration: none; display: block;">
+                <div style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(23,162,184,0.4); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; transform: scale(1.05);" 
+                     onmouseover="this.style.transform='scale(1.08) translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(23,162,184,0.5)'" 
+                     onmouseout="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 35px rgba(23,162,184,0.4)'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    <i class="fas fa-bell" style="font-size: 3rem; margin-bottom: 20px; display: block; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Notifications</h3>
+                    <p style="margin: 0; font-size: 0.95rem; opacity: 0.95; line-height: 1.5;">Email, SMS, and alert configuration</p>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                        <span style="font-size: 0.85rem; opacity: 0.9;">📍 Currently Viewing</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- System Architecture Card -->
+            <a href="./system_architecture_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#6f42c1'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-sitemap" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #6f42c1; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">System Architecture</h3>
+                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Technical architecture and system flow diagrams</p>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="breadcrumb">
+            🏠 <a href="../">ATTENDO Home</a> / <a href="API_REFERENCE.md">Documentation</a> / <strong>Notification System Guide</strong>
+        </div>
+
+        <div class="header">
+            <h1>📢 ATTENDO Notification System</h1>
+            <p>Complete Guide to All Notification Types, Triggers, and Configurations</p>
+        </div>
+
+        <div class="nav-menu">
+            <h3 onclick="toggleNavigation()">
+                📋 Quick Navigation
+                <span class="nav-toggle-icon" id="navToggleIcon">🔽</span>
+            </h3>
+            <div class="nav-content expanded" id="navContent">
+                <ul>
+                    <li><a href="#notification-1">🔔 Daily Status Reminders</a></li>
+                    <li><a href="#notification-2">📊 Manager Summary Notifications</a></li>
+                    <li><a href="#notification-3">✅ All-Complete Notifications</a></li>
+                    <li><a href="#notification-4">⚠️ Mismatch Notifications</a></li>
+                    <li><a href="#notification-5">📝 Manager Feedback Notifications</a></li>
+                    <li><a href="#notification-6">📈 Monthly Report Notifications</a></li>
+                    <li><a href="#notification-7">🚨 Admin System Alerts</a></li>
+                    <li><a href="#notification-8">🏖️ Holiday Reminder Notifications</a></li>
+                    <li><a href="#notification-9">⏰ Late Submission Alerts</a></li>
+                    <li><a href="#notification-10">💰 Billing Correction Notifications</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 1: Daily Status Reminders -->
+        <div id="notification-1" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">🔔</span>
+                <div class="notification-title">
+                    <h2>Daily Status Reminders</h2>
+                    <div class="notification-subtitle">01_daily_status_reminders.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Remind vendors to submit their daily attendance status to ensure 100% compliance</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge vendor">Vendors</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>Every 3 hours</strong> from 9:00 AM to 6:00 PM</li>
+                    <li><strong>Only on weekdays</strong> (Monday-Friday)</li>
+                    <li><strong>Only to vendors</strong> who haven't submitted status for current day</li>
+                    <li><strong>Stops automatically</strong> when vendor submits their status</li>
+                    <li><strong>Maximum 3 reminders</strong> per day per vendor</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Reminder intervals (default: 3 hours)</li>
+                    <li>Start/end times (default: 9 AM - 6 PM)</li>
+                    <li>Maximum reminders per day</li>
+                    <li>Weekdays only setting</li>
+                    <li>Holiday exclusions</li>
+                    <li>Custom message templates</li>
+                    <li>Auto-escalation to managers</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 2: Manager Summary -->
+        <div id="notification-2" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">📊</span>
+                <div class="notification-title">
+                    <h2>Manager Summary Notifications</h2>
+                    <div class="notification-subtitle">02_manager_summary_notifications.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Provide managers with regular team status summaries including completion rates and pending items</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge manager">Managers</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>12:00 PM</strong> (noon summary with morning statistics)</li>
+                    <li><strong>2:00 PM</strong> (afternoon summary with full day progress)</li>
+                    <li><strong>Daily on weekdays</strong> only</li>
+                    <li><strong>Includes team statistics</strong>, pending approvals, completion rates</li>
+                    <li><strong>Automatically generated</strong> with real-time data</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Summary times (customizable)</li>
+                    <li>Content inclusion (stats, charts, pending count)</li>
+                    <li>Team vs individual focus</li>
+                    <li>Summary format (detailed/brief)</li>
+                    <li>Include mismatch alerts</li>
+                    <li>Teams channel targeting</li>
+                    <li>Chart and visualization options</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 3: All-Complete -->
+        <div id="notification-3" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">✅</span>
+                <div class="notification-title">
+                    <h2>All-Complete Notifications</h2>
+                    <div class="notification-subtitle">03_manager_all_complete_notifications.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Celebrate and notify managers when all team members have successfully submitted their daily status</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge manager">Managers</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>Immediately</strong> when last team member submits status</li>
+                    <li><strong>Once per day maximum</strong> per manager</li>
+                    <li><strong>Celebrates team completion</strong> with positive messaging</li>
+                    <li><strong>Includes completion time</strong> and team performance metrics</li>
+                    <li><strong>Only triggers</strong> when 100% team compliance achieved</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Celebration message content</li>
+                    <li>Include team recognition</li>
+                    <li>Summary statistics inclusion</li>
+                    <li>Next day preparation tips</li>
+                    <li>Team completion triggers</li>
+                    <li>Recognition messages</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 4: Mismatch Notifications -->
+        <div id="notification-4" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">⚠️</span>
+                <div class="notification-title">
+                    <h2>Mismatch Notifications</h2>
+                    <div class="notification-subtitle">04_mismatch_notifications.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Alert about attendance mismatches between web status submissions and card swipe data</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge vendor">Vendors</div>
+                    <div class="recipients-badge manager">Managers</div>
+                    <div class="recipients-badge admin">Admins</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>Daily at 6:00 PM</strong> after reconciliation process</li>
+                    <li><strong>When mismatches detected</strong> between submitted status and card swipe</li>
+                    <li><strong>Escalation alerts</strong> if not resolved in 24-48 hours</li>
+                    <li><strong>High mismatch count</strong> alerts for admins (>20% daily)</li>
+                    <li><strong>Immediate alerts</strong> for critical discrepancies</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Mismatch types to alert on</li>
+                    <li>Escalation timing (24h/48h)</li>
+                    <li>Resolution steps included</li>
+                    <li>Acknowledgment requirements</li>
+                    <li>Alert immediately setting</li>
+                    <li>Include resolution steps</li>
+                    <li>Auto-escalation days</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 5: Manager Feedback -->
+        <div id="notification-5" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">📝</span>
+                <div class="notification-title">
+                    <h2>Manager Feedback Notifications</h2>
+                    <div class="notification-subtitle">05_manager_feedback_notifications.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Send feedback from managers to vendors regarding status approvals, rejections, or corrections needed</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge vendor">Vendors</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>Immediately</strong> when manager approves/rejects status</li>
+                    <li><strong>Within 1 hour</strong> of manager action</li>
+                    <li><strong>Includes corrective actions</strong> if status rejected</li>
+                    <li><strong>Manager comments</strong> and guidance included</li>
+                    <li><strong>Next steps</strong> clearly outlined</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Feedback types (approval/rejection/correction)</li>
+                    <li>Manager comments inclusion</li>
+                    <li>Next steps guidance</li>
+                    <li>Deadline reminders</li>
+                    <li>Include manager comments</li>
+                    <li>Require acknowledgment</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 6: Monthly Reports -->
+        <div id="notification-6" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">📈</span>
+                <div class="notification-title">
+                    <h2>Monthly Report Notifications</h2>
+                    <div class="notification-subtitle">06_monthly_report_notifications.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Automated delivery of comprehensive monthly attendance reports with trends and insights</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge manager">Managers</div>
+                    <div class="recipients-badge admin">Admins</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>1st of each month</strong> at 9:00 AM</li>
+                    <li><strong>Monthly reconciliation</strong> completion notification</li>
+                    <li><strong>Includes previous month data</strong>, trends, and insights</li>
+                    <li><strong>Separate reports</strong> for managers (team) and admins (organization)</li>
+                    <li><strong>PDF attachments</strong> with detailed analytics</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Report generation day (1st/last of month)</li>
+                    <li>Report format (PDF/Excel)</li>
+                    <li>Charts and trends inclusion</li>
+                    <li>Comparative analysis</li>
+                    <li>Include charts and trends</li>
+                    <li>Auto-email report setting</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 7: Admin System Alerts -->
+        <div id="notification-7" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">🚨</span>
+                <div class="notification-title">
+                    <h2>Admin System Alerts</h2>
+                    <div class="notification-subtitle">07_admin_system_alerts.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Critical system notifications for administrators regarding errors, performance issues, and security alerts</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge admin">System Administrators</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>System errors</strong> (database, imports, exports)</li>
+                    <li><strong>High mismatch rates</strong> (>20% daily)</li>
+                    <li><strong>Security alerts</strong> (failed logins, suspicious activity)</li>
+                    <li><strong>Performance issues</strong> (slow responses, timeouts)</li>
+                    <li><strong>Data integrity issues</strong> and critical system failures</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Alert severity levels (ERROR/WARNING/INFO)</li>
+                    <li>Escalation timing</li>
+                    <li>System status inclusion</li>
+                    <li>Log file attachments</li>
+                    <li>Alert immediately setting</li>
+                    <li>Include system status</li>
+                    <li>Escalation levels (3)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 8: Holiday Reminders -->
+        <div id="notification-8" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">🏖️</span>
+                <div class="notification-title">
+                    <h2>Holiday Reminder Notifications</h2>
+                    <div class="notification-subtitle">08_holiday_reminder_notifications.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Remind all users about upcoming holidays and provide relevant policy information</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge all">All Users</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>3 days before holiday</strong> (advance notice reminder)</li>
+                    <li><strong>1 day before holiday</strong> (final reminder)</li>
+                    <li><strong>Includes holiday policy</strong> information and guidelines</li>
+                    <li><strong>Calendar integration</strong> details provided</li>
+                    <li><strong>All user types</strong> (Vendors, Managers, Admins) included</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Days before holiday (3,1 default)</li>
+                    <li>Holiday details inclusion</li>
+                    <li>Policy links and documents</li>
+                    <li>Calendar integration</li>
+                    <li>Include holiday details</li>
+                    <li>Include policy links</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 9: Late Submission Alerts -->
+        <div id="notification-9" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">⏰</span>
+                <div class="notification-title">
+                    <h2>Late Submission Alerts</h2>
+                    <div class="notification-subtitle">09_late_submission_alerts.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Alert management about vendors with late attendance submissions and track patterns</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge manager">Managers</div>
+                    <div class="recipients-badge admin">Admins</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>24 hours after deadline</strong> (first alert to managers)</li>
+                    <li><strong>48 hours after deadline</strong> (escalation alert to admins)</li>
+                    <li><strong>Weekly summary</strong> of chronic late submitters</li>
+                    <li><strong>Pattern detection</strong> for repeated late submissions</li>
+                    <li><strong>Manager action</strong> recommendations included</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Grace period hours (2 default)</li>
+                    <li>Alert frequency (hourly/daily)</li>
+                    <li>Vendor list inclusion</li>
+                    <li>Auto follow-up actions</li>
+                    <li>Include vendor list</li>
+                    <li>Auto follow-up setting</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Notification 10: Billing Corrections -->
+        <div id="notification-10" class="notification-card">
+            <div class="notification-header">
+                <span class="notification-icon">💰</span>
+                <div class="notification-title">
+                    <h2>Billing Correction Notifications</h2>
+                    <div class="notification-subtitle">10_billing_correction_notifications.xlsx</div>
+                </div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <h4>📋 Purpose</h4>
+                    <p>Notify stakeholders about billing adjustments, corrections, and financial reconciliations</p>
+                </div>
+                <div class="info-item">
+                    <h4>👥 Recipients</h4>
+                    <div class="recipients-badge manager">Managers</div>
+                    <div class="recipients-badge admin">Admins</div>
+                </div>
+                <div class="info-item">
+                    <h4>📱 Delivery Method</h4>
+                    <div class="delivery-methods">
+                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trigger-list">
+                <h4>⏰ Trigger Conditions</h4>
+                <ul>
+                    <li><strong>When billing corrections processed</strong> (monthly/quarterly)</li>
+                    <li><strong>When hours adjusted</strong> for overtime, leave, corrections</li>
+                    <li><strong>When discrepancies found</strong> in billing calculations</li>
+                    <li><strong>Financial impact</strong> above threshold levels</li>
+                    <li><strong>Audit trail</strong> and justification required</li>
+                </ul>
+            </div>
+
+            <div class="config-options">
+                <h5>⚙️ Configurable Options</h5>
+                <ul class="config-list">
+                    <li>Correction types (HOURS/OVERTIME/LEAVE)</li>
+                    <li>Financial details inclusion</li>
+                    <li>Original values comparison</li>
+                    <li>Audit trail inclusion</li>
+                    <li>Include original values</li>
+                    <li>Require approval setting</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Summary Table -->
+        <div class="summary-table">
+            <h2>🎯 Notification Timing Summary</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Notification Type</th>
+                            <th>Frequency</th>
+                            <th>Primary Trigger Time</th>
+                            <th>Recipients</th>
+                            <th>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Daily Status Reminders</td>
+                            <td>Every 3 hours</td>
+                            <td>9 AM - 6 PM</td>
+                            <td>Vendors</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td>Manager Summary</td>
+                            <td>2x daily</td>
+                            <td>12 PM, 2 PM</td>
+                            <td>Managers</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td>All-Complete</td>
+                            <td>Event-driven</td>
+                            <td>When team complete</td>
+                            <td>Managers</td>
+                            <td>Low</td>
+                        </tr>
+                        <tr>
+                            <td>Mismatch Alerts</td>
+                            <td>Daily + Escalation</td>
+                            <td>6 PM daily</td>
+                            <td>Vendors, Managers</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td>Manager Feedback</td>
+                            <td>Event-driven</td>
+                            <td>Within 1 hour</td>
+                            <td>Vendors</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td>Monthly Reports</td>
+                            <td>Monthly</td>
+                            <td>1st at 9 AM</td>
+                            <td>Managers, Admins</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td>System Alerts</td>
+                            <td>Event-driven</td>
+                            <td>Immediate</td>
+                            <td>Admins</td>
+                            <td>Critical</td>
+                        </tr>
+                        <tr>
+                            <td>Holiday Reminders</td>
+                            <td>Before holidays</td>
+                            <td>3 days, 1 day before</td>
+                            <td>All Users</td>
+                            <td>Low</td>
+                        </tr>
+                        <tr>
+                            <td>Late Submission</td>
+                            <td>After deadlines</td>
+                            <td>24h, 48h after</td>
+                            <td>Managers, Admins</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td>Billing Corrections</td>
+                            <td>When processed</td>
+                            <td>Monthly/Quarterly</td>
+                            <td>Managers, Finance</td>
+                            <td>High</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Smart Features Section -->
+        <div class="features-section">
+            <h2>🔧 Smart Notification Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">⚡</span>
+                    <h3>Real-Time Database Sync</h3>
+                    <p>Notification recipients automatically update when users are added, removed, or roles change. No manual intervention required.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🎯</span>
+                    <h3>Intelligent Filtering</h3>
+                    <p>Time-aware, holiday-aware, role-based, and status-aware filtering ensures notifications reach the right people at the right time.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📱</span>
+                    <h3>Teams-First Delivery</h3>
+                    <p>All notifications delivered through Microsoft Teams for instant, centralized communication. Optimized for workplace collaboration and real-time engagement.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <h3>Excel Configuration</h3>
+                    <p>All notification settings managed through Excel files. Non-technical users can easily modify timing, content, and recipients.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🔍</span>
+                    <h3>Monitoring & Validation</h3>
+                    <p>Continuous health checks, sync validation, and auto-repair ensure the notification system runs reliably 24/7.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🌐</span>
+                    <h3>Power Automate Ready</h3>
+                    <p>Full webhook integration with Microsoft Power Automate for advanced automation workflows and business logic.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>🚀 ATTENDO Notification System</h3>
+            <p>Zero missed notifications with always accurate recipient lists through real-time synchronization!</p>
+        </div>
+    </div>
+
+    <button class="scroll-to-top" onclick="scrollToTop()" id="scrollBtn">↑</button>
+
+    <script>
+        // Navigation toggle functionality
+        function toggleNavigation() {
+            const navContent = document.getElementById('navContent');
+            const toggleIcon = document.getElementById('navToggleIcon');
+            
+            if (navContent.classList.contains('expanded')) {
+                navContent.classList.remove('expanded');
+                navContent.classList.add('collapsed');
+                toggleIcon.classList.add('collapsed');
+                toggleIcon.textContent = '▶️';
+            } else {
+                navContent.classList.remove('collapsed');
+                navContent.classList.add('expanded');
+                toggleIcon.classList.remove('collapsed');
+                toggleIcon.textContent = '🔽';
+            }
+        }
+
+        // Show scroll to top button
+        window.onscroll = function() {
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                document.getElementById("scrollBtn").style.display = "block";
+            } else {
+                document.getElementById("scrollBtn").style.display = "none";
+            }
+        };
+
+        function scrollToTop() {
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add loading animation for tables
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.notification-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        // Save navigation state in localStorage
+        document.addEventListener('DOMContentLoaded', function() {
+            const navContent = document.getElementById('navContent');
+            const toggleIcon = document.getElementById('navToggleIcon');
+            const savedState = localStorage.getItem('navMenuCollapsed');
+            
+            if (savedState === 'true') {
+                navContent.classList.remove('expanded');
+                navContent.classList.add('collapsed');
+                toggleIcon.classList.add('collapsed');
+                toggleIcon.textContent = '▶️';
+            }
+        });
+
+        // Update localStorage when navigation is toggled
+        const originalToggle = toggleNavigation;
+        toggleNavigation = function() {
+            originalToggle();
+            const isCollapsed = document.getElementById('navContent').classList.contains('collapsed');
+            localStorage.setItem('navMenuCollapsed', isCollapsed);
+        };
+    </script>
+</body>
+</html>

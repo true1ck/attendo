@@ -107,7 +107,10 @@ def generate_monthly_report(manager_id, month_str):
         return []
 
 def import_swipe_data(file_path):
-    """Import attendance swipe machine data from Excel or CSV file"""
+    """Import attendance swipe machine data from Excel or CSV file
+    Expected columns: Employee Code, Employee Name, Attendance, WeekDay, 
+    Shift Code, Login, Logout, Extra Work Hours, Total Working Hours, Department
+    """
     try:
         # Read file based on extension
         if file_path.lower().endswith('.csv'):
@@ -116,16 +119,65 @@ def import_swipe_data(file_path):
             df = pd.read_excel(file_path)
         
         records_imported = 0
+        records_skipped = 0
+        errors = []
         
-        for _, row in df.iterrows():
+        # Print column names for debugging
+        print(f"Excel columns found: {df.columns.tolist()}")
+        
+        for idx, row in df.iterrows():
             try:
-                # Map vendor by employee ID (assuming vendor_id matches Employee ID)
-                vendor = Vendor.query.filter_by(vendor_id=str(row['Employee ID'])).first()
-                if not vendor:
+                # Skip rows with no employee code
+                if pd.isna(row.get('Employee Code', None)):
                     continue
+                    
+                # Map vendor by employee code (e.g., OT1)
+                employee_code = str(row['Employee Code']).strip()
+                vendor = Vendor.query.filter_by(vendor_id=employee_code).first()
                 
-                # Parse date
-                attendance_date = pd.to_datetime(row['Attendance Date']).date()
+                # If vendor doesn't exist, try to create one
+                if not vendor:
+                    # Check if we have employee name
+                    employee_name = str(row.get('Employee Name', 'Unknown')).strip()
+                    department = str(row.get('Department', 'Unknown')).strip()
+                    
+                    # Create user account first
+                    user = User.query.filter_by(username=employee_code).first()
+                    if not user:
+                        user = User(
+                            username=employee_code,
+                            email=f"{employee_code.lower()}@vendor.com",
+                            role=UserRole.VENDOR,
+                            is_active=True
+                        )
+                        user.set_password('vendor123')  # Default password
+                        models.db.session.add(user)
+                        models.db.session.flush()
+                    
+                    # Create vendor profile
+                    vendor = Vendor(
+                        user_id=user.id,
+                        vendor_id=employee_code,
+                        full_name=employee_name,
+                        department=department,
+                        company='Vendor Company',  # Default company
+                        band='B2',  # Default band
+                        location='BL-A-5F'  # Default location
+                    )
+                    models.db.session.add(vendor)
+                    models.db.session.flush()
+                    print(f"Created new vendor: {employee_code} - {employee_name}")
+                
+                # Parse date from Attendance column (format: DD/MM/YYYY)
+                attendance_str = str(row['Attendance'])
+                # Handle both DD/MM/YYYY and MM/DD/YYYY formats
+                try:
+                    attendance_date = pd.to_datetime(attendance_str, format='%d/%m/%Y').date()
+                except:
+                    try:
+                        attendance_date = pd.to_datetime(attendance_str, format='%m/%d/%Y').date()
+                    except:
+                        attendance_date = pd.to_datetime(attendance_str).date()
                 
                 # Check if record already exists
                 existing_record = SwipeRecord.query.filter_by(
@@ -134,49 +186,121 @@ def import_swipe_data(file_path):
                 ).first()
                 
                 if existing_record:
+                    records_skipped += 1
                     continue
                 
-                # Parse times
+                # Parse times (handle time format HH:MM)
                 login_time = None
                 logout_time = None
                 total_hours = 0
+                extra_hours = 0
                 
-                if pd.notna(row['Login']) and row['Login'] != '-':
-                    login_time = pd.to_datetime(row['Login']).time()
+                # Parse Login time
+                if pd.notna(row.get('Login')) and str(row['Login']).strip() not in ['-', '']:
+                    try:
+                        login_str = str(row['Login']).strip()
+                        # Handle time format like "10:32" or "10.32"
+                        login_str = login_str.replace('.', ':')
+                        if ':' in login_str:
+                            login_time = pd.to_datetime(login_str, format='%H:%M').time()
+                        else:
+                            login_time = pd.to_datetime(login_str).time()
+                    except:
+                        pass
                 
-                if pd.notna(row['Logout']) and row['Logout'] != '-':
-                    logout_time = pd.to_datetime(row['Logout']).time()
+                # Parse Logout time
+                if pd.notna(row.get('Logout')) and str(row['Logout']).strip() not in ['-', '']:
+                    try:
+                        logout_str = str(row['Logout']).strip()
+                        # Handle time format like "17:25" or "17.25"
+                        logout_str = logout_str.replace('.', ':')
+                        if ':' in logout_str:
+                            logout_time = pd.to_datetime(logout_str, format='%H:%M').time()
+                        else:
+                            logout_time = pd.to_datetime(logout_str).time()
+                    except:
+                        pass
                 
-                if pd.notna(row['Total Working Hours']) and row['Total Working Hours'] != '-':
-                    # Parse time string like "07:21" to hours
-                    time_parts = str(row['Total Working Hours']).split(':')
-                    if len(time_parts) == 2:
-                        total_hours = float(time_parts[0]) + float(time_parts[1]) / 60
+                # Parse Total Working Hours (format: HH:MM or decimal)
+                if pd.notna(row.get('Total Working Hours')) and str(row['Total Working Hours']).strip() not in ['-', '']:
+                    try:
+                        hours_str = str(row['Total Working Hours']).strip()
+                        if ':' in hours_str:
+                            # Format like "07:21"
+                            time_parts = hours_str.split(':')
+                            total_hours = float(time_parts[0]) + float(time_parts[1]) / 60
+                        elif '.' in hours_str:
+                            # Format like "7.35" (decimal hours)
+                            total_hours = float(hours_str)
+                        else:
+                            total_hours = float(hours_str)
+                    except:
+                        total_hours = 0
+                
+                # Parse Extra Work Hours if available
+                if pd.notna(row.get('Extra Work Hours')) and str(row['Extra Work Hours']).strip() not in ['-', '']:
+                    try:
+                        extra_str = str(row['Extra Work Hours']).strip()
+                        if ':' in extra_str:
+                            time_parts = extra_str.split(':')
+                            extra_hours = float(time_parts[0]) + float(time_parts[1]) / 60
+                        else:
+                            extra_hours = float(extra_str)
+                    except:
+                        extra_hours = 0
+                
+                # Determine attendance status from Shift Code
+                shift_code = str(row.get('Shift Code', 'AA')).strip().upper()
+                attendance_status = 'AP' if shift_code == 'G' else 'AA'  # G = Present, else Absent
+                
+                # Get weekday
+                weekday = str(row.get('WeekDay', '')).strip()
                 
                 # Create swipe record
                 swipe_record = SwipeRecord(
                     vendor_id=vendor.id,
                     attendance_date=attendance_date,
-                    weekday=row['Weekday'],
+                    weekday=weekday,
+                    shift_code=shift_code,
                     login_time=login_time,
                     logout_time=logout_time,
                     total_hours=total_hours,
-                    attendance_status=row['Attendance Status']
+                    extra_hours=extra_hours,
+                    attendance_status=attendance_status
                 )
                 
                 models.db.session.add(swipe_record)
                 records_imported += 1
                 
+                # Print progress every 100 records
+                if records_imported % 100 == 0:
+                    print(f"Imported {records_imported} records...")
+                
             except Exception as e:
-                print(f"Error processing row: {str(e)}")
+                error_msg = f"Error processing row {idx}: {str(e)}"
+                print(error_msg)
+                errors.append(error_msg)
                 continue
         
         models.db.session.commit()
+        
+        # Print summary
+        print(f"\n=== Import Summary ===")
+        print(f"Total records imported: {records_imported}")
+        print(f"Records skipped (already exist): {records_skipped}")
+        print(f"Errors encountered: {len(errors)}")
+        if errors and len(errors) <= 10:
+            print("\nFirst 10 errors:")
+            for err in errors[:10]:
+                print(f"  - {err}")
+        
         return records_imported
         
     except Exception as e:
         models.db.session.rollback()
         print(f"Error importing swipe data: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return 0
 
 def detect_mismatches():
@@ -548,3 +672,175 @@ def predict_absence_risk(vendor_id, days_ahead=7):
     except Exception as e:
         print(f"Error predicting absence risk: {str(e)}")
         return {'risk_score': 0, 'confidence': 'low', 'factors': []}
+
+
+def generate_ai_insights(manager_id, prediction_window_days=7):
+    """Generate AI-like insights and predictions for a manager's team using simple heuristics.
+    Returns a tuple: (predictions, ai_stats, risk_distribution)
+    - predictions: list of dicts for display in the table
+    - ai_stats: summary KPIs used by the cards at the top
+    - risk_distribution: counts for Low/Medium/High/Critical used by donut chart
+    """
+    try:
+        from collections import defaultdict
+        today = date.today()
+        manager = Manager.query.get(manager_id)
+        team_vendors = manager.team_vendors.all() if manager and manager.team_vendors else []
+
+        predictions = []
+        risk_counts = { 'low': 0, 'medium': 0, 'high': 0, 'critical': 0 }
+        absence_pred_count = 0
+        wfh_pred_count = 0
+        pattern_insights_count = 0
+
+        # Pre-fetch holidays for the prediction window (with small buffer)
+        holiday_set = {
+            h.holiday_date for h in Holiday.query.filter(
+                Holiday.holiday_date >= today,
+                Holiday.holiday_date <= today + timedelta(days=prediction_window_days + 14)
+            ).all()
+        }
+
+        # Helper to get next working date matching a target weekday, within the window
+        def next_working_date_for_weekday(start_date, target_weekday, window_days):
+            for i in range(1, window_days + 1):
+                d = start_date + timedelta(days=i)
+                if d.weekday() != target_weekday:
+                    continue
+                # Only consider Mon-Fri and not a holiday
+                if d.weekday() >= 5 or d in holiday_set:
+                    continue
+                return d
+            return None
+
+        for v in team_vendors:
+            # Look back 120 days for patterns
+            start_lookback = today - timedelta(days=120)
+            statuses = DailyStatus.query.filter(
+                DailyStatus.vendor_id == v.id,
+                DailyStatus.status_date >= start_lookback,
+                DailyStatus.status_date <= today
+            ).all()
+
+            if not statuses:
+                continue
+
+            # Day-of-week pattern tracking
+            dow_total = [0] * 7
+            dow_leave = [0] * 7
+            dow_wfh = [0] * 7
+            for s in statuses:
+                dow = s.status_date.weekday()
+                dow_total[dow] += 1
+                if s.status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]:
+                    dow_leave[dow] += 1
+                elif s.status in [AttendanceStatus.WFH_FULL, AttendanceStatus.WFH_HALF]:
+                    dow_wfh[dow] += 1
+
+            # Determine strongest pattern (leave vs wfh) and best weekday
+            best_type = None
+            best_dow = None
+            best_rate = 0.0
+            for dwi in range(7):
+                if dow_total[dwi] == 0:
+                    continue
+                leave_rate = dow_leave[dwi] / dow_total[dwi]
+                wfh_rate = dow_wfh[dwi] / dow_total[dwi]
+                if leave_rate >= wfh_rate and leave_rate > best_rate:
+                    best_rate = leave_rate
+                    best_type = 'leave'
+                    best_dow = dwi
+                if wfh_rate > leave_rate and wfh_rate > best_rate:
+                    best_rate = wfh_rate
+                    best_type = 'wfh'
+                    best_dow = dwi
+
+            # Base risk from existing heuristic function
+            risk_info = predict_absence_risk(v.id, days_ahead=prediction_window_days)
+            base_score = risk_info.get('risk_score', 0)
+            reasons = list(risk_info.get('factors', []))
+
+            # Add pattern reason if any
+            if best_dow is not None and best_rate > 0:
+                weekday_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+                if best_type == 'leave':
+                    reasons.append(f"Historical pattern: higher leave on {weekday_names[best_dow]} ({best_rate*100:.0f}%)")
+                else:
+                    reasons.append(f"Historical pattern: higher WFH on {weekday_names[best_dow]} ({best_rate*100:.0f}%)")
+
+            # Predicted date (prefer pattern weekday, next working day within window)
+            predicted_date = None
+            if best_dow is not None:
+                predicted_date = next_working_date_for_weekday(today, best_dow, prediction_window_days)
+            if not predicted_date:
+                # Fallback: first working day within window
+                for i in range(1, prediction_window_days + 1):
+                    d = today + timedelta(days=i)
+                    if d.weekday() < 5 and d not in holiday_set:
+                        predicted_date = d
+                        break
+
+            # Combine base score with pattern rate to estimate likelihood
+            likelihood = int(min(95, max(40, base_score * 0.6 + (best_rate * 100.0) * 0.5)))
+
+            # Risk level
+            if likelihood >= 90:
+                level = 'Critical'
+            elif likelihood >= 75:
+                level = 'High'
+            elif likelihood >= 60:
+                level = 'Medium'
+            else:
+                level = 'Low'
+
+            # Recommendation
+            if level in ['Critical', 'High']:
+                recommendation = 'Urgent Intervention' if best_type == 'leave' else 'Schedule Backup'
+            elif level == 'Medium':
+                recommendation = 'Proactive Check-in'
+            else:
+                recommendation = 'Schedule Backup'
+
+            # Counters
+            if best_type == 'leave':
+                absence_pred_count += 1
+            elif best_type == 'wfh':
+                wfh_pred_count += 1
+            risk_counts[level.lower()] += 1
+            pattern_insights_count += len(reasons)
+
+            predictions.append({
+                'vendor_id': v.vendor_id,
+                'vendor_name': v.full_name,
+                'predicted_date': predicted_date.isoformat() if predicted_date else None,
+                'predicted_date_display': predicted_date.strftime('%b %d, %Y') if predicted_date else '-',
+                'likelihood': likelihood,
+                'risk_level': level,
+                'type': best_type or 'leave',
+                'reasons': reasons,
+                'recommendation': recommendation,
+            })
+
+        # Sort predictions by likelihood descending
+        predictions.sort(key=lambda p: p['likelihood'], reverse=True)
+
+        ai_stats = {
+            'absence_predictions': absence_pred_count,
+            'wfh_predictions': wfh_pred_count,
+            'risk_alerts': risk_counts['high'] + risk_counts['critical'],
+            'pattern_insights': pattern_insights_count,
+            'last_trained': datetime.now().strftime('%Y-%m-%d %H:%M'),
+            'predictions_made': len(predictions),
+            # Leave accuracy None to allow template fallback display, or set 'N/A'
+            'accuracy': None,
+        }
+        risk_distribution = {
+            'low': risk_counts['low'],
+            'medium': risk_counts['medium'],
+            'high': risk_counts['high'],
+            'critical': risk_counts['critical'],
+        }
+        return predictions, ai_stats, risk_distribution
+    except Exception as e:
+        print(f"Error generating AI insights: {str(e)}")
+        return [], {'absence_predictions': 0, 'wfh_predictions': 0, 'risk_alerts': 0, 'pattern_insights': 0, 'last_trained': datetime.now().strftime('%Y-%m-%d %H:%M'), 'predictions_made': 0, 'accuracy': None}, {'low': 0, 'medium': 0, 'high': 0, 'critical': 0}

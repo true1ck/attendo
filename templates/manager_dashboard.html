@@ -8,10 +8,10 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="fas fa-users me-2"></i>Manager Dashboard</h2>
             <div>
-                <button class="btn btn-warning me-2">
+                <button class="btn btn-warning me-2" onclick="sendBulkReminders()">
                     <i class="fas fa-bell me-1"></i>Send Reminders
                 </button>
-                <button class="btn btn-info">
+                <button class="btn btn-info" onclick="generateReport()">
                     <i class="fas fa-download me-1"></i>Export Report
                 </button>
             </div>
@@ -92,7 +92,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Team Status - Today ({{ today_date }})</h5>
-                <button class="btn btn-sm btn-outline-primary" onclick="refreshTeamStatus()">
+                <button class="btn btn-sm btn-outline-light" onclick="refreshTeamStatus()">
                     <i class="fas fa-sync-alt me-1"></i>Refresh
                 </button>
             </div>
@@ -165,10 +165,6 @@
                                                     title="Reject Status">
                                                 <i class="fas fa-times"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-outline-info" onclick="viewDetails({{ status.id }})"
-                                                    title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
                                         {% elif status.approval_status.value == 'approved' %}
                                             <span class="badge bg-success">
                                                 <i class="fas fa-check me-1"></i>Approved
@@ -179,9 +175,20 @@
                                             </span>
                                         {% endif %}
                                     {% else %}
-                                        <button class="btn btn-sm btn-warning" onclick="sendReminder('{{ vendor.vendor_id }}')"
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock me-1"></i>Awaiting Submission
+                                        </span>
+                                    {% endif %}
+                                    
+                                    <button class="btn btn-sm btn-outline-primary ms-1" onclick="viewDetails('{{ vendor.vendor_id }}')"
+                                            title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    
+                                    {% if not status %}
+                                        <button class="btn btn-sm btn-outline-warning ms-1" onclick="sendReminder('{{ vendor.vendor_id }}')"
                                                 title="Send Reminder">
-                                            <i class="fas fa-bell"></i> Remind
+                                            <i class="fas fa-bell"></i>
                                         </button>
                                     {% endif %}
                                     
@@ -300,14 +307,11 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <button class="btn btn-primary" onclick="sendBulkReminders()">
-                        <i class="fas fa-bullhorn me-2"></i>Send Daily Reminders
-                    </button>
                     <button class="btn btn-outline-secondary" onclick="viewTeamCalendar()">
                         <i class="fas fa-calendar me-2"></i>Holiday Calendar
                     </button>
                     <button class="btn btn-outline-info" onclick="generateReport()">
-                        <i class="fas fa-chart-bar me-2"></i>Weekly Report
+                        <i class="fas fa-chart-bar me-2"></i>Team Reports
                     </button>
                     <button class="btn btn-outline-warning" onclick="viewMismatches()">
                         <i class="fas fa-exclamation-triangle me-2"></i>Review Mismatches
@@ -431,18 +435,6 @@ function rejectStatus(statusId) {
     }
 }
 
-function viewDetails(statusId) {
-    // TODO: Implement modal or redirect to details page
-    alert('View details for status ' + statusId + ' (Demo)');
-}
-
-function sendReminder(vendorId) {
-    if (confirm('Send reminder to this vendor?')) {
-        // TODO: Implement AJAX call
-        console.log('Sending reminder to vendor:', vendorId);
-        alert('Reminder sent! (Demo)');
-    }
-}
 
 function getSelectedPendingIds() {
     const checkboxes = Array.from(document.querySelectorAll('.pending-checkbox'));
@@ -503,36 +495,47 @@ function bulkRejectAll() {
     }
 }
 
-function sendBulkReminders() {
-    if (confirm('Send daily reminders to all team members?')) {
-        console.log('Sending bulk reminders');
-        alert('Daily reminders sent to all team members! (Demo)');
-    }
-}
-
-function viewTeamCalendar() {
-    // Navigate to shared holiday calendar
-    window.location.href = '/holiday-calendar';
-}
-
 function generateReport() {
     window.location.href = '/manager/reports';
 }
 
-function viewMismatches() {
-    window.location.href = '/manager/mismatches';
-}
-
-function refreshTeamStatus() {
-    console.log('Refreshing team status');
-    // TODO: Implement AJAX refresh
-    alert('Team status refreshed! (Demo)');
-    location.reload();
+function viewMismatches(vendorId) {
+    // If vendorId provided, filter by that vendor
+    if (vendorId) {
+        window.location.href = '/manager/mismatches?vendor=' + vendorId;
+    } else {
+        window.location.href = '/manager/mismatches';
+    }
 }
 
 function viewAIInsights() {
     window.location.href = '/manager/ai-insights';
 }
 
+function viewTeamCalendar() {
+    window.location.href = '/holiday-calendar';
+}
+
+function viewDetails(vendorId) {
+    alert('Demo: View details for vendor ' + vendorId + '\n\nThis would show:\n• Detailed status history\n• Performance metrics\n• Recent activities\n• Contact information');
+}
+
+function sendReminder(vendorId) {
+    if (confirm('Send reminder to vendor ' + vendorId + '?')) {
+        alert('Demo: Reminder sent to vendor ' + vendorId + '\n\nIn production, this would:\n• Send email/SMS notification\n• Log the reminder action\n• Update dashboard status');
+    }
+}
+
+function sendBulkReminders() {
+    if (confirm('Send reminders to all vendors who haven\'t submitted today?')) {
+        alert('Demo: Bulk reminders sent!\n\nIn production, this would:\n• Identify non-submitters\n• Send batch notifications\n• Log all reminder actions\n• Update dashboard counts');
+    }
+}
+
+function refreshTeamStatus() {
+    alert('Demo: Refreshing team status...\n\nIn production, this would:\n• Fetch latest status data\n• Update dashboard counts\n• Refresh team member table\n• Show loading indicators');
+    location.reload();
+}
 </script>
+
 {% endblock %}

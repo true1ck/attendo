@@ -51,8 +51,25 @@ app.register_blueprint(import_bp)
 # Register Swagger UI
 register_swagger_ui(app)
 
+# Register Power Automate API
+try:
+    from scripts.power_automate_api import register_power_automate_api
+    register_power_automate_api(app)
+except ImportError as e:
+    print(f"⚠️ Power Automate API not available: {e}")
+
 # Initialize notification service
 notification_service.init_app(app)
+
+# Real-time sync configuration
+app.config['SYNC_INTERVAL_MINUTES'] = 5
+app.config['WEBHOOK_TIMEOUT_SECONDS'] = 30
+app.config['ENABLE_POWER_AUTOMATE_WEBHOOKS'] = True
+app.config['POWER_AUTOMATE_WEBHOOK_URLS'] = []
+app.config['SYNC_MONITORING_INTERVAL_MINUTES'] = 30
+app.config['SYNC_VALIDATION_INTERVAL_HOURS'] = 6
+app.config['ADMIN_EMAILS'] = ['admin@attendo.com']
+app.config['SYNC_ALERT_FROM'] = 'attendo-sync@attendo.com'
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -60,17 +77,63 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 def create_tables():
-    """Create database tables and initialize demo data"""
+    """Create database tables and ensure default Admin user exists"""
     with app.app_context():
-        from models import User
+        from models import User, UserRole
         db.create_all()
         
-        # Check if demo data already exists
-        if User.query.count() == 0:
-            initialize_demo_data()
+        # Run database migrations if needed
+        try:
+            from migrate_database import migrate_database
+            print("🔄 Checking for database migrations...")
+            migrate_database()
+        except Exception as e:
+            print(f"⚠️ Migration check failed: {e}")
+        
+        # Ensure default Admin user exists (Admin/admin123)
+        from sqlalchemy import or_
+        admin_user = User.query.filter(or_(
+            User.username == 'Admin',
+            User.username == 'admin',
+            User.email == 'admin@attendo.com'
+        )).first()
+        if admin_user:
+            # Normalize credentials to requested ones
+            admin_user.username = 'Admin'
+            admin_user.email = 'admin@attendo.com'
+            admin_user.role = UserRole.ADMIN
+            admin_user.is_active = True
+            admin_user.set_password('admin123')
+            db.session.commit()
+        else:
+            admin_user = User(
+                username='Admin',
+                email='admin@attendo.com',
+                role=UserRole.ADMIN,
+                is_active=True
+            )
+            admin_user.set_password('admin123')
+            db.session.add(admin_user)
+            db.session.commit()
         
         # Setup notification scheduler after tables are created
         setup_notification_scheduler(app, notification_service)
+        
+        # Initialize real-time notification sync system
+        try:
+            from scripts.setup_realtime_notification_sync import setup_complete_notification_sync_system
+            print("\n🚀 Initializing Real-Time Notification Sync System...")
+            sync_components = setup_complete_notification_sync_system(app)
+            
+            # Store components in app context for access
+            app.sync_manager = sync_components['sync_manager']
+            app.realtime_sync = sync_components['realtime_sync']
+            app.monitor = sync_components['monitor']
+            
+            print("✅ Real-Time Notification Sync System initialized successfully!")
+        except Exception as e:
+            print(f"⚠️ Real-Time Sync System initialization failed: {str(e)}")
+            print("   App will continue without real-time sync features")
 
 def initialize_demo_data():
     """Initialize the database with demo data for hackathon presentation"""
@@ -79,7 +142,7 @@ def initialize_demo_data():
 
 # Import all the route functions directly here
 from models import User, Vendor, Manager, DailyStatus, SwipeRecord, Holiday, MismatchRecord, NotificationLog, AuditLog, SystemConfiguration, LeaveRecord, WFHRecord, UserRole, AttendanceStatus, ApprovalStatus
-from utils import create_audit_log, generate_monthly_report, import_swipe_data, detect_mismatches, set_system_config, get_system_config
+from utils import create_audit_log, generate_monthly_report, import_swipe_data, detect_mismatches, set_system_config, get_system_config, generate_ai_insights
 
 @app.route('/')
 def index():
@@ -95,25 +158,48 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """User login"""
+    """User login with clear feedback for common errors"""
+    prefill_username = ''
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = (request.form.get('username') or '').strip()
+        password = (request.form.get('password') or '').strip()
+        prefill_username = username
+
+        # Basic validation
+        if not username and not password:
+            flash('Please enter your username and password.', 'warning')
+            return render_template('login.html', prefill_username=prefill_username)
+        if not username:
+            flash('Please enter your username.', 'warning')
+            return render_template('login.html', prefill_username=prefill_username)
+        if not password:
+            flash('Please enter your password.', 'warning')
+            return render_template('login.html', prefill_username=prefill_username)
+
+        # Find user by username (or email fallback if needed later)
         user = User.query.filter_by(username=username).first()
+
+        if not user:
+            flash('User not found. Please check your username.', 'error')
+            return render_template('login.html', prefill_username=prefill_username)
+
+        if not user.is_active:
+            flash('Your account is disabled. Please contact the administrator.', 'error')
+            return render_template('login.html', prefill_username=prefill_username)
         
-        if user and user.check_password(password):
-            login_user(user)
-            user.last_login = datetime.utcnow()
-            db.session.commit()
-            
-            create_audit_log(user.id, 'LOGIN', 'users', user.id, {}, {'last_login': str(datetime.utcnow())})
-            
-            flash(f'Welcome {user.username}!', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('Invalid username or password', 'error')
+        if not user.check_password(password):
+            flash('Incorrect password. Please try again.', 'error')
+            return render_template('login.html', prefill_username=prefill_username)
+
+        # Success
+        login_user(user)
+        user.last_login = datetime.utcnow()
+        db.session.commit()
+        create_audit_log(user.id, 'LOGIN', 'users', user.id, {}, {'last_login': str(datetime.utcnow())})
+        flash(f'Welcome {user.username}!', 'success')
+        return redirect(url_for('index'))
     
-    return render_template('login.html')
+    return render_template('login.html', prefill_username=prefill_username)
 
 @app.route('/logout')
 @login_required
@@ -216,6 +302,15 @@ def admin_holidays():
         return redirect(url_for('index'))
     holidays = Holiday.query.order_by(Holiday.holiday_date.asc()).all()
     return render_template('admin_holidays.html', holidays=holidays)
+
+# Admin: System Settings page (bulk import, templates)
+@app.route('/admin/system-settings')
+@login_required
+def admin_system_settings():
+    if current_user.role != UserRole.ADMIN:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    return render_template('admin_system_settings.html')
 
 # Admin: Audit logs page
 @app.route('/admin/audit-logs')
@@ -549,10 +644,10 @@ def admin_deactivate_vendor(vendor_id):
         create_audit_log(current_user.id, 'UPDATE', 'users', v.user_account.id, {'is_active': True}, {'is_active': False})
     return jsonify({'success': True})
 
-# Admin: System settings (notification toggles, weekends)
-@app.route('/admin/system-settings', methods=['GET', 'POST'])
+# Admin: System settings API (notification toggles, weekends)
+@app.route('/admin/system-settings/config', methods=['GET', 'POST'])
 @login_required
-def admin_system_settings():
+def admin_system_settings_config():
     if current_user.role != UserRole.ADMIN:
         return jsonify({'error': 'Access denied'}), 403
     if request.method == 'GET':
@@ -646,6 +741,41 @@ def manager_dashboard():
                          today_statuses=today_statuses,
                          pending_statuses=pending_statuses,
                          today_date=today.strftime('%B %d, %Y'))
+
+
+@app.route('/manager/ai-insights')
+@login_required
+def manager_ai_insights():
+    """AI Insights page backed by heuristic predictions."""
+    if current_user.role != UserRole.MANAGER:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+
+    manager = current_user.manager_profile
+    if not manager:
+        flash('Manager profile not found', 'error')
+        return redirect(url_for('login'))
+
+    try:
+        # Optional query param to adjust window (days)
+        window = request.args.get('window', default='7')
+        try:
+            prediction_window = max(3, min(30, int(window)))
+        except Exception:
+            prediction_window = 7
+
+        predictions, ai_stats, risk_distribution = generate_ai_insights(manager.id, prediction_window_days=prediction_window)
+
+        return render_template(
+            'ai_insights.html',
+            ai_stats=ai_stats,
+            predictions=predictions,
+            risk_distribution=risk_distribution
+        )
+    except Exception as e:
+        flash(f'Error loading AI insights: {str(e)}', 'error')
+        # Fallback to template with no data (will show demo placeholders)
+        return render_template('ai_insights.html', ai_stats={}, predictions=[], risk_distribution={})
 
 # ============= API ROUTES FOR SWAGGER =============
 
@@ -1588,6 +1718,22 @@ def vendor_submit_status():
                        'daily_statuses', existing_status.id if existing_status else None, 
                        {}, {'status': status_value, 'location': location})
         
+        # 🆕 NEW: Update Excel sheets immediately for Power Automate
+        try:
+            from scripts.daily_excel_updater import handle_vendor_status_submission
+            handle_vendor_status_submission(vendor.vendor_id)
+            print(f"✅ Excel sheets updated for vendor {vendor.vendor_id}")
+        except ImportError:
+            try:
+                from scripts.power_automate_excel_refresh import power_automate_excel_refresh
+                power_automate_excel_refresh()
+                print(f"✅ Fallback Excel refresh completed for vendor {vendor.vendor_id}")
+            except Exception as fallback_error:
+                print(f"⚠️ Both Excel update methods failed for vendor {vendor.vendor_id}: {str(fallback_error)}")
+        except Exception as excel_error:
+            # Don't fail the main submission if Excel update fails
+            print(f"⚠️ Excel update failed for vendor {vendor.vendor_id}: {str(excel_error)}")
+        
         flash('Status submitted successfully!', 'success')
         return redirect(url_for('vendor_dashboard'))
         
@@ -1658,6 +1804,22 @@ def api_approve_status(status_id):
                        {'approval_status': 'pending'}, 
                        {'approval_status': action, 'manager_comments': reason})
         
+        # 🆕 NEW: Update Excel sheets immediately for Power Automate (same logic as vendor submission)
+        try:
+            from scripts.daily_excel_updater import handle_vendor_status_submission
+            handle_vendor_status_submission(vendor.vendor_id)
+            print(f"✅ Excel sheets updated after manager {action} for vendor {vendor.vendor_id}")
+        except ImportError:
+            try:
+                from scripts.power_automate_excel_refresh import power_automate_excel_refresh
+                power_automate_excel_refresh()
+                print(f"✅ Fallback Excel refresh completed after manager {action} for vendor {vendor.vendor_id}")
+            except Exception as fallback_error:
+                print(f"⚠️ Both Excel update methods failed after manager {action} for vendor {vendor.vendor_id}: {str(fallback_error)}")
+        except Exception as excel_error:
+            # Don't fail the main approval if Excel update fails
+            print(f"⚠️ Excel update failed after manager action for vendor {vendor.vendor_id}: {str(excel_error)}")
+        
         return jsonify({
             'status': 'success',
             'message': message,
@@ -1725,6 +1887,27 @@ def api_bulk_approve_status():
                              {'approval_status': action, 'manager_comments': ds.manager_comments})
         
         db.session.commit()
+        
+        # 🆕 NEW: Update Excel sheets for all affected vendors (same logic as individual approvals)
+        try:
+            from scripts.daily_excel_updater import handle_vendor_status_submission
+            affected_vendor_ids = [ds.vendor.vendor_id for ds in statuses]
+            for vendor_id in affected_vendor_ids:
+                try:
+                    handle_vendor_status_submission(vendor_id)
+                    print(f"✅ Excel sheets updated for vendor {vendor_id} in bulk {action}")
+                except Exception as vendor_excel_error:
+                    print(f"⚠️ Excel update failed for vendor {vendor_id} in bulk operation: {str(vendor_excel_error)}")
+        except ImportError:
+            try:
+                from scripts.power_automate_excel_refresh import power_automate_excel_refresh
+                power_automate_excel_refresh()
+                print(f"✅ Fallback Excel refresh completed for bulk {action} operation")
+            except Exception as fallback_error:
+                print(f"⚠️ Bulk Excel update fallback failed: {str(fallback_error)}")
+        except Exception as excel_error:
+            print(f"⚠️ Bulk Excel update failed: {str(excel_error)}")
+        
         return jsonify({'status': 'success', 'updated': updated, 'action': action})
     except Exception as e:
         db.session.rollback()
@@ -1912,7 +2095,7 @@ if __name__ == '__main__':
     # Create tables and initialize demo data
     with app.app_context():
         create_tables()
-        print("Database initialized with demo data!")
+        print("Database initialized. Default Admin user ensured (Admin / admin123).")
     
     # Start notification scheduler
     start_notification_scheduler()
@@ -1925,9 +2108,8 @@ if __name__ == '__main__':
     print("   Web Interface: http://localhost:5000")
     print("   API Documentation: http://localhost:5000/api/docs")
     print("\nLogin Credentials:")
-    print("   Admin:    admin / admin123")
-    print("   Manager:  manager1 / manager123")
-    print("   Vendor:   vendor1 / vendor123")
+    print("   Admin:    Admin / admin123")
+    print("   (Create Managers and Vendors via Admin > System Settings > Import)")
     print("\nPress CTRL+C to stop the server")
     print("="*70 + "\n")
     

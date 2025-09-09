@@ -1,0 +1,130 @@
+{% extends "base_fixed.html" %}
+
+{% block title %}System Settings - VendorTime{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12 d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-cogs me-2"></i>System Settings</h2>
+    <a class="btn btn-secondary" href="/admin/dashboard">
+      <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-file-import me-2"></i>Bulk Import (Excel)</h5>
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h6 class="mb-2">Manager Master</h6>
+            <form action="/import/manager-data" method="post" enctype="multipart/form-data" class="d-flex gap-2">
+              <input type="file" class="form-control" name="file" accept=".xlsx,.xls,.csv" required>
+              <button class="btn btn-success" type="submit"><i class="fas fa-upload me-1"></i>Import</button>
+            </form>
+            <a class="small d-inline-block mt-2" href="/import/sample-templates?type=manager">
+              <i class="fas fa-download me-1"></i>Download Manager template
+            </a>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="mb-2">Vendor Master</h6>
+            <form action="/import/vendor-data" method="post" enctype="multipart/form-data" class="d-flex gap-2">
+              <input type="file" class="form-control" name="file" accept=".xlsx,.xls,.csv" required>
+              <button class="btn btn-success" type="submit"><i class="fas fa-upload me-1"></i>Import</button>
+            </form>
+            <a class="small d-inline-block mt-2" href="/import/sample-templates?type=vendor">
+              <i class="fas fa-download me-1"></i>Download Vendor template
+            </a>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="mb-2">Holidays</h6>
+            <form action="/import/holiday-data" method="post" enctype="multipart/form-data" class="d-flex gap-2">
+              <input type="file" class="form-control" name="file" accept=".xlsx,.xls,.csv" required>
+              <button class="btn btn-success" type="submit"><i class="fas fa-upload me-1"></i>Import</button>
+            </form>
+            <a class="small d-inline-block mt-2" href="/import/sample-templates?type=holiday">
+              <i class="fas fa-download me-1"></i>Download Holiday template
+            </a>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="mb-2">Swipe Machine Data</h6>
+            <form action="/import/swipe-data" method="post" enctype="multipart/form-data" class="d-flex gap-2">
+              <input type="file" class="form-control" name="file" accept=".xlsx,.xls,.csv" required>
+              <button class="btn btn-primary" type="submit"><i class="fas fa-upload me-1"></i>Import</button>
+            </form>
+            <a class="small d-inline-block mt-2" href="/import/sample-templates?type=swipe">
+              <i class="fas fa-download me-1"></i>Download Swipe template
+            </a>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="mb-2">Leave Data</h6>
+            <form action="/import/leave-data" method="post" enctype="multipart/form-data" class="d-flex gap-2">
+              <input type="file" class="form-control" name="file" accept=".xlsx,.xls,.csv" required>
+              <button class="btn btn-primary" type="submit"><i class="fas fa-upload me-1"></i>Import</button>
+            </form>
+            <a class="small d-inline-block mt-2" href="/import/sample-templates?type=leave">
+              <i class="fas fa-download me-1"></i>Download Leave template
+            </a>
+          </div>
+
+          <div class="col-md-6">
+            <h6 class="mb-2">WFH Data</h6>
+            <form action="/import/wfh-data" method="post" enctype="multipart/form-data" class="d-flex gap-2">
+              <input type="file" class="form-control" name="file" accept=".xlsx,.xls,.csv" required>
+              <button class="btn btn-primary" type="submit"><i class="fas fa-upload me-1"></i>Import</button>
+            </form>
+            <a class="small d-inline-block mt-2" href="/import/sample-templates?type=wfh">
+              <i class="fas fa-download me-1"></i>Download WFH template
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Import Guidelines</h5>
+      </div>
+      <div class="card-body">
+        <ul class="small">
+          <li>Accepted files: .xlsx, .xls, or .csv</li>
+          <li>Use the provided templates to avoid header mismatches</li>
+          <li>Vendors link to Managers by "Manager ID" (ensure managers are imported first)</li>
+          <li>Holidays use ISO dates (YYYY-MM-DD)</li>
+        </ul>
+        <div class="d-grid gap-2 mt-3">
+          <a class="btn btn-outline-secondary" href="/import/sample-templates?type=manager">
+            <i class="fas fa-download me-1"></i>Manager Template
+          </a>
+          <a class="btn btn-outline-secondary" href="/import/sample-templates?type=vendor">
+            <i class="fas fa-download me-1"></i>Vendor Template
+          </a>
+          <a class="btn btn-outline-secondary" href="/import/sample-templates?type=holiday">
+            <i class="fas fa-download me-1"></i>Holiday Template
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Access Control</h5>
+      </div>
+      <div class="card-body">
+        <p class="small mb-0">Only Admin users can access this page and perform imports.</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

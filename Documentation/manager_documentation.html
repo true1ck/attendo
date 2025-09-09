@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATTENDO - Manager User Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .documentation-container {
+            background: white;
+            margin: 20px auto;
+            max-width: 1200px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header-section h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .header-section p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+        
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px 20px;
+            height: 100%;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar h5 {
+            color: #28a745;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar .nav-link {
+            color: #333;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: #28a745;
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .content-section {
+            padding: 40px;
+        }
+        
+        .feature-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        
+        .feature-card:hover {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+        }
+        
+        .feature-card h3 {
+            color: #28a745;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-card h3 i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .feature-card h4 {
+            color: #20c997;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .step-list {
+            counter-reset: step-counter;
+            padding-left: 0;
+        }
+        
+        .step-list li {
+            list-style: none;
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 15px;
+            counter-increment: step-counter;
+        }
+        
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #28a745;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .tip-box {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .tip-box strong {
+            color: #155724;
+        }
+        
+        .warning-box {
+            background: #fff5f5;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .warning-box strong {
+            color: #e74c3c;
+        }
+        
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box strong {
+            color: #0c5460;
+        }
+        
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .quick-access {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .quick-access h5 {
+            margin-bottom: 20px;
+        }
+        
+        .quick-access .btn {
+            background: white;
+            color: #28a745;
+            border: none;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        
+        .quick-access .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .faq-section {
+            margin-top: 40px;
+        }
+        
+        .faq-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .faq-item h5 {
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        
+        .comparison-table {
+            margin-top: 20px;
+        }
+        
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table th {
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        .comparison-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Unified Navigation Header -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 20px 80px; position: relative; overflow: hidden;">
+        <!-- Wave Pattern -->
+        <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 120px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+            <path fill="#f0f2f5" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
+        <!-- Decorative Elements -->
+        <div style="position: absolute; top: 20px; right: 20px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(40px);"></div>
+        <div style="position: absolute; bottom: 50px; left: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.08); border-radius: 50%; filter: blur(60px);"></div>
+        
+        <div style="text-align: center; position: relative; z-index: 1;">
+            <h1 style="color: white; font-size: 3rem; margin-bottom: 10px; font-weight: 600; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                <i class="fas fa-book-open" style="margin-right: 15px; font-size: 2.5rem; vertical-align: middle;"></i>ATTENDO Documentation
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 1.2rem; font-weight: 300; letter-spacing: 0.5px;">Complete User Guide & System Documentation</p>
+        </div>
+    </div>
+    
+    <!-- Navigation Cards -->
+    <div style="max-width: 1600px; margin: -50px auto 40px; position: relative; z-index: 10; padding: 0 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+            <!-- Vendor Guide Card -->
+            <a href="./vendor_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#6c757d'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #6c757d; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Vendor Guide</h3>
+                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Daily attendance submission, status tracking, and reports</p>
+                </div>
+            </a>
+            
+            <!-- Manager Guide Card - Active -->
+            <a href="./manager_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(40,167,69,0.4); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; transform: scale(1.05);" 
+                     onmouseover="this.style.transform='scale(1.08) translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(40,167,69,0.5)'" 
+                     onmouseout="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 35px rgba(40,167,69,0.4)'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    <i class="fas fa-user-tie" style="font-size: 3rem; margin-bottom: 20px; display: block; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Manager Guide</h3>
+                    <p style="margin: 0; font-size: 0.95rem; opacity: 0.95; line-height: 1.5;">Team management, approvals, and AI insights</p>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                        <span style="font-size: 0.85rem; opacity: 0.9;">📍 Currently Viewing</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Admin Guide Card -->
+            <a href="./admin_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#dc3545'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user-shield" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #dc3545; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Admin Guide</h3>
+                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">System configuration and user management</p>
+                </div>
+            </a>
+            
+            <!-- Notifications Card -->
+            <a href="./NOTIFICATION_SYSTEM_GUIDE.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#17a2b8'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-bell" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #17a2b8; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Notifications</h3>
+                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Email, SMS, and alert configuration</p>
+                </div>
+            </a>
+            
+            <!-- System Architecture Card -->
+            <a href="./system_architecture_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#6f42c1'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-sitemap" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #6f42c1; position: relative;"></i>
+                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">System Architecture</h3>
+                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Technical architecture and system flow diagrams</p>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <div class="documentation-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <h1><i class="fas fa-user-tie me-2"></i>ATTENDO Manager User Guide</h1>
+            <p>Complete guide for managing your team's attendance and approvals</p>
+            <div class="mt-3">
+                <span class="badge bg-white text-success px-3 py-2">Manager Edition</span>
+                <span class="badge bg-white text-success px-3 py-2 ms-2">Version 2.0</span>
+            </div>
+        </div>
+        
+        <div class="row g-0">
+            <!-- Sidebar Navigation -->
+            <div class="col-md-3">
+                <div class="sidebar">
+                    <h5><i class="fas fa-compass me-2"></i>Navigation</h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#getting-started">Getting Started</a>
+                        <a class="nav-link" href="#dashboard">Dashboard Overview</a>
+                        <a class="nav-link" href="#team-management">Team Management</a>
+                        <a class="nav-link" href="#approvals">Approval Management</a>
+                        <a class="nav-link" href="#bulk-actions">Bulk Actions</a>
+                        <a class="nav-link" href="#mismatches">Mismatch Review</a>
+                        <a class="nav-link" href="#reports">Reports & Analytics</a>
+                        <a class="nav-link" href="#ai-insights">AI Predictions</a>
+                        <a class="nav-link" href="#notifications">Notifications</a>
+                        <a class="nav-link" href="#calendar">Holiday Calendar</a>
+                        <a class="nav-link" href="#best-practices">Best Practices</a>
+                        <a class="nav-link" href="#faq">FAQs</a>
+                        <a class="nav-link" href="#support">Support</a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <div class="content-section">
+                    <!-- Quick Access Buttons -->
+                    <div class="quick-access">
+                        <h5><i class="fas fa-rocket me-2"></i>Manager Quick Actions</h5>
+                        <div class="d-flex flex-wrap">
+                            <button class="btn btn-light"><i class="fas fa-check-double me-2"></i>Bulk Approve</button>
+                            <button class="btn btn-light"><i class="fas fa-bell me-2"></i>Send Reminders</button>
+                            <button class="btn btn-light"><i class="fas fa-chart-bar me-2"></i>Team Reports</button>
+                            <button class="btn btn-light"><i class="fas fa-brain me-2"></i>AI Insights</button>
+                            <button class="btn btn-light"><i class="fas fa-download me-2"></i>Export Data</button>
+                            <button class="btn btn-light"><i class="fas fa-exclamation-triangle me-2"></i>Review Mismatches</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Getting Started Section -->
+                    <div class="feature-card" id="getting-started">
+                        <h3><i class="fas fa-play-circle"></i>Getting Started as a Manager</h3>
+                        <p>Welcome to ATTENDO Manager Portal! As a manager, you oversee your team's attendance, approve submissions, and ensure compliance.</p>
+                        
+                        <h4>Your Responsibilities</h4>
+                        <ul>
+                            <li>Review and approve daily attendance submissions from your team</li>
+                            <li>Resolve attendance mismatches between web submissions and swipe records</li>
+                            <li>Send reminders to team members who haven't submitted their status</li>
+                            <li>Generate team reports for upper management</li>
+                            <li>Monitor attendance patterns and compliance</li>
+                            <li>Use AI insights for predictive attendance management</li>
+                        </ul>
+                        
+                        <h4>Login Credentials</h4>
+                        <ul>
+                            <li><strong>Username:</strong> Your Manager ID (e.g., M001, M002)</li>
+                            <li><strong>Default Password:</strong> manager123 (change on first login)</li>
+                        </ul>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Manager Tip:</strong> 
+                            Set up a daily routine to check pending approvals at 10 AM and 3 PM to ensure timely processing.
+                        </div>
+                    </div>
+                    
+                    <!-- Dashboard Overview -->
+                    <div class="feature-card" id="dashboard">
+                        <h3><i class="fas fa-tachometer-alt"></i>Manager Dashboard Overview</h3>
+                        <p>Your dashboard provides a comprehensive view of your team's attendance status and pending actions.</p>
+                        
+                        <h4>Dashboard Widgets</h4>
+                        <ul>
+                            <li><strong>Total Team Members:</strong> Shows the size of your team</li>
+                            <li><strong>Present Today:</strong> Number of team members marked present (Office/WFH)</li>
+                            <li><strong>Pending Approvals:</strong> Attendance submissions awaiting your review</li>
+                            <li><strong>Issues & Mismatches:</strong> Discrepancies requiring attention</li>
+                        </ul>
+                        
+                        <h4>Team Status Table</h4>
+                        <p>The main table shows today's attendance status for all team members:</p>
+                        <ul>
+                            <li>Color-coded status badges (Green: Present, Yellow: Pending, Red: Absent)</li>
+                            <li>Submission timestamps to track punctuality</li>
+                            <li>Quick action buttons for approve/reject</li>
+                            <li>Mismatch indicators for vendors with discrepancies</li>
+                        </ul>
+                        
+                        <h4>Quick Actions Panel</h4>
+                        <ul>
+                            <li><strong>Send Daily Reminders:</strong> Notify all non-submitters</li>
+                            <li><strong>Holiday Calendar:</strong> View upcoming holidays</li>
+                            <li><strong>Weekly Report:</strong> Generate team performance report</li>
+                            <li><strong>Review Mismatches:</strong> Address all pending discrepancies</li>
+                            <li><strong>AI Predictions:</strong> View attendance forecasts</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Team Management -->
+                    <div class="feature-card" id="team-management">
+                        <h3><i class="fas fa-users"></i>Team Management</h3>
+                        <p>Effectively manage and monitor your team's attendance patterns.</p>
+                        
+                        <h4>Team Overview Features</h4>
+                        <ol class="step-list">
+                            <li>Access your dashboard to see all team members</li>
+                            <li>View real-time status for each vendor</li>
+                            <li>Identify vendors who haven't submitted status (highlighted in yellow)</li>
+                            <li>Check submission times to ensure compliance with 10 AM deadline</li>
+                            <li>Monitor attendance patterns over time</li>
+                        </ol>
+                        
+                        <h4>Team Member Details</h4>
+                        <p>For each team member, you can view:</p>
+                        <ul>
+                            <li>Vendor ID and full name</li>
+                            <li>Email address for communication</li>
+                            <li>Current day's status and location</li>
+                            <li>Historical attendance records</li>
+                            <li>Pending approvals count</li>
+                            <li>Mismatch history</li>
+                        </ul>
+                        
+                        <div class="info-box">
+                            <strong><i class="fas fa-info-circle me-2"></i>Team Size:</strong> 
+                            Managers typically handle teams of 8-15 vendors. If your team grows beyond 20, consider requesting team restructuring.
+                        </div>
+                    </div>
+                    
+                    <!-- Approval Management -->
+                    <div class="feature-card" id="approvals">
+                        <h3><i class="fas fa-check-circle"></i>Approval Management</h3>
+                        <p>Review and approve vendor attendance submissions efficiently.</p>
+                        
+                        <h4>Single Status Approval</h4>
+                        <ol class="step-list">
+                            <li>Navigate to the "Pending Approvals" section on your dashboard</li>
+                            <li>Review vendor name, date, status, and location</li>
+                            <li>Click the green checkmark to approve</li>
+                            <li>Click the red X to reject (provide reason)</li>
+                            <li>Status updates immediately and vendor is notified</li>
+                        </ol>
+                        
+                        <h4>Approval Guidelines</h4>
+                        <p>Consider these factors when reviewing submissions:</p>
+                        <ul>
+                            <li><strong>Consistency:</strong> Check if status matches expected schedule</li>
+                            <li><strong>Location:</strong> Verify location is appropriate for status type</li>
+                            <li><strong>Patterns:</strong> Look for unusual patterns (frequent leaves, etc.)</li>
+                            <li><strong>Comments:</strong> Read any comments provided by vendor</li>
+                            <li><strong>Swipe Data:</strong> Cross-reference with biometric records if available</li>
+                        </ul>
+                        
+                        <h4>Rejection Process</h4>
+                        <p>When rejecting a status:</p>
+                        <ol class="step-list">
+                            <li>Click the reject button</li>
+                            <li>Enter a clear reason for rejection</li>
+                            <li>Be specific about what needs correction</li>
+                            <li>Vendor will be notified to resubmit</li>
+                        </ol>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Important:</strong> 
+                            Always provide a clear rejection reason. Vendors need this feedback to correct their submissions.
+                        </div>
+                    </div>
+                    
+                    <!-- Bulk Actions -->
+                    <div class="feature-card" id="bulk-actions">
+                        <h3><i class="fas fa-check-double"></i>Bulk Actions</h3>
+                        <p>Process multiple attendance submissions simultaneously to save time.</p>
+                        
+                        <h4>Bulk Approve All</h4>
+                        <ol class="step-list">
+                            <li>Review all pending submissions in the table</li>
+                            <li>Select specific items using checkboxes (optional)</li>
+                            <li>Click "Approve All" button</li>
+                            <li>Confirm the bulk action</li>
+                            <li>All selected (or all pending) statuses are approved</li>
+                        </ol>
+                        
+                        <h4>Bulk Reject</h4>
+                        <ol class="step-list">
+                            <li>Select items to reject using checkboxes</li>
+                            <li>Click "Reject All" button</li>
+                            <li>Enter a common rejection reason</li>
+                            <li>Confirm the action</li>
+                            <li>Selected statuses are rejected with the same reason</li>
+                        </ol>
+                        
+                        <h4>Send Bulk Reminders</h4>
+                        <p>Notify all team members who haven't submitted their status:</p>
+                        <ol class="step-list">
+                            <li>Click "Send Daily Reminders" button</li>
+                            <li>System identifies non-submitters automatically</li>
+                            <li>Email reminders are sent to all pending vendors</li>
+                            <li>Confirmation message shows number of reminders sent</li>
+                        </ol>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Efficiency Tip:</strong> 
+                            Use bulk approve for routine days when most team members are in office. Review individually for Mondays and Fridays when patterns vary.
+                        </div>
+                    </div>
+                    
+                    <!-- Mismatch Review -->
+                    <div class="feature-card" id="mismatches">
+                        <h3><i class="fas fa-exclamation-triangle"></i>Mismatch Review</h3>
+                        <p>Resolve discrepancies between vendor submissions and swipe machine records.</p>
+                        
+                        <h4>Understanding Mismatches</h4>
+                        <p>Mismatches occur when:</p>
+                        <ul>
+                            <li>Vendor marks present but no swipe record exists</li>
+                            <li>Swipe shows present but vendor marked leave/absent</li>
+                            <li>Timing discrepancies (late arrival not reflected in status)</li>
+                            <li>Location mismatches (office vs actual swipe location)</li>
+                        </ul>
+                        
+                        <h4>Review Process</h4>
+                        <ol class="step-list">
+                            <li>Click "Review Mismatches" from quick actions</li>
+                            <li>Filter by status (Pending/Approved/Rejected) or vendor</li>
+                            <li>Review each mismatch:
+                                <ul>
+                                    <li>Date of mismatch</li>
+                                    <li>Vendor's submitted status</li>
+                                    <li>Actual swipe record</li>
+                                    <li>Vendor's explanation</li>
+                                </ul>
+                            </li>
+                            <li>Approve valid explanations (forgot to swipe, machine issues)</li>
+                            <li>Reject invalid explanations with feedback</li>
+                            <li>Add manager comments for record</li>
+                        </ol>
+                        
+                        <h4>Common Valid Reasons</h4>
+                        <ul>
+                            <li>Swipe machine malfunction</li>
+                            <li>Forgot to swipe in/out</li>
+                            <li>Client site visit (no swipe access)</li>
+                            <li>Emergency situations</li>
+                            <li>System downtime</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Compliance Note:</strong> 
+                            Unresolved mismatches affect billing accuracy. Aim to resolve all mismatches within 48 hours.
+                        </div>
+                    </div>
+                    
+                    <!-- Reports & Analytics -->
+                    <div class="feature-card" id="reports">
+                        <h3><i class="fas fa-chart-bar"></i>Reports & Analytics</h3>
+                        <p>Generate comprehensive reports for team performance and compliance tracking.</p>
+                        
+                        <h4>Available Reports</h4>
+                        <ul>
+                            <li><strong>Weekly Team Report:</strong> 7-day attendance summary</li>
+                            <li><strong>Monthly Summary:</strong> Complete month overview with statistics</li>
+                            <li><strong>Attendance Trends:</strong> Patterns and anomalies visualization</li>
+                            <li><strong>Compliance Report:</strong> Submission timeliness and accuracy</li>
+                            <li><strong>Mismatch Analysis:</strong> Recurring issues identification</li>
+                        </ul>
+                        
+                        <h4>Generating Reports</h4>
+                        <ol class="step-list">
+                            <li>Click "Weekly Report" or navigate to Reports section</li>
+                            <li>Select date range (default: current period)</li>
+                            <li>Choose report type and filters</li>
+                            <li>Click "Generate Report"</li>
+                            <li>View in browser or download as Excel</li>
+                        </ol>
+                        
+                        <h4>Report Metrics</h4>
+                        <p>Key metrics included in reports:</p>
+                        <ul>
+                            <li>Team attendance percentage</li>
+                            <li>Average submission time</li>
+                            <li>WFH vs Office ratio</li>
+                            <li>Leave patterns analysis</li>
+                            <li>Approval turnaround time</li>
+                            <li>Mismatch resolution rate</li>
+                        </ul>
+                        
+                        <h4>Export Options</h4>
+                        <ul>
+                            <li><strong>Excel:</strong> Full data with formatting and charts</li>
+                            <li><strong>PDF:</strong> Professional report for management</li>
+                            <li><strong>Email:</strong> Schedule automated reports</li>
+                        </ul>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Reporting Tip:</strong> 
+                            Schedule weekly reports for Monday morning to review the previous week's performance with your team.
+                        </div>
+                    </div>
+                    
+                    <!-- AI Insights -->
+                    <div class="feature-card" id="ai-insights">
+                        <h3><i class="fas fa-brain"></i>AI Predictions & Insights</h3>
+                        <p>Leverage AI-powered predictions to proactively manage attendance.</p>
+                        
+                        <h4>AI Features</h4>
+                        <ul>
+                            <li><strong>Attendance Predictions:</strong> 7-day forecast for each team member</li>
+                            <li><strong>Risk Assessment:</strong> Identify high-risk absence patterns</li>
+                            <li><strong>Pattern Recognition:</strong> Detect unusual attendance behaviors</li>
+                            <li><strong>Recommendation Engine:</strong> Suggested actions for improvement</li>
+                        </ul>
+                        
+                        <h4>Using AI Insights</h4>
+                        <ol class="step-list">
+                            <li>Click "AI Predictions" from quick actions</li>
+                            <li>View the prediction dashboard showing:
+                                <ul>
+                                    <li>Team attendance forecast graph</li>
+                                    <li>Individual risk scores</li>
+                                    <li>Confidence levels for predictions</li>
+                                </ul>
+                            </li>
+                            <li>Filter by prediction window (3, 7, or 14 days)</li>
+                            <li>Click on individual predictions for details</li>
+                            <li>Export predictions for planning purposes</li>
+                        </ol>
+                        
+                        <h4>Risk Categories</h4>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <span class="badge bg-success badge-status">Low Risk</span>
+                                <p class="mt-2">Regular attendance pattern, minimal concerns</p>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="badge bg-warning badge-status">Medium Risk</span>
+                                <p class="mt-2">Some irregularities, monitor closely</p>
+                            </div>
+                            <div class="col-md-4">
+                                <span class="badge bg-danger badge-status">High Risk</span>
+                                <p class="mt-2">Significant absence risk, intervention needed</p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-box">
+                            <strong><i class="fas fa-info-circle me-2"></i>AI Accuracy:</strong> 
+                            Predictions improve over time as more data is collected. Current accuracy rate: ~85% for 7-day forecasts.
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="feature-card" id="notifications">
+                        <h3><i class="fas fa-bell"></i>Notification Management</h3>
+                        <p>Communicate effectively with your team through various notification channels.</p>
+                        
+                        <h4>Notification Types</h4>
+                        <ul>
+                            <li><strong>Daily Summary:</strong> Overview of team attendance (9 AM daily)</li>
+                            <li><strong>Urgent Reminders:</strong> For non-submitters (10 AM, 3 PM)</li>
+                            <li><strong>Approval Alerts:</strong> When urgent approvals are pending</li>
+                            <li><strong>Mismatch Notifications:</strong> New discrepancies detected</li>
+                            <li><strong>System Alerts:</strong> Important updates and maintenance</li>
+                        </ul>
+                        
+                        <h4>Sending Manual Notifications</h4>
+                        <ol class="step-list">
+                            <li>Identify team members requiring notification</li>
+                            <li>Click "Send Reminders" button</li>
+                            <li>Select notification type:
+                                <ul>
+                                    <li>Status submission reminder</li>
+                                    <li>Mismatch resolution request</li>
+                                    <li>General announcement</li>
+                                </ul>
+                            </li>
+                            <li>Customize message (optional)</li>
+                            <li>Send immediately or schedule</li>
+                        </ol>
+                        
+                        <h4>Notification Settings</h4>
+                        <p>Configure your notification preferences:</p>
+                        <ul>
+                            <li>Email frequency (immediate, hourly, daily digest)</li>
+                            <li>SMS alerts for critical issues (if enabled)</li>
+                            <li>In-app notification preferences</li>
+                            <li>Quiet hours (no notifications during off-hours)</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Holiday Calendar -->
+                    <div class="feature-card" id="calendar">
+                        <h3><i class="fas fa-calendar-alt"></i>Holiday Calendar Management</h3>
+                        <p>View and plan around company holidays for better team management.</p>
+                        
+                        <h4>Calendar Features</h4>
+                        <ul>
+                            <li>View all company-declared holidays</li>
+                            <li>See team leave patterns around holidays</li>
+                            <li>Plan resource allocation</li>
+                            <li>Identify coverage gaps</li>
+                        </ul>
+                        
+                        <h4>Using the Calendar</h4>
+                        <ol class="step-list">
+                            <li>Click "Holiday Calendar" from quick actions</li>
+                            <li>Navigate between months using arrows</li>
+                            <li>View holiday details by clicking on dates</li>
+                            <li>Check team availability for each day</li>
+                            <li>Export calendar for planning</li>
+                        </ol>
+                        
+                        <div class="info-box">
+                            <strong><i class="fas fa-info-circle me-2"></i>Planning Tip:</strong> 
+                            Review the calendar monthly to anticipate low attendance periods and plan accordingly.
+                        </div>
+                    </div>
+                    
+                    <!-- Best Practices -->
+                    <div class="feature-card" id="best-practices">
+                        <h3><i class="fas fa-award"></i>Best Practices for Managers</h3>
+                        <p>Follow these guidelines to effectively manage your team's attendance.</p>
+                        
+                        <h4>Daily Routine</h4>
+                        <ul>
+                            <li><strong>9:00 AM:</strong> Check dashboard for yesterday's pending approvals</li>
+                            <li><strong>10:00 AM:</strong> Send reminders to non-submitters</li>
+                            <li><strong>11:00 AM:</strong> Process morning submissions</li>
+                            <li><strong>3:00 PM:</strong> Second reminder round if needed</li>
+                            <li><strong>5:00 PM:</strong> Final approval check before end of day</li>
+                        </ul>
+                        
+                        <h4>Weekly Tasks</h4>
+                        <ul>
+                            <li><strong>Monday:</strong> Review previous week's report</li>
+                            <li><strong>Wednesday:</strong> Check AI predictions for planning</li>
+                            <li><strong>Friday:</strong> Process all pending approvals</li>
+                            <li><strong>Weekly:</strong> Address all outstanding mismatches</li>
+                        </ul>
+                        
+                        <h4>Communication Guidelines</h4>
+                        <ul>
+                            <li>Be clear and specific in rejection reasons</li>
+                            <li>Respond to vendor queries within 24 hours</li>
+                            <li>Use positive reinforcement for good compliance</li>
+                            <li>Document recurring issues for HR escalation</li>
+                            <li>Maintain professional tone in all communications</li>
+                        </ul>
+                        
+                        <h4>Efficiency Tips</h4>
+                        <ul>
+                            <li>Use bulk actions for routine approvals</li>
+                            <li>Set up browser notifications for urgent items</li>
+                            <li>Create a bookmark for quick dashboard access</li>
+                            <li>Review AI insights weekly for proactive management</li>
+                            <li>Export reports regularly for record keeping</li>
+                        </ul>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Pro Manager Tip:</strong> 
+                            Consistency is key. Process approvals at the same times daily to establish a routine your team can rely on.
+                        </div>
+                    </div>
+                    
+                    <!-- FAQs Section -->
+                    <div class="faq-section" id="faq">
+                        <h2 class="mb-4"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h2>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How quickly should I approve vendor submissions?</h5>
+                            <p>A: Aim to approve submissions within 24 hours. Daily submissions should be reviewed by end of the same day to maintain accurate records.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: Can I modify a vendor's attendance status after approval?</h5>
+                            <p>A: No, approved statuses cannot be modified. For corrections, contact the system administrator with proper justification.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: What should I do if a vendor repeatedly submits incorrect status?</h5>
+                            <p>A: Document the pattern, provide clear feedback through rejections, and if it continues, escalate to HR with evidence.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How do I handle team members in different time zones?</h5>
+                            <p>A: The system uses local time zones. Ensure vendors submit based on their local working hours and review accordingly.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: Can I delegate approval authority during my absence?</h5>
+                            <p>A: Yes, contact the admin to set up a temporary delegate who can approve on your behalf during planned absences.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How accurate are the AI predictions?</h5>
+                            <p>A: AI predictions have approximately 85% accuracy for 7-day forecasts. Accuracy improves with more historical data.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: What's the difference between rejecting a status and a mismatch explanation?</h5>
+                            <p>A: Status rejection means the submitted attendance is incorrect. Mismatch rejection means the explanation for discrepancy is inadequate.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How do I export data for upper management?</h5>
+                            <p>A: Use the Reports section to generate comprehensive reports. Select Excel format for data analysis or PDF for presentations.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Support Section -->
+                    <div class="feature-card" id="support">
+                        <h3><i class="fas fa-headset"></i>Manager Support</h3>
+                        <p>Get help when you need it.</p>
+                        
+                        <h4>Support Channels</h4>
+                        <ul>
+                            <li><strong>Manager Helpline:</strong> Priority support for managers</li>
+                            <li><strong>Admin Support:</strong> For system-level issues</li>
+                            <li><strong>HR Escalation:</strong> For policy and compliance matters</li>
+                            <li><strong>Technical Support:</strong> For platform issues</li>
+                        </ul>
+                        
+                        <h4>Contact Information</h4>
+                        <ul>
+                            <li><strong>Manager Support Email:</strong> manager-support@attendo.com</li>
+                            <li><strong>Priority Hotline:</strong> +91-1234-567891</li>
+                            <li><strong>Support Hours:</strong> Monday-Friday, 8:00 AM - 7:00 PM</li>
+                            <li><strong>Emergency Contact:</strong> +91-9876-543210 (24/7)</li>
+                        </ul>
+                        
+                        <h4>Common Issues & Solutions</h4>
+                        <ul>
+                            <li><strong>Can't see team members:</strong> Contact admin to verify team assignment</li>
+                            <li><strong>Bulk approve not working:</strong> Check if you have pending selections</li>
+                            <li><strong>Reports not generating:</strong> Clear browser cache and retry</li>
+                            <li><strong>AI insights not loading:</strong> Ensure sufficient historical data exists</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Escalation Path:</strong> 
+                            For urgent issues affecting team productivity, use the emergency hotline for immediate assistance.
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="text-center mt-5 pt-4 border-top">
+                        <p class="text-muted">
+                            <i class="fas fa-copyright me-1"></i>2025 ATTENDO - Manager Portal Documentation<br>
+                            Empowering Managers for Efficient Team Management | All Rights Reserved
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // Update active state
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Highlight current section on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.feature-card, .faq-section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+        
+        // Quick action buttons - removed popup alerts
+    </script>
+</body>
+</html>

@@ -129,9 +129,11 @@ class SwipeRecord(db.Model):
     vendor_id = db.Column(db.Integer, db.ForeignKey('vendors.id'), nullable=False)
     attendance_date = db.Column(db.Date, nullable=False)
     weekday = db.Column(db.String(20))
+    shift_code = db.Column(db.String(10))  # G, A, etc.
     login_time = db.Column(db.Time)
     logout_time = db.Column(db.Time)
     total_hours = db.Column(db.Float)
+    extra_hours = db.Column(db.Float)  # Extra/Overtime hours
     attendance_status = db.Column(db.String(10))  # AP (Present), AA (Absent)
     imported_at = db.Column(db.DateTime, default=datetime.utcnow)
     

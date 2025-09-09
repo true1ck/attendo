@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATTENDO - Vendor User Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .documentation-container {
+            background: white;
+            margin: 20px auto;
+            max-width: 1200px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header-section h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .header-section p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+        
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px 20px;
+            height: 100%;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar h5 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar .nav-link {
+            color: #333;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .content-section {
+            padding: 40px;
+        }
+        
+        .feature-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .feature-card:hover {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+        }
+        
+        .feature-card h3 {
+            color: #667eea;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-card h3 i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .feature-card h4 {
+            color: #764ba2;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .step-list {
+            counter-reset: step-counter;
+            padding-left: 0;
+        }
+        
+        .step-list li {
+            list-style: none;
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 15px;
+            counter-increment: step-counter;
+        }
+        
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .tip-box {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .tip-box strong {
+            color: #667eea;
+        }
+        
+        .warning-box {
+            background: #fff5f5;
+            border-left: 4px solid #e74c3c;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .warning-box strong {
+            color: #e74c3c;
+        }
+        
+        .info-box {
+            background: #fff9e6;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box strong {
+            color: #f39c12;
+        }
+        
+        .screenshot {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin: 20px 0;
+            padding: 5px;
+            background: #f8f9fa;
+        }
+        
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .quick-access {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .quick-access h5 {
+            margin-bottom: 20px;
+        }
+        
+        .quick-access .btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        
+        .quick-access .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .faq-section {
+            margin-top: 40px;
+        }
+        
+        .faq-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .faq-item h5 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+        <!-- Unified Navigation Header -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 20px 80px; position: relative; overflow: hidden;">
+            <!-- Wave Pattern -->
+            <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 120px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+                <path fill="#f0f2f5" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+            </svg>
+            <!-- Decorative Elements -->
+            <div style="position: absolute; top: 20px; right: 20px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(40px);"></div>
+            <div style="position: absolute; bottom: 50px; left: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.08); border-radius: 50%; filter: blur(60px);"></div>
+            
+            <div style="text-align: center; position: relative; z-index: 1;">
+                <h1 style="color: white; font-size: 3rem; margin-bottom: 10px; font-weight: 600; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                    <i class="fas fa-book-open" style="margin-right: 15px; font-size: 2.5rem; vertical-align: middle;"></i>ATTENDO Documentation
+                </h1>
+                <p style="color: rgba(255,255,255,0.95); font-size: 1.2rem; font-weight: 300; letter-spacing: 0.5px;">Complete User Guide & System Documentation</p>
+            </div>
+        </div>
+        
+        <!-- Navigation Cards -->
+        <div style="max-width: 1600px; margin: -50px auto 40px; position: relative; z-index: 10; padding: 0 20px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+                <!-- Vendor Guide Card - Active -->
+                <a href="./vendor_documentation.html" style="text-decoration: none; display: block;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(102,126,234,0.4); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; transform: scale(1.05);" 
+                         onmouseover="this.style.transform='scale(1.08) translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(102,126,234,0.5)'" 
+                         onmouseout="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 35px rgba(102,126,234,0.4)'">
+                        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                        <i class="fas fa-user" style="font-size: 3rem; margin-bottom: 20px; display: block; position: relative;"></i>
+                        <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Vendor Guide</h3>
+                        <p style="margin: 0; font-size: 0.95rem; opacity: 0.95; line-height: 1.5;">Daily attendance submission, status tracking, and reports</p>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                            <span style="font-size: 0.85rem; opacity: 0.9;">📍 Currently Viewing</span>
+                        </div>
+                    </div>
+                </a>
+                
+                <!-- Manager Guide Card -->
+                <a href="./manager_documentation.html" style="text-decoration: none; display: block;">
+                    <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;" 
+                         onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#28a745'" 
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                        <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); opacity: 0.1; border-radius: 50%;"></div>
+                        <i class="fas fa-user-tie" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #28a745; position: relative;"></i>
+                        <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Manager Guide</h3>
+                        <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Team management, approvals, and AI insights</p>
+                    </div>
+                </a>
+                
+                <!-- Admin Guide Card -->
+                <a href="./admin_documentation.html" style="text-decoration: none; display: block;">
+                    <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                         onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#dc3545'" 
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                        <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); opacity: 0.1; border-radius: 50%;"></div>
+                        <i class="fas fa-user-shield" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #dc3545; position: relative;"></i>
+                        <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Admin Guide</h3>
+                        <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">System configuration and user management</p>
+                    </div>
+                </a>
+                
+                <!-- Notifications Card -->
+                <a href="./NOTIFICATION_SYSTEM_GUIDE.html" style="text-decoration: none; display: block;">
+                    <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                         onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#17a2b8'" 
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                        <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); opacity: 0.1; border-radius: 50%;"></div>
+                        <i class="fas fa-bell" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #17a2b8; position: relative;"></i>
+                        <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Notifications</h3>
+                        <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Email, SMS, and alert configuration</p>
+                    </div>
+                </a>
+                
+                <!-- System Architecture Card -->
+                <a href="./system_architecture_documentation.html" style="text-decoration: none; display: block;">
+                    <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                         onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#6f42c1'" 
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                        <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); opacity: 0.1; border-radius: 50%;"></div>
+                        <i class="fas fa-sitemap" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #6f42c1; position: relative;"></i>
+                        <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">System Architecture</h3>
+                        <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Technical architecture and system flow diagrams</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+        
+        <div class="documentation-container">
+        <div class="header-section">
+            <h1><i class="fas fa-book-open me-2"></i>ATTENDO Vendor User Guide</h1>
+            <p>Complete guide to using the Vendor Timesheet Management System</p>
+            <div class="mt-3">
+                <span class="badge bg-white text-primary px-3 py-2">Version 2.0</span>
+                <span class="badge bg-white text-primary px-3 py-2 ms-2">Last Updated: January 2025</span>
+            </div>
+        </div>
+        
+        <div class="row g-0">
+            <!-- Sidebar Navigation -->
+            <div class="col-md-3">
+                <div class="sidebar">
+                    <h5><i class="fas fa-compass me-2"></i>Navigation</h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#getting-started">Getting Started</a>
+                        <a class="nav-link" href="#dashboard">Dashboard Overview</a>
+                        <a class="nav-link" href="#submit-status">Submit Daily Status</a>
+                        <a class="nav-link" href="#edit-status">Edit/Update Status</a>
+                        <a class="nav-link" href="#view-history">View Status History</a>
+                        <a class="nav-link" href="#mismatches">Resolve Mismatches</a>
+                        <a class="nav-link" href="#reports">View Reports</a>
+                        <a class="nav-link" href="#calendar">Holiday Calendar</a>
+                        <a class="nav-link" href="#profile">Profile Management</a>
+                        <a class="nav-link" href="#notifications">Notifications</a>
+                        <a class="nav-link" href="#faq">FAQs</a>
+                        <a class="nav-link" href="#support">Support</a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <div class="content-section">
+                    <!-- Quick Access Buttons -->
+                    <div class="quick-access">
+                        <h5><i class="fas fa-rocket me-2"></i>Quick Actions</h5>
+                        <div class="d-flex flex-wrap">
+                            <button class="btn btn-light"><i class="fas fa-plus me-2"></i>Submit Today's Status</button>
+                            <button class="btn btn-light"><i class="fas fa-calendar me-2"></i>View Calendar</button>
+                            <button class="btn btn-light"><i class="fas fa-chart-line me-2"></i>View Reports</button>
+                            <button class="btn btn-light"><i class="fas fa-download me-2"></i>Download Excel</button>
+                            <button class="btn btn-light"><i class="fas fa-bell me-2"></i>Notifications</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Getting Started Section -->
+                    <div class="feature-card" id="getting-started">
+                        <h3><i class="fas fa-play-circle"></i>Getting Started</h3>
+                        <p>Welcome to ATTENDO! This system helps you manage your daily attendance and work status efficiently.</p>
+                        
+                        <h4>System Access</h4>
+                        <ol class="step-list">
+                            <li>Open your web browser and navigate to the ATTENDO portal</li>
+                            <li>Enter your username (Vendor ID) and password</li>
+                            <li>Click "Login" to access your dashboard</li>
+                            <li>If this is your first login, you may need to change your password</li>
+                        </ol>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Tip:</strong> 
+                            Save the portal URL as a bookmark for quick access. The system works best on Chrome, Firefox, or Edge browsers.
+                        </div>
+                        
+                        <h4>Default Credentials</h4>
+                        <ul>
+                            <li><strong>Username:</strong> Your Vendor ID (e.g., V001, Otsoxx)</li>
+                            <li><strong>Default Password:</strong> vendor123 (change on first login)</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Dashboard Overview -->
+                    <div class="feature-card" id="dashboard">
+                        <h3><i class="fas fa-tachometer-alt"></i>Dashboard Overview</h3>
+                        <p>Your dashboard is the central hub for all attendance-related activities.</p>
+                        
+                        <h4>Dashboard Components</h4>
+                        <ul>
+                            <li><strong>Today's Status Widget:</strong> Shows your current day's attendance status</li>
+                            <li><strong>Monthly Summary:</strong> Displays total days submitted this month</li>
+                            <li><strong>Pending Approvals:</strong> Shows statuses awaiting manager approval</li>
+                            <li><strong>Mismatch Alerts:</strong> Highlights discrepancies between submitted status and swipe records</li>
+                            <li><strong>Recent History:</strong> Quick view of your last 10 status submissions</li>
+                            <li><strong>Profile Information:</strong> Your details and manager information</li>
+                        </ul>
+                        
+                        <h4>Status Indicators</h4>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <span class="badge bg-success badge-status">In Office - Full</span> Present in office full day<br>
+                                <span class="badge bg-success badge-status mt-2">In Office - Half</span> Present in office half day<br>
+                                <span class="badge bg-info badge-status mt-2">WFH - Full</span> Working from home full day<br>
+                                <span class="badge bg-info badge-status mt-2">WFH - Half</span> Working from home half day
+                            </div>
+                            <div class="col-md-6">
+                                <span class="badge bg-secondary badge-status">Leave - Full</span> On leave full day<br>
+                                <span class="badge bg-secondary badge-status mt-2">Leave - Half</span> On leave half day<br>
+                                <span class="badge bg-danger badge-status mt-2">Absent</span> Absent from work<br>
+                                <span class="badge bg-warning badge-status mt-2">Pending</span> Awaiting approval
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Daily Status -->
+                    <div class="feature-card" id="submit-status">
+                        <h3><i class="fas fa-calendar-check"></i>Submit Daily Status</h3>
+                        <p>Submit your daily attendance status to keep your records up to date.</p>
+                        
+                        <h4>How to Submit Status</h4>
+                        <ol class="step-list">
+                            <li>Click the "Submit Today's Status" button on your dashboard</li>
+                            <li>Select the date (defaults to today)</li>
+                            <li>Choose your attendance status from the dropdown:
+                                <ul class="mt-2">
+                                    <li>In Office - Full/Half Day</li>
+                                    <li>Work From Home - Full/Half Day</li>
+                                    <li>On Leave - Full/Half Day</li>
+                                    <li>Absent</li>
+                                </ul>
+                            </li>
+                            <li>Enter your location (auto-fills based on status selection)</li>
+                            <li>Add any optional comments or notes</li>
+                            <li>Click "Submit Status" to save</li>
+                        </ol>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Important:</strong> 
+                            Submit your status before 10:00 AM each working day to avoid reminder notifications.
+                        </div>
+                        
+                        <h4>Auto-fill Features</h4>
+                        <ul>
+                            <li>Selecting "In Office" auto-fills location with "BL-A-5F"</li>
+                            <li>Selecting "WFH" auto-fills location with "Home"</li>
+                            <li>Date defaults to current date but can be changed for backdated entries</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Edit/Update Status -->
+                    <div class="feature-card" id="edit-status">
+                        <h3><i class="fas fa-edit"></i>Edit/Update Status</h3>
+                        <p>Modify your submitted status if it's pending or rejected.</p>
+                        
+                        <h4>When Can You Edit?</h4>
+                        <ul>
+                            <li><strong>Pending Status:</strong> Can be edited until manager approves</li>
+                            <li><strong>Rejected Status:</strong> Must be edited and resubmitted</li>
+                            <li><strong>Approved Status:</strong> Cannot be edited (contact manager for corrections)</li>
+                        </ul>
+                        
+                        <h4>How to Edit Status</h4>
+                        <ol class="step-list">
+                            <li>Go to your Recent Status History on the dashboard</li>
+                            <li>Find the status you want to edit</li>
+                            <li>Click the "Edit" button (only visible for pending statuses)</li>
+                            <li>Modify the required fields in the edit form</li>
+                            <li>Click "Update Status" to save changes</li>
+                            <li>The status will reset to "Pending" for manager review</li>
+                        </ol>
+                        
+                        <div class="info-box">
+                            <strong><i class="fas fa-info-circle me-2"></i>Note:</strong> 
+                            Editing a status creates an audit trail. All changes are logged for compliance purposes.
+                        </div>
+                    </div>
+                    
+                    <!-- View Status History -->
+                    <div class="feature-card" id="view-history">
+                        <h3><i class="fas fa-history"></i>View Status History</h3>
+                        <p>Track and review your attendance history.</p>
+                        
+                        <h4>Accessing History</h4>
+                        <ul>
+                            <li><strong>Recent History:</strong> Last 10 entries shown on dashboard</li>
+                            <li><strong>Full History:</strong> Click "View Calendar" for complete monthly view</li>
+                            <li><strong>Export Option:</strong> Download history as Excel report</li>
+                        </ul>
+                        
+                        <h4>History Table Information</h4>
+                        <ul>
+                            <li><strong>Date:</strong> The attendance date</li>
+                            <li><strong>Status:</strong> Your submitted attendance status</li>
+                            <li><strong>Location:</strong> Office/Home/Other location</li>
+                            <li><strong>Approval:</strong> Current approval status (Pending/Approved/Rejected)</li>
+                            <li><strong>Actions:</strong> Available actions (Edit/Resubmit)</li>
+                        </ul>
+                        
+                        <h4>Filtering and Sorting</h4>
+                        <p>Use the monthly report feature to:</p>
+                        <ul>
+                            <li>Filter by date range</li>
+                            <li>Filter by status type</li>
+                            <li>View approval statistics</li>
+                            <li>Generate attendance percentage</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Resolve Mismatches -->
+                    <div class="feature-card" id="mismatches">
+                        <h3><i class="fas fa-exclamation-triangle"></i>Resolve Mismatches</h3>
+                        <p>Handle discrepancies between your submitted status and biometric swipe records.</p>
+                        
+                        <h4>What are Mismatches?</h4>
+                        <p>Mismatches occur when your submitted status doesn't align with the swipe machine records. For example:</p>
+                        <ul>
+                            <li>You marked "Present" but no swipe record exists</li>
+                            <li>You marked "Leave" but swipe shows you were present</li>
+                            <li>You didn't submit status but swipe record exists</li>
+                        </ul>
+                        
+                        <h4>How to Resolve Mismatches</h4>
+                        <ol class="step-list">
+                            <li>Check the mismatch alert on your dashboard (red badge with count)</li>
+                            <li>Click "Resolve Mismatches" button</li>
+                            <li>Review each mismatch:
+                                <ul class="mt-2">
+                                    <li>Your submitted status</li>
+                                    <li>Swipe machine record</li>
+                                    <li>Date of mismatch</li>
+                                </ul>
+                            </li>
+                            <li>Provide a detailed explanation for the mismatch</li>
+                            <li>Click "Submit Explanation" for each mismatch</li>
+                            <li>Your manager will review and approve/reject the explanation</li>
+                        </ol>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Important:</strong> 
+                            Unresolved mismatches may affect your attendance records and billing. Resolve them promptly.
+                        </div>
+                        
+                        <h4>Common Mismatch Reasons</h4>
+                        <ul>
+                            <li>Forgot to swipe in/out</li>
+                            <li>Swipe machine malfunction</li>
+                            <li>Client site visit (no swipe available)</li>
+                            <li>Emergency leave (couldn't swipe)</li>
+                            <li>System downtime</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- View Reports -->
+                    <div class="feature-card" id="reports">
+                        <h3><i class="fas fa-chart-line"></i>View Reports</h3>
+                        <p>Access detailed attendance reports and analytics.</p>
+                        
+                        <h4>Available Reports</h4>
+                        <ul>
+                            <li><strong>Monthly Summary Report:</strong> Complete month attendance overview</li>
+                            <li><strong>Attendance Percentage:</strong> Your attendance rate calculation</li>
+                            <li><strong>Status Distribution:</strong> Breakdown by status type (Office/WFH/Leave)</li>
+                            <li><strong>Approval Statistics:</strong> Pending vs Approved statuses</li>
+                        </ul>
+                        
+                        <h4>How to Access Reports</h4>
+                        <ol class="step-list">
+                            <li>Click "View Report" button on dashboard</li>
+                            <li>Select the report type and date range</li>
+                            <li>View report in browser or download as Excel</li>
+                            <li>Reports include charts and detailed tables</li>
+                        </ol>
+                        
+                        <h4>Export Options</h4>
+                        <ul>
+                            <li><strong>Excel Format:</strong> Full data export with formatting</li>
+                            <li><strong>PDF Format:</strong> Printable report (coming soon)</li>
+                            <li><strong>Email Report:</strong> Send report to your registered email</li>
+                        </ul>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Tip:</strong> 
+                            Download your monthly report at month-end for personal records and verification.
+                        </div>
+                    </div>
+                    
+                    <!-- Holiday Calendar -->
+                    <div class="feature-card" id="calendar">
+                        <h3><i class="fas fa-calendar-alt"></i>Holiday Calendar</h3>
+                        <p>View company holidays and plan your attendance accordingly.</p>
+                        
+                        <h4>Calendar Features</h4>
+                        <ul>
+                            <li>View all company-declared holidays</li>
+                            <li>See holiday names and descriptions</li>
+                            <li>Navigate between months</li>
+                            <li>Holidays highlighted in different color</li>
+                            <li>Weekend identification</li>
+                        </ul>
+                        
+                        <h4>How to Use Calendar</h4>
+                        <ol class="step-list">
+                            <li>Click "View Calendar" from quick actions</li>
+                            <li>Use navigation arrows to change months</li>
+                            <li>Holidays appear with special marking</li>
+                            <li>Click on a holiday to see details</li>
+                            <li>Plan your leaves around holidays for maximum benefit</li>
+                        </ol>
+                        
+                        <div class="info-box">
+                            <strong><i class="fas fa-info-circle me-2"></i>Note:</strong> 
+                            You don't need to submit attendance status for company holidays and weekends.
+                        </div>
+                    </div>
+                    
+                    <!-- Profile Management -->
+                    <div class="feature-card" id="profile">
+                        <h3><i class="fas fa-user-cog"></i>Profile Management</h3>
+                        <p>View and manage your profile information.</p>
+                        
+                        <h4>Profile Information</h4>
+                        <p>Your profile displays:</p>
+                        <ul>
+                            <li><strong>Vendor ID:</strong> Your unique identifier</li>
+                            <li><strong>Full Name:</strong> Your registered name</li>
+                            <li><strong>Department:</strong> Your assigned department</li>
+                            <li><strong>Company:</strong> Your vendor company name</li>
+                            <li><strong>Band/Level:</strong> Your designation level</li>
+                            <li><strong>Location:</strong> Default work location</li>
+                            <li><strong>Manager Details:</strong> Your reporting manager information</li>
+                            <li><strong>Last Login:</strong> Your previous login timestamp</li>
+                        </ul>
+                        
+                        <h4>Password Management</h4>
+                        <ol class="step-list">
+                            <li>Click on your username in the top-right corner</li>
+                            <li>Select "Change Password" from dropdown</li>
+                            <li>Enter current password</li>
+                            <li>Enter new password (minimum 8 characters)</li>
+                            <li>Confirm new password</li>
+                            <li>Click "Update Password"</li>
+                        </ol>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Security:</strong> 
+                            Use a strong password and don't share it. Change your password every 90 days.
+                        </div>
+                    </div>
+                    
+                    <!-- Notifications -->
+                    <div class="feature-card" id="notifications">
+                        <h3><i class="fas fa-bell"></i>Notifications</h3>
+                        <p>Stay informed with system notifications and alerts.</p>
+                        
+                        <h4>Types of Notifications</h4>
+                        <ul>
+                            <li><strong>Daily Reminders:</strong> Submit attendance before 10 AM</li>
+                            <li><strong>Approval Updates:</strong> When manager approves/rejects status</li>
+                            <li><strong>Mismatch Alerts:</strong> New mismatches detected</li>
+                            <li><strong>System Announcements:</strong> Important updates and maintenance</li>
+                            <li><strong>Holiday Reminders:</strong> Upcoming holiday notifications</li>
+                        </ul>
+                        
+                        <h4>Notification Channels</h4>
+                        <ul>
+                            <li><strong>In-App Notifications:</strong> Bell icon in header shows count</li>
+                            <li><strong>Email Notifications:</strong> Sent to registered email</li>
+                            <li><strong>Dashboard Alerts:</strong> Important messages on login</li>
+                        </ul>
+                        
+                        <h4>Managing Notifications</h4>
+                        <p>You can:</p>
+                        <ul>
+                            <li>Click bell icon to view all notifications</li>
+                            <li>Mark notifications as read</li>
+                            <li>Clear old notifications</li>
+                            <li>Update email preferences (contact admin)</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- FAQs Section -->
+                    <div class="faq-section" id="faq">
+                        <h2 class="mb-4"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h2>
+                        
+                        <div class="faq-item">
+                            <h5>Q: What if I forget to submit my daily status?</h5>
+                            <p>A: You can submit backdated status for up to 7 days. After that, you'll need manager approval for late submissions.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: Can I submit status for future dates?</h5>
+                            <p>A: No, you can only submit status for today and past dates. Future date submissions are not allowed.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: What happens if my status is rejected?</h5>
+                            <p>A: You'll receive a notification with the rejection reason. You must edit and resubmit the status with corrections.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How do I know if there's a mismatch?</h5>
+                            <p>A: The dashboard shows a red badge with mismatch count. You'll also receive email notifications for new mismatches.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: Can I change my submitted status after approval?</h5>
+                            <p>A: No, approved statuses cannot be changed. Contact your manager for corrections if needed.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: What if the swipe machine wasn't working?</h5>
+                            <p>A: Submit your status normally and explain the swipe machine issue in the mismatch resolution if detected.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How is attendance percentage calculated?</h5>
+                            <p>A: Attendance % = (Present Days + WFH Days) / Total Working Days × 100. Excludes weekends and holidays.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: Can I access the system from mobile?</h5>
+                            <p>A: Yes, the system is mobile-responsive. Use any modern mobile browser to access all features.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Support Section -->
+                    <div class="feature-card" id="support">
+                        <h3><i class="fas fa-headset"></i>Support & Contact</h3>
+                        <p>Get help when you need it.</p>
+                        
+                        <h4>Support Channels</h4>
+                        <ul>
+                            <li><strong>IT Helpdesk:</strong> For login and technical issues</li>
+                            <li><strong>HR Support:</strong> For attendance policy queries</li>
+                            <li><strong>Manager:</strong> For approval and correction requests</li>
+                            <li><strong>System Admin:</strong> For system-wide issues</li>
+                        </ul>
+                        
+                        <h4>Contact Information</h4>
+                        <ul>
+                            <li><strong>Email:</strong> support@attendo.com</li>
+                            <li><strong>Phone:</strong> +91-1234-567890</li>
+                            <li><strong>Hours:</strong> Monday-Friday, 9:00 AM - 6:00 PM</li>
+                        </ul>
+                        
+                        <h4>Before Contacting Support</h4>
+                        <ol>
+                            <li>Check this documentation for answers</li>
+                            <li>Try logging out and logging back in</li>
+                            <li>Clear browser cache and cookies</li>
+                            <li>Try a different browser</li>
+                            <li>Note down any error messages</li>
+                        </ol>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Pro Tip:</strong> 
+                            Include your Vendor ID, date/time of issue, and screenshots when reporting problems for faster resolution.
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="text-center mt-5 pt-4 border-top">
+                        <p class="text-muted">
+                            <i class="fas fa-copyright me-1"></i>2025 ATTENDO - Vendor Timesheet Management System<br>
+                            Developed for MediaTek Hackathon | All Rights Reserved
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // Update active state
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Highlight current section on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.feature-card, .faq-section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+        
+        // Quick action buttons - removed popup alerts
+    </script>
+</body>
+</html>

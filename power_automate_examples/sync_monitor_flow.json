@@ -1,0 +1,105 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "actions": {
+      "Check_Sync_Status": {
+        "type": "Http",
+        "inputs": {
+          "method": "GET",
+          "uri": "https://your-attendo-server.com/api/sync/status"
+        }
+      },
+      "Parse_Status_Response": {
+        "type": "ParseJson",
+        "inputs": {
+          "content": "@body('Check_Sync_Status')",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "metrics": {
+                "type": "object",
+                "properties": {
+                  "failed_syncs": {
+                    "type": "integer"
+                  },
+                  "total_syncs": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "runAfter": {
+          "Check_Sync_Status": [
+            "Succeeded"
+          ]
+        }
+      },
+      "Check_For_Failures": {
+        "type": "If",
+        "expression": {
+          "greater": [
+            "@body('Parse_Status_Response')?['metrics']?['failed_syncs']",
+            0
+          ]
+        },
+        "actions": {
+          "Send_Alert_To_Teams": {
+            "type": "Http",
+            "inputs": {
+              "method": "POST",
+              "uri": "https://graph.microsoft.com/v1.0/teams/{team-id}/channels/{channel-id}/messages",
+              "headers": {
+                "Authorization": "Bearer @{variables('TeamsToken')}",
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "body": {
+                  "content": "\ud83d\udea8 ATTENDO Sync Alert: @{body('Parse_Status_Response')?['metrics']?['failed_syncs']} sync failures detected!"
+                }
+              }
+            }
+          },
+          "Trigger_Force_Sync": {
+            "type": "Http",
+            "inputs": {
+              "method": "POST",
+              "uri": "https://your-attendo-server.com/api/sync/trigger",
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "event_type": "manual_trigger",
+                "entity_type": "all",
+                "force_sync": true
+              }
+            },
+            "runAfter": {
+              "Send_Alert_To_Teams": [
+                "Succeeded"
+              ]
+            }
+          }
+        },
+        "runAfter": {
+          "Parse_Status_Response": [
+            "Succeeded"
+          ]
+        }
+      }
+    },
+    "triggers": {
+      "Recurrence": {
+        "type": "Recurrence",
+        "recurrence": {
+          "frequency": "Minute",
+          "interval": 30
+        }
+      }
+    }
+  }
+}

@@ -4,12 +4,9 @@ from werkzeug.utils import secure_filename
 from datetime import datetime, date, timedelta
 import os
 import pandas as pd
-from models import UserRole, SwipeRecord, LeaveRecord, WFHRecord, MismatchRecord, Vendor
-try:
-    from app_old import db
-except ImportError:
-    from flask_sqlalchemy import SQLAlchemy
-    db = SQLAlchemy()
+import models
+from models import UserRole, SwipeRecord, LeaveRecord, WFHRecord, MismatchRecord, Vendor, Manager, User, Holiday, ApprovalStatus
+
 # Import utils functions - we'll handle this inside functions to avoid circular imports
 # from utils import import_swipe_data, import_leave_data, import_wfh_data, detect_mismatches, generate_monthly_report
 
@@ -50,8 +47,8 @@ def import_dashboard():
         WFHRecord.imported_at >= date.today().replace(day=1)
     ).count()
     
-    pending_mismatches = MismatchRecord.query.filter_by(
-        manager_approval='pending'
+    pending_mismatches = MismatchRecord.query.filter(
+        MismatchRecord.manager_approval == ApprovalStatus.PENDING
     ).count()
     
     stats = {
@@ -154,6 +151,259 @@ def import_leaves():
         return redirect(url_for('import_routes.import_dashboard'))
     
     return redirect(url_for('import_routes.import_dashboard'))
+
+@import_bp.route('/vendor-data', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def import_vendors():
+    """Import Vendor master data (Users + Vendor profiles)"""
+    if request.method == 'POST':
+        try:
+            if 'file' not in request.files:
+                flash('No file selected', 'error')
+                return redirect(url_for('import_routes.import_dashboard'))
+
+            file = request.files['file']
+            if file.filename == '':
+                flash('No file selected', 'error')
+                return redirect(url_for('import_routes.import_dashboard'))
+
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(filepath)
+
+                df = pd.read_excel(filepath) if not filepath.lower().endswith('.csv') else pd.read_csv(filepath)
+                created = 0
+                updated = 0
+                for _, row in df.iterrows():
+                    try:
+                        vendor_id = str(row.get('Vendor ID') or '').strip()
+                        full_name = str(row.get('Full Name') or '').strip()
+                        email = str(row.get('Email') or '').strip()
+                        department = str(row.get('Department') or '').strip()
+                        company = str(row.get('Company') or '').strip()
+                        band = str(row.get('Band') or '').strip() or 'B1'
+                        location = str(row.get('Location') or '').strip() or 'BL-A-5F'
+                        manager_id = str(row.get('Manager ID') or '').strip() or None
+                        password = str(row.get('Password') or '').strip() or 'vendor123'
+
+                        if not vendor_id or not full_name:
+                            continue
+
+                        # Check if vendor already exists
+                        existing_vendor = Vendor.query.filter_by(vendor_id=vendor_id).first()
+
+                        # Get or create user
+                        user = None
+                        if existing_vendor:
+                            user = existing_vendor.user_account
+                        if not user:
+                            user = User.query.filter_by(email=email).first()
+                        if not user:
+                            # Create new user
+                            user = User(username=email.split('@')[0] if email else vendor_id,
+                                        email=email or f"{vendor_id}@example.com",
+                                        role=UserRole.VENDOR,
+                                        is_active=True)
+                            user.set_password(password)
+                            models.db.session.add(user)
+                            models.db.session.flush()
+
+                        if existing_vendor:
+                            # Update existing vendor
+                            existing_vendor.full_name = full_name or existing_vendor.full_name
+                            existing_vendor.department = department or existing_vendor.department
+                            existing_vendor.company = company or existing_vendor.company
+                            existing_vendor.band = band or existing_vendor.band
+                            existing_vendor.location = location or existing_vendor.location
+                            existing_vendor.manager_id = manager_id or existing_vendor.manager_id
+                            updated += 1
+                        else:
+                            # Create new vendor
+                            vendor = Vendor(
+                                user_id=user.id,
+                                vendor_id=vendor_id,
+                                full_name=full_name,
+                                department=department,
+                                company=company,
+                                band=band,
+                                location=location,
+                                manager_id=manager_id
+                            )
+                            models.db.session.add(vendor)
+                            created += 1
+                    except Exception as ie:
+                        print(f"Error importing vendor row: {str(ie)}")
+                        continue
+
+                models.db.session.commit()
+                os.remove(filepath)
+
+                flash(f'Vendor import complete. Created: {created}, Updated: {updated}', 'success')
+                return redirect(url_for('import_routes.import_dashboard'))
+            else:
+                flash('Invalid file type. Please upload Excel (.xlsx, .xls) or CSV files only.', 'error')
+        except Exception as e:
+            models.db.session.rollback()
+            flash(f'Error importing vendors: {str(e)}', 'error')
+        return redirect(url_for('import_routes.import_dashboard'))
+    return redirect(url_for('import_routes.import_dashboard'))
+
+
+@import_bp.route('/manager-data', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def import_managers():
+    """Import Manager master data (Users + Manager profiles)"""
+    if request.method == 'POST':
+        try:
+            if 'file' not in request.files:
+                flash('No file selected', 'error')
+                return redirect(url_for('import_routes.import_dashboard'))
+
+            file = request.files['file']
+            if file.filename == '':
+                flash('No file selected', 'error')
+                return redirect(url_for('import_routes.import_dashboard'))
+
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(filepath)
+
+                df = pd.read_excel(filepath) if not filepath.lower().endswith('.csv') else pd.read_csv(filepath)
+                created = 0
+                updated = 0
+                for _, row in df.iterrows():
+                    try:
+                        manager_code = str(row.get('Manager ID') or '').strip()
+                        full_name = str(row.get('Full Name') or '').strip()
+                        email = str(row.get('Email') or '').strip()
+                        department = str(row.get('Department') or '').strip()
+                        team_name = str(row.get('Team Name') or '').strip()
+                        phone = str(row.get('Phone') or '').strip()
+                        password = str(row.get('Password') or '').strip() or 'manager123'
+
+                        if not manager_code or not full_name:
+                            continue
+
+                        # Find existing manager by manager_id
+                        existing_manager = Manager.query.filter_by(manager_id=manager_code).first()
+
+                        # Get or create user
+                        user = None
+                        if existing_manager:
+                            user = existing_manager.user_account
+                        if not user:
+                            user = User.query.filter_by(email=email).first()
+                        if not user:
+                            user = User(username=email.split('@')[0] if email else manager_code,
+                                        email=email or f"{manager_code}@example.com",
+                                        role=UserRole.MANAGER,
+                                        is_active=True)
+                            user.set_password(password)
+                            models.db.session.add(user)
+                            models.db.session.flush()
+
+                        if existing_manager:
+                            existing_manager.full_name = full_name or existing_manager.full_name
+                            existing_manager.department = department or existing_manager.department
+                            existing_manager.team_name = team_name or existing_manager.team_name
+                            existing_manager.email = email or existing_manager.email
+                            existing_manager.phone = phone or existing_manager.phone
+                            updated += 1
+                        else:
+                            manager = Manager(
+                                manager_id=manager_code,
+                                user_id=user.id,
+                                full_name=full_name,
+                                department=department,
+                                team_name=team_name,
+                                email=email,
+                                phone=phone
+                            )
+                            models.db.session.add(manager)
+                            created += 1
+                    except Exception as ie:
+                        print(f"Error importing manager row: {str(ie)}")
+                        continue
+
+                models.db.session.commit()
+                os.remove(filepath)
+
+                flash(f'Manager import complete. Created: {created}, Updated: {updated}', 'success')
+                return redirect(url_for('import_routes.import_dashboard'))
+            else:
+                flash('Invalid file type. Please upload Excel (.xlsx, .xls) or CSV files only.', 'error')
+        except Exception as e:
+            models.db.session.rollback()
+            flash(f'Error importing managers: {str(e)}', 'error')
+        return redirect(url_for('import_routes.import_dashboard'))
+    return redirect(url_for('import_routes.import_dashboard'))
+
+
+@import_bp.route('/holiday-data', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def import_holidays():
+    """Import Holiday master data"""
+    if request.method == 'POST':
+        try:
+            if 'file' not in request.files:
+                flash('No file selected', 'error')
+                return redirect(url_for('import_routes.import_dashboard'))
+
+            file = request.files['file']
+            if file.filename == '':
+                flash('No file selected', 'error')
+                return redirect(url_for('import_routes.import_dashboard'))
+
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+                filepath = os.path.join(UPLOAD_FOLDER, filename)
+                file.save(filepath)
+
+                df = pd.read_excel(filepath) if not filepath.lower().endswith('.csv') else pd.read_csv(filepath)
+                created = 0
+                for _, row in df.iterrows():
+                    try:
+                        date_str = str(row.get('Date') or '').strip()
+                        name = str(row.get('Name') or '').strip()
+                        description = str(row.get('Description') or '').strip()
+                        if not date_str or not name:
+                            continue
+                        holiday_date = pd.to_datetime(date_str).date()
+                        existing = Holiday.query.filter_by(holiday_date=holiday_date).first()
+                        if existing:
+                            # Update name/description if changed
+                            existing.name = name or existing.name
+                            existing.description = description or existing.description
+                        else:
+                            h = Holiday(holiday_date=holiday_date,
+                                        name=name,
+                                        description=description,
+                                        created_by=current_user.id)
+                            models.db.session.add(h)
+                            created += 1
+                    except Exception as ie:
+                        print(f"Error importing holiday row: {str(ie)}")
+                        continue
+                models.db.session.commit()
+                os.remove(filepath)
+                flash(f'Holiday import complete. Created/Updated: {created}', 'success')
+                return redirect(url_for('import_routes.import_dashboard'))
+            else:
+                flash('Invalid file type. Please upload Excel (.xlsx, .xls) or CSV files only.', 'error')
+        except Exception as e:
+            models.db.session.rollback()
+            flash(f'Error importing holidays: {str(e)}', 'error')
+        return redirect(url_for('import_routes.import_dashboard'))
+    return redirect(url_for('import_routes.import_dashboard'))
+
 
 @import_bp.route('/wfh-data', methods=['GET', 'POST'])
 @login_required
@@ -279,6 +529,40 @@ def download_templates():
         }
         filename = 'wfh_data_template.xlsx'
     
+    elif template_type == 'vendor':
+        sample_data = {
+            'Vendor ID': ['VND001', 'VND002'],
+            'Full Name': ['John Doe', 'Jane Smith'],
+            'Email': ['john.doe@vendor.com', 'jane.smith@vendor.com'],
+            'Department': ['MTB_WCS_MSE7_MS1', 'MTB_WCS_MSE7_MS2'],
+            'Company': ['ABC Solutions', 'XYZ Technologies'],
+            'Band': ['B2', 'B3'],
+            'Location': ['BL-A-5F', 'BL-B-3F'],
+            'Manager ID': ['M001', 'M002'],
+            'Password': ['vendor123', 'vendor123']
+        }
+        filename = 'vendor_master_template.xlsx'
+    
+    elif template_type == 'manager':
+        sample_data = {
+            'Manager ID': ['M001', 'M002'],
+            'Full Name': ['Sarah Johnson', 'Michael Chen'],
+            'Email': ['sarah.johnson@attendo.com', 'michael.chen@attendo.com'],
+            'Department': ['ATD_WCS_MSE7_MS1', 'ATD_WCS_MSE7_MS2'],
+            'Team Name': ['Team Alpha', 'Team Beta'],
+            'Phone': ['+1-555-0101', '+1-555-0102'],
+            'Password': ['manager123', 'manager123']
+        }
+        filename = 'manager_master_template.xlsx'
+    
+    elif template_type == 'holiday':
+        sample_data = {
+            'Date': ['2025-12-25', '2026-01-01'],
+            'Name': ['Christmas Day', 'New Year\'s Day'],
+            'Description': ['National Holiday', 'National Holiday']
+        }
+        filename = 'holiday_master_template.xlsx'
+    
     else:
         flash('Invalid template type', 'error')
         return redirect(url_for('import_routes.import_dashboard'))
@@ -342,7 +626,7 @@ def validate_imports():
     try:
         # Duplicates in swipe records (same vendor/date)
         from sqlalchemy import func
-        duplicates = (db.session
+        duplicates = (models.db.session
             .query(SwipeRecord.vendor_id, SwipeRecord.attendance_date, func.count('*').label('c'))
             .group_by(SwipeRecord.vendor_id, SwipeRecord.attendance_date)
             .having(func.count('*') > 1)

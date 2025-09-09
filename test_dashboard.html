@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dashboard Functions</title>
+    <style>
+        button { margin: 5px; padding: 10px; }
+        .container { padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Manager Dashboard Function Test</h2>
+        
+        <h3>✅ WORKING FUNCTIONS (with backend routes):</h3>
+        <button onclick="generateReport()">Team Reports</button>
+        <button onclick="viewMismatches()">Review Mismatches</button>  
+        <button onclick="viewAIInsights()">AI Predictions</button>
+        <button onclick="viewTeamCalendar()">Holiday Calendar</button>
+        
+        <h3>📱 DEMO FUNCTIONS (alert messages):</h3>
+        <button onclick="viewDetails('V001')">View Details</button>
+        <button onclick="sendReminder('V001')">Send Reminder</button>
+        <button onclick="sendBulkReminders()">Send Bulk Reminders</button>
+        <button onclick="refreshTeamStatus()">Refresh Team Status</button>
+    </div>
+
+    <script>
+        // Working functions that redirect to backend routes
+        function generateReport() {
+            window.location.href = '/manager/reports';
+        }
+        
+        function viewMismatches(vendorId) {
+            if (vendorId) {
+                window.location.href = '/manager/mismatches?vendor=' + vendorId;
+            } else {
+                window.location.href = '/manager/mismatches';
+            }
+        }
+        
+        function viewAIInsights() {
+            window.location.href = '/ai-insights';
+        }
+        
+        function viewTeamCalendar() {
+            window.location.href = '/holiday-calendar';
+        }
+        
+        // Demo functions with informative alerts
+        function viewDetails(vendorId) {
+            alert('Demo: View details for vendor ' + vendorId + '\n\nThis would show:\n• Detailed status history\n• Performance metrics\n• Recent activities\n• Contact information');
+        }
+        
+        function sendReminder(vendorId) {
+            if (confirm('Send reminder to vendor ' + vendorId + '?')) {
+                alert('Demo: Reminder sent to vendor ' + vendorId + '\n\nIn production, this would:\n• Send email/SMS notification\n• Log the reminder action\n• Update dashboard status');
+            }
+        }
+        
+        function sendBulkReminders() {
+            if (confirm('Send reminders to all vendors who haven\'t submitted today?')) {
+                alert('Demo: Bulk reminders sent!\n\nIn production, this would:\n• Identify non-submitters\n• Send batch notifications\n• Log all reminder actions\n• Update dashboard counts');
+            }
+        }
+        
+        function refreshTeamStatus() {
+            alert('Demo: Refreshing team status...\n\nIn production, this would:\n• Fetch latest status data\n• Update dashboard counts\n• Refresh team member table\n• Show loading indicators');
+            location.reload();
+        }
+    </script>
+</body>
+</html>
