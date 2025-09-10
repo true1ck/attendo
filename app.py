@@ -2087,6 +2087,12 @@ def vendor_submit_status():
         break_duration = int(request.form.get('break_duration', 0)) if request.form.get('break_duration') else 0
         total_hours = float(request.form.get('total_hours', 0)) if request.form.get('total_hours') else None
         
+        # Half-day type fields
+        half_am_type = request.form.get('half_am_type')
+        half_pm_type = request.form.get('half_pm_type')
+        am_enum = None
+        pm_enum = None
+        
         # Convert time strings to time objects
         def parse_time(time_str):
             if time_str:
@@ -2119,6 +2125,49 @@ def vendor_submit_status():
             flash('Invalid status value', 'error')
             return redirect(url_for('vendor_dashboard'))
         
+        # Validate half-day submissions
+        if status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]:
+            if not half_am_type or not half_pm_type:
+                flash('Both AM and PM activities must be specified for half-day status', 'error')
+                return redirect(url_for('vendor_dashboard'))
+            
+            # Validate half-day type values
+            valid_half_day_types = ['in_office', 'wfh', 'leave', 'absent']
+            if half_am_type not in valid_half_day_types or half_pm_type not in valid_half_day_types:
+                flash('Invalid half-day activity type', 'error')
+                return redirect(url_for('vendor_dashboard'))
+            
+            # Check for invalid combinations
+            from models import HalfDayType
+            half_day_map = {
+                'in_office': HalfDayType.IN_OFFICE,
+                'wfh': HalfDayType.WFH,
+                'leave': HalfDayType.LEAVE,
+                'absent': HalfDayType.ABSENT
+            }
+            
+            am_enum = half_day_map[half_am_type]
+            pm_enum = half_day_map[half_pm_type]
+            
+            # Validate combinations
+            if am_enum == pm_enum:
+                if am_enum == HalfDayType.ABSENT:
+                    flash('Both AM and PM cannot be absent. Use "Absent" status instead', 'error')
+                    return redirect(url_for('vendor_dashboard'))
+                elif am_enum == HalfDayType.LEAVE:
+                    flash('Both AM and PM cannot be leave. Use "On Leave - Full Day" instead', 'error')
+                    return redirect(url_for('vendor_dashboard'))
+                elif am_enum == HalfDayType.WFH:
+                    flash('Both AM and PM cannot be WFH. Use "Work From Home - Full Day" instead', 'error')
+                    return redirect(url_for('vendor_dashboard'))
+                elif am_enum == HalfDayType.IN_OFFICE:
+                    flash('Both AM and PM cannot be in office. Use "In Office - Full Day" instead', 'error')
+                    return redirect(url_for('vendor_dashboard'))
+        else:
+            # Clear half-day types for non-half-day statuses
+            am_enum = None
+            pm_enum = None
+        
         # Check if status already exists
         existing_status = DailyStatus.query.filter_by(
             vendor_id=vendor.id,
@@ -2137,6 +2186,8 @@ def vendor_submit_status():
             existing_status.wfh_out_time = wfh_out_time_obj
             existing_status.break_duration = break_duration
             existing_status.total_hours = total_hours
+            existing_status.half_am_type = am_enum if am_enum else None
+            existing_status.half_pm_type = pm_enum if pm_enum else None
             existing_status.submitted_at = datetime.utcnow()
             existing_status.approval_status = ApprovalStatus.PENDING
         else:
@@ -2153,7 +2204,9 @@ def vendor_submit_status():
                 wfh_in_time=wfh_in_time_obj,
                 wfh_out_time=wfh_out_time_obj,
                 break_duration=break_duration,
-                total_hours=total_hours
+                total_hours=total_hours,
+                half_am_type=am_enum if am_enum else None,
+                half_pm_type=pm_enum if pm_enum else None
             )
             db.session.add(new_status)
         

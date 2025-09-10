@@ -38,7 +38,7 @@ try:
     from models import (
         User, Vendor, Manager, DailyStatus, SwipeRecord, Holiday,
         MismatchRecord, SystemConfiguration, LeaveRecord, WFHRecord,
-        UserRole, AttendanceStatus, ApprovalStatus
+        UserRole, AttendanceStatus, ApprovalStatus, HalfDayType
     )
     from utils import detect_mismatches
     print("✅ Imported app, models, and utils.detect_mismatches")
@@ -61,7 +61,7 @@ def next_business_days(n=7):
     return dates
 
 
-def upsert_daily_status(vendor_id, d, status, location=None, approved=True):
+def upsert_daily_status(vendor_id, d, status, location=None, approved=True, half_am_type=None, half_pm_type=None):
     ds = DailyStatus.query.filter_by(vendor_id=vendor_id, status_date=d).first()
     if not ds:
         ds = DailyStatus(
@@ -70,13 +70,17 @@ def upsert_daily_status(vendor_id, d, status, location=None, approved=True):
             status=status,
             location=location or ("Office" if 'IN_OFFICE' in status.value else "Home" if 'WFH' in status.value else "N/A"),
             submitted_at=datetime.combine(d, time(9, 30)),
-            approval_status=ApprovalStatus.APPROVED if approved else ApprovalStatus.PENDING
+            approval_status=ApprovalStatus.APPROVED if approved else ApprovalStatus.PENDING,
+            half_am_type=half_am_type,
+            half_pm_type=half_pm_type
         )
         db.session.add(ds)
     else:
         ds.status = status
         ds.location = location or ("Office" if 'IN_OFFICE' in status.value else "Home" if 'WFH' in status.value else "N/A")
         ds.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.PENDING
+        ds.half_am_type = half_am_type
+        ds.half_pm_type = half_pm_type
     return ds
 
 
@@ -248,6 +252,187 @@ def create_special_cases():
         print(f"✅ Injected {created} special-case day scenarios across vendors {', '.join([vt.vendor_id for vt in v_targets])}")
         return created
 
+def create_enhanced_half_day_scenarios():
+    """Create detailed half-day scenarios with AM/PM combinations that cause mismatches"""
+    with app.app_context():
+        vendors = Vendor.query.order_by(Vendor.id).all()
+        if not vendors:
+            print("❌ No vendors found for half-day scenarios.")
+            return 0
+        
+        days = next_business_days(10)  # Get more days for varied scenarios
+        v_targets = vendors[:4]  # Use first 4 vendors
+        created = 0
+        
+        print("\n🔄 Creating Enhanced Half-Day Scenarios...")
+        
+        # Scenario 1: AM in-office + PM WFH, but swipe shows full day presence
+        d = days[0]
+        v = v_targets[0]
+        upsert_daily_status(
+            v.id, d, AttendanceStatus.IN_OFFICE_HALF, 
+            location='BL-A-5F / Home', approved=True,
+            half_am_type=HalfDayType.IN_OFFICE,
+            half_pm_type=HalfDayType.WFH
+        )
+        # Create full day swipe (will mismatch with PM WFH)
+        upsert_swipe(v.id, d, present=True, partial=False)
+        # Add WFH approval for the full day to avoid that mismatch
+        add_wfh(v.id, d, d)
+        created += 1
+        print(f"  ✓ Scenario 1: AM office + PM WFH with full-day swipe on {d}")
+        
+        # Scenario 2: AM WFH + PM in-office, but no swipe at all
+        d = days[1]
+        v = v_targets[1]
+        upsert_daily_status(
+            v.id, d, AttendanceStatus.IN_OFFICE_HALF,
+            location='Home / BL-A-5F', approved=True,
+            half_am_type=HalfDayType.WFH,
+            half_pm_type=HalfDayType.IN_OFFICE
+        )
+        # No swipe record (will mismatch with PM in-office)
+        upsert_swipe(v.id, d, present=False)
+        # Add WFH approval for AM
+        add_wfh(v.id, d, d)
+        created += 1
+        print(f"  ✓ Scenario 2: AM WFH + PM office with no swipe on {d}")
+        
+        # Scenario 3: AM leave + PM in-office, but swipe shows full day
+        d = days[2]
+        v = v_targets[2]
+        upsert_daily_status(
+            v.id, d, AttendanceStatus.LEAVE_HALF,
+            location='N/A / BL-A-5F', approved=True,
+            half_am_type=HalfDayType.LEAVE,
+            half_pm_type=HalfDayType.IN_OFFICE
+        )
+        # Full day swipe (will mismatch with AM leave)
+        upsert_swipe(v.id, d, present=True, partial=False)
+        # Add leave approval for AM
+        add_leave(v.id, d, d, leave_type='Sick Leave')
+        created += 1
+        print(f"  ✓ Scenario 3: AM leave + PM office with full-day swipe on {d}")
+        
+        # Scenario 4: AM in-office + PM leave, but no leave approval
+        d = days[3]
+        v = v_targets[3]
+        upsert_daily_status(
+            v.id, d, AttendanceStatus.LEAVE_HALF,
+            location='BL-A-5F / N/A', approved=True,
+            half_am_type=HalfDayType.IN_OFFICE,
+            half_pm_type=HalfDayType.LEAVE
+        )
+        # Partial swipe (AM only)
+        upsert_swipe(v.id, d, present=True, partial=True)
+        # No leave approval (will cause mismatch)
+        created += 1
+        print(f"  ✓ Scenario 4: AM office + PM leave with no leave approval on {d}")
+        
+        # Scenario 5: AM WFH + PM absent, but swipe shows presence in PM
+        d = days[4]
+        v = v_targets[0]
+        upsert_daily_status(
+            v.id, d, AttendanceStatus.WFH_HALF,
+            location='Home / N/A', approved=True,
+            half_am_type=HalfDayType.WFH,
+            half_pm_type=HalfDayType.ABSENT
+        )
+        # Late arrival swipe (PM only) - conflicts with PM absent
+        sr = SwipeRecord.query.filter_by(vendor_id=v.id, attendance_date=d).first()
+        if not sr:
+            sr = SwipeRecord(
+                vendor_id=v.id,
+                attendance_date=d,
+                weekday=d.strftime('%A'),
+                shift_code='G',
+                login_time=time(14, 30),  # PM start
+                logout_time=time(18, 0),
+                total_hours=3.5,
+                extra_hours=0.0,
+                attendance_status='AP'
+            )
+            db.session.add(sr)
+        # Add WFH approval for AM
+        add_wfh(v.id, d, d)
+        created += 1
+        print(f"  ✓ Scenario 5: AM WFH + PM absent with PM swipe on {d}")
+        
+        # Scenario 6: AM absent + PM WFH, but full day swipe
+        d = days[5]
+        v = v_targets[1]
+        upsert_daily_status(
+            v.id, d, AttendanceStatus.WFH_HALF,
+            location='N/A / Home', approved=True,
+            half_am_type=HalfDayType.ABSENT,
+            half_pm_type=HalfDayType.WFH
+        )
+        # Full day swipe (conflicts with AM absent)
+        upsert_swipe(v.id, d, present=True, partial=False)
+        # No WFH approval (will cause additional mismatch)
+        created += 1
+        print(f"  ✓ Scenario 6: AM absent + PM WFH with full-day swipe and no WFH approval on {d}")
+        
+        # Scenario 7: Complex - AM leave + PM in-office, partial swipe + no leave approval
+        d = days[6]
+        v = v_targets[2]
+        upsert_daily_status(
+            v.id, d, AttendanceStatus.LEAVE_HALF,
+            location='N/A / BL-A-5F', approved=True,
+            half_am_type=HalfDayType.LEAVE,
+            half_pm_type=HalfDayType.IN_OFFICE
+        )
+        # Partial swipe (AM only) - conflicts with both AM leave and incomplete PM office
+        sr = SwipeRecord.query.filter_by(vendor_id=v.id, attendance_date=d).first()
+        if not sr:
+            sr = SwipeRecord(
+                vendor_id=v.id,
+                attendance_date=d,
+                weekday=d.strftime('%A'),
+                shift_code='G',
+                login_time=time(9, 15),  # AM time
+                logout_time=time(11, 30),  # Short AM period
+                total_hours=2.25,
+                extra_hours=0.0,
+                attendance_status='AP'
+            )
+            db.session.add(sr)
+        # No leave approval (will cause mismatch)
+        created += 1
+        print(f"  ✓ Scenario 7: AM leave + PM office with AM-only swipe and no leave approval on {d}")
+        
+        # Scenario 8: AM in-office + PM WFH, but no WFH approval and early departure
+        d = days[7]
+        v = v_targets[3]
+        upsert_daily_status(
+            v.id, d, AttendanceStatus.IN_OFFICE_HALF,
+            location='BL-A-5F / Home', approved=True,
+            half_am_type=HalfDayType.IN_OFFICE,
+            half_pm_type=HalfDayType.WFH
+        )
+        # Partial swipe (AM only)
+        sr = SwipeRecord.query.filter_by(vendor_id=v.id, attendance_date=d).first()
+        if not sr:
+            sr = SwipeRecord(
+                vendor_id=v.id,
+                attendance_date=d,
+                weekday=d.strftime('%A'),
+                shift_code='G',
+                login_time=time(9, 0),
+                logout_time=time(13, 0),  # End of AM
+                total_hours=4.0,
+                extra_hours=0.0,
+                attendance_status='AP'
+            )
+            db.session.add(sr)
+        # No WFH approval for PM (will cause mismatch)
+        created += 1
+        print(f"  ✓ Scenario 8: AM office + PM WFH with AM-only swipe and no WFH approval on {d}")
+        
+        db.session.commit()
+        print(f"✅ Created {created} enhanced half-day scenarios with detailed AM/PM combinations")
+        return created
+
 
 def run_detection():
     with app.app_context():
@@ -263,20 +448,36 @@ def run_detection():
 
 def main():
     with app.app_context():
+        # Create basic special cases
         scenarios = create_special_cases()
         if scenarios == 0:
             print("❌ No scenarios created. Ensure sample data is loaded first.")
             return
+        
+        # Create enhanced half-day scenarios
+        half_day_scenarios = create_enhanced_half_day_scenarios()
+        total_scenarios = scenarios + half_day_scenarios
+        
+        # Run mismatch detection
         run_detection()
+        
         # Quick summary of mismatches
         total = MismatchRecord.query.count()
-        recent = MismatchRecord.query.order_by(MismatchRecord.created_at.desc()).limit(10).all()
+        recent = MismatchRecord.query.order_by(MismatchRecord.created_at.desc()).limit(15).all()
         print(f"\n📈 Total mismatch records in DB: {total}")
+        print(f"📋 Total scenarios created: {total_scenarios} ({scenarios} basic + {half_day_scenarios} half-day)")
+        
         if recent:
-            print("🧾 Recent mismatches:")
+            print("🧾 Recent mismatches with detailed analysis:")
             for mm in recent:
-                print(f"  - {mm.mismatch_date} | VendorID={mm.vendor_id} | web={mm.web_status.value if mm.web_status else 'None'} | swipe={mm.swipe_status}")
-        print("\n✨ Done. Open /admin/reconciliation to view mismatches.")
+                details = mm.get_mismatch_details()
+                summary = mm.get_mismatch_summary() if details else "Legacy mismatch"
+                print(f"  - {mm.mismatch_date} | Vendor={mm.vendor_id} | web={mm.web_status.value if mm.web_status else 'None'} | swipe={mm.swipe_status}")
+                print(f"    → {summary}")
+        
+        print("\n✨ Done! Enhanced half-day mismatch detection is now active.")
+        print("🔍 Open /admin/reconciliation to view detailed mismatch analysis.")
+        print("📝 Vendors can see detailed half-day explanations in their mismatch resolution modal.")
 
 
 if __name__ == "__main__":

@@ -130,15 +130,24 @@
                                     {% if status.status.value == 'in_office_full' %}
                                         <span class="badge bg-success">In Office - Full</span>
                                     {% elif status.status.value == 'in_office_half' %}
-                                        <span class="badge bg-success">In Office - Half</span>
+                                        <span class="badge bg-success">Half Day</span>
+                                        {% if status.has_half_day_details() %}
+                                            <br><small class="text-muted">{{ status.get_half_day_description() }}</small>
+                                        {% endif %}
                                     {% elif status.status.value == 'wfh_full' %}
                                         <span class="badge bg-info">WFH - Full</span>
                                     {% elif status.status.value == 'wfh_half' %}
                                         <span class="badge bg-info">WFH - Half</span>
+                                        {% if status.has_half_day_details() %}
+                                            <br><small class="text-muted">{{ status.get_half_day_description() }}</small>
+                                        {% endif %}
                                     {% elif status.status.value == 'leave_full' %}
                                         <span class="badge bg-secondary">Leave - Full</span>
                                     {% elif status.status.value == 'leave_half' %}
                                         <span class="badge bg-secondary">Leave - Half</span>
+                                        {% if status.has_half_day_details() %}
+                                            <br><small class="text-muted">{{ status.get_half_day_description() }}</small>
+                                        {% endif %}
                                     {% else %}
                                         <span class="badge bg-danger">{{ status.status.value.replace('_', ' ').title() }}</span>
                                     {% endif %}
@@ -270,7 +279,7 @@
                 <h5 class="modal-title"><i class="fas fa-clock me-2"></i>Submit Daily Status</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ url_for('vendor_submit_status') }}" method="POST" id="statusForm">
+            <form action="{{ url_for('vendor_submit_status') }}" method="POST" id="statusForm" onsubmit="return validateStatusForm()">
                 <div class="modal-body">
                     <!-- Basic Information -->
                     <div class="row mb-4">
@@ -284,13 +293,54 @@
                             <select class="form-select" id="status" name="status" required onchange="handleStatusChange()">
                                 <option value="">Select Status</option>
                                 <option value="in_office_full">In Office - Full Day</option>
-                                <option value="in_office_half">In Office - Half Day</option>
+                                <option value="in_office_half">Half Day (Mixed)</option>
                                 <option value="wfh_full">Work From Home - Full Day</option>
                                 <option value="wfh_half">Work From Home - Half Day</option>
                                 <option value="leave_full">On Leave - Full Day</option>
                                 <option value="leave_half">On Leave - Half Day</option>
                                 <option value="absent">Absent</option>
                             </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Half-day combination selection -->
+                    <div id="halfDayComboSection" style="display: none;" class="mb-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Half-Day Schedule</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>Important:</strong> For half-day status, please specify what you'll be doing in both AM (morning) and PM (afternoon) periods.
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="half_am_type" class="form-label">AM (Morning) - 9:00 AM to 1:00 PM</label>
+                                        <select class="form-select" id="half_am_type" name="half_am_type" onchange="validateHalfDaySelection()">
+                                            <option value="">Select AM activity</option>
+                                            <option value="in_office">In Office</option>
+                                            <option value="wfh">Work From Home</option>
+                                            <option value="leave">On Leave</option>
+                                            <option value="absent">Absent/Not Working</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="half_pm_type" class="form-label">PM (Afternoon) - 2:00 PM to 6:00 PM</label>
+                                        <select class="form-select" id="half_pm_type" name="half_pm_type" onchange="validateHalfDaySelection()">
+                                            <option value="">Select PM activity</option>
+                                            <option value="in_office">In Office</option>
+                                            <option value="wfh">Work From Home</option>
+                                            <option value="leave">On Leave</option>
+                                            <option value="absent">Absent/Not Working</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="halfDayValidation" class="alert alert-danger mt-3" style="display: none;">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <span id="halfDayValidationMessage"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -415,11 +465,20 @@
                 </div>
                 {% for mismatch in pending_mismatches %}
                 <div class="card mb-3">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <strong>{{ mismatch.mismatch_date.strftime('%Y-%m-%d') }}</strong>
+                        {% set details = mismatch.get_mismatch_details() %}
+                        {% if details and (details.get('am_mismatch') or details.get('pm_mismatch')) %}
+                            <small class="badge bg-warning">Half-Day Issues</small>
+                        {% elif details and details.get('full_day_mismatch') %}
+                            <small class="badge bg-danger">Full-Day Issue</small>
+                        {% else %}
+                            <small class="badge bg-secondary">Legacy Mismatch</small>
+                        {% endif %}
                     </div>
                     <div class="card-body">
-                        <div class="row">
+                        <!-- Basic Information -->
+                        <div class="row mb-3">
                             <div class="col-md-6">
                                 <p><strong>Your Status:</strong> 
                                     {% if mismatch.web_status %}
@@ -435,13 +494,89 @@
                                 </p>
                             </div>
                         </div>
+                        
+                        <!-- Detailed Mismatch Explanation -->
+                        {% set details = mismatch.get_mismatch_details() %}
+                        {% if details %}
+                            <div class="alert alert-light border mb-3">
+                                <h6 class="mb-2"><i class="fas fa-search me-2"></i>Detailed Analysis</h6>
+                                
+                                {% if details.get('am_mismatch') %}
+                                    <div class="mb-2">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge bg-warning me-2">AM Period</span>
+                                            <small class="text-muted">(Morning: 9:00 AM - 1:00 PM)</small>
+                                        </div>
+                                        <div class="ms-3">
+                                            <i class="fas fa-exclamation-circle text-warning me-1"></i>
+                                            <strong>Issue:</strong> {{ details.am_mismatch.reason }}
+                                            {% if details.am_mismatch.severity == 'high' %}
+                                                <span class="badge bg-danger ms-2">High Priority</span>
+                                            {% elif details.am_mismatch.severity == 'medium' %}
+                                                <span class="badge bg-warning ms-2">Medium Priority</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if details.get('pm_mismatch') %}
+                                    <div class="mb-2">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge bg-info me-2">PM Period</span>
+                                            <small class="text-muted">(Afternoon: 2:00 PM - 6:00 PM)</small>
+                                        </div>
+                                        <div class="ms-3">
+                                            <i class="fas fa-exclamation-circle text-warning me-1"></i>
+                                            <strong>Issue:</strong> {{ details.pm_mismatch.reason }}
+                                            {% if details.pm_mismatch.severity == 'high' %}
+                                                <span class="badge bg-danger ms-2">High Priority</span>
+                                            {% elif details.pm_mismatch.severity == 'medium' %}
+                                                <span class="badge bg-warning ms-2">Medium Priority</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if details.get('full_day_mismatch') %}
+                                    <div class="mb-2">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge bg-primary me-2">Full Day</span>
+                                        </div>
+                                        <div class="ms-3">
+                                            <i class="fas fa-exclamation-circle text-warning me-1"></i>
+                                            <strong>Issue:</strong> {{ details.full_day_mismatch.reason }}
+                                            {% if details.full_day_mismatch.severity == 'high' %}
+                                                <span class="badge bg-danger ms-2">High Priority</span>
+                                            {% elif details.full_day_mismatch.severity == 'medium' %}
+                                                <span class="badge bg-warning ms-2">Medium Priority</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <!-- Legacy mismatch display -->
+                            {% if mismatch.manager_comments %}
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <strong>System Note:</strong> {{ mismatch.manager_comments }}
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        
+                        <!-- Resolution Form -->
                         <form action="{{ url_for('submit_mismatch_explanation', mismatch_id=mismatch.id) }}" method="POST">
                             <div class="mb-3">
                                 <label class="form-label">Provide explanation for this mismatch:</label>
                                 <textarea class="form-control" name="reason" rows="3" required
-                                          placeholder="Please explain the reason for this mismatch...">{{ mismatch.vendor_reason or '' }}</textarea>
+                                          placeholder="Please explain the reason for this mismatch. Consider the specific issues mentioned above in your explanation...">{{ mismatch.vendor_reason or '' }}</textarea>
                             </div>
-                            <button type="submit" class="btn btn-warning btn-sm">Submit Explanation</button>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <button type="submit" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-paper-plane me-1"></i>Submit Explanation
+                                </button>
+                                <small class="text-muted">Your explanation will be reviewed by your manager</small>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -654,6 +789,7 @@ function handleStatusChange() {
     const timeTrackingSection = document.getElementById('timeTrackingSection');
     const fullDayTiming = document.getElementById('fullDayTiming');
     const halfDayTiming = document.getElementById('halfDayTiming');
+    const halfDayComboSection = document.getElementById('halfDayComboSection');
     const officeHalf = document.getElementById('officeHalf');
     const wfhHalf = document.getElementById('wfhHalf');
     
@@ -661,39 +797,44 @@ function handleStatusChange() {
     timeTrackingSection.style.display = 'none';
     fullDayTiming.style.display = 'none';
     halfDayTiming.style.display = 'none';
+    halfDayComboSection.style.display = 'none';
     officeHalf.style.display = 'none';
     wfhHalf.style.display = 'none';
     
-    // Clear all time fields
+    // Clear all fields
     clearAllTimeFields();
+    clearHalfDaySelection();
     
     if (status === 'in_office_full' || status === 'wfh_full') {
         // Show full day timing
         timeTrackingSection.style.display = 'block';
         fullDayTiming.style.display = 'block';
         setDefaultFullDayTimes(status);
-    } else if (status === 'in_office_half' || status === 'wfh_half') {
-        // Show half day timing with appropriate sections
-        timeTrackingSection.style.display = 'block';
-        halfDayTiming.style.display = 'block';
         
-        if (status === 'in_office_half') {
-            officeHalf.style.display = 'block';
-            wfhHalf.style.display = 'block';
-        } else if (status === 'wfh_half') {
-            wfhHalf.style.display = 'block';
-            officeHalf.style.display = 'block';
+        // Auto-fill location for full day
+        const locationField = document.getElementById('location');
+        if (status === 'wfh_full') {
+            locationField.value = 'Home';
+        } else if (status === 'in_office_full') {
+            locationField.value = 'BL-A-5F';
         }
-        setDefaultHalfDayTimes(status);
-    }
-    
-    // Auto-fill location
-    const locationField = document.getElementById('location');
-    if (status.includes('wfh')) {
-        locationField.value = 'Home';
-    } else if (status.includes('in_office')) {
-        locationField.value = 'BL-A-5F';
-    } else if (status.includes('leave') || status === 'absent') {
+    } else if (status === 'in_office_half' || status === 'wfh_half' || status === 'leave_half') {
+        // Show half-day combination selection
+        halfDayComboSection.style.display = 'block';
+        
+        // Pre-populate based on selection
+        if (status === 'wfh_half') {
+            document.getElementById('half_am_type').value = 'wfh';
+            document.getElementById('half_pm_type').value = 'wfh';
+        } else if (status === 'leave_half') {
+            document.getElementById('half_am_type').value = 'leave';
+            document.getElementById('half_pm_type').value = 'leave';
+        }
+        
+        validateHalfDaySelection();
+    } else if (status === 'leave_full' || status === 'absent') {
+        // Clear location for leave/absent
+        const locationField = document.getElementById('location');
         locationField.value = '';
     }
 }
@@ -708,6 +849,135 @@ function clearAllTimeFields() {
     document.getElementById('break_duration').value = '60';
     document.getElementById('break_duration_half').value = '30';
     document.getElementById('totalHoursDisplay').textContent = '0.0';
+}
+
+function clearHalfDaySelection() {
+    document.getElementById('half_am_type').value = '';
+    document.getElementById('half_pm_type').value = '';
+    document.getElementById('halfDayValidation').style.display = 'none';
+}
+
+function validateHalfDaySelection() {
+    const amType = document.getElementById('half_am_type').value;
+    const pmType = document.getElementById('half_pm_type').value;
+    const validation = document.getElementById('halfDayValidation');
+    const validationMessage = document.getElementById('halfDayValidationMessage');
+    
+    // Hide validation by default
+    validation.style.display = 'none';
+    
+    // Only validate if both are selected
+    if (!amType || !pmType) {
+        return false;
+    }
+    
+    // Check for invalid combinations
+    let isValid = true;
+    let message = '';
+    
+    // Both can't be absent
+    if (amType === 'absent' && pmType === 'absent') {
+        isValid = false;
+        message = 'Both AM and PM cannot be marked as absent. Please select "Absent" as your main status instead.';
+    }
+    // Both can't be leave (should use full leave)
+    else if (amType === 'leave' && pmType === 'leave') {
+        isValid = false;
+        message = 'Both AM and PM cannot be marked as leave. Please select "On Leave - Full Day" instead.';
+    }
+    // Both can't be WFH (should use full WFH)
+    else if (amType === 'wfh' && pmType === 'wfh') {
+        isValid = false;
+        message = 'Both AM and PM cannot be marked as WFH. Please select "Work From Home - Full Day" instead.';
+    }
+    // Both can't be in office (should use full office)
+    else if (amType === 'in_office' && pmType === 'in_office') {
+        isValid = false;
+        message = 'Both AM and PM cannot be marked as in office. Please select "In Office - Full Day" instead.';
+    }
+    
+    if (!isValid) {
+        validationMessage.textContent = message;
+        validation.style.display = 'block';
+        return false;
+    }
+    
+    // Update time tracking based on selection
+    updateHalfDayTimeTracking(amType, pmType);
+    
+    // Update location based on selection
+    updateLocationForHalfDay(amType, pmType);
+    
+    return true;
+}
+
+function updateHalfDayTimeTracking(amType, pmType) {
+    const timeTrackingSection = document.getElementById('timeTrackingSection');
+    const halfDayTiming = document.getElementById('halfDayTiming');
+    const officeHalf = document.getElementById('officeHalf');
+    const wfhHalf = document.getElementById('wfhHalf');
+    
+    // Show time tracking if either AM or PM requires work
+    const needsTimeTracking = (amType === 'in_office' || amType === 'wfh') || (pmType === 'in_office' || pmType === 'wfh');
+    
+    if (needsTimeTracking) {
+        timeTrackingSection.style.display = 'block';
+        halfDayTiming.style.display = 'block';
+        
+        // Show relevant sections based on selection
+        officeHalf.style.display = (amType === 'in_office' || pmType === 'in_office') ? 'block' : 'none';
+        wfhHalf.style.display = (amType === 'wfh' || pmType === 'wfh') ? 'block' : 'none';
+        
+        // Set default times based on selection
+        setHalfDayDefaultTimes(amType, pmType);
+    } else {
+        timeTrackingSection.style.display = 'none';
+    }
+}
+
+function setHalfDayDefaultTimes(amType, pmType) {
+    // Clear existing values
+    clearAllTimeFields();
+    
+    // Set office times if needed
+    if (amType === 'in_office' || pmType === 'in_office') {
+        if (amType === 'in_office') {
+            document.getElementById('office_in_time').value = '09:00';
+            document.getElementById('office_out_time').value = '13:00';
+        } else if (pmType === 'in_office') {
+            document.getElementById('office_in_time').value = '14:00';
+            document.getElementById('office_out_time').value = '18:00';
+        }
+    }
+    
+    // Set WFH times if needed
+    if (amType === 'wfh' || pmType === 'wfh') {
+        if (amType === 'wfh') {
+            document.getElementById('wfh_in_time').value = '09:00';
+            document.getElementById('wfh_out_time').value = '13:00';
+        } else if (pmType === 'wfh') {
+            document.getElementById('wfh_in_time').value = '14:00';
+            document.getElementById('wfh_out_time').value = '18:00';
+        }
+    }
+    
+    calculateTotalHours();
+}
+
+function updateLocationForHalfDay(amType, pmType) {
+    const locationField = document.getElementById('location');
+    
+    if (amType === 'in_office' && pmType === 'wfh') {
+        locationField.value = 'BL-A-5F / Home';
+    } else if (amType === 'wfh' && pmType === 'in_office') {
+        locationField.value = 'Home / BL-A-5F';
+    } else if (amType === 'in_office' || pmType === 'in_office') {
+        locationField.value = 'BL-A-5F';
+    } else if (amType === 'wfh' || pmType === 'wfh') {
+        locationField.value = 'Home';
+    } else {
+        locationField.value = '';
+    }
 }
 
 function setDefaultFullDayTimes(status) {
@@ -801,6 +1071,30 @@ function getMinutesBetweenTimes(startTime, endTime) {
     }
     
     return endMinutes - startMinutes;
+}
+
+// Form validation before submission
+function validateStatusForm() {
+    const status = document.getElementById('status').value;
+    
+    // Check if half-day status is selected
+    if (status === 'in_office_half' || status === 'wfh_half' || status === 'leave_half') {
+        const amType = document.getElementById('half_am_type').value;
+        const pmType = document.getElementById('half_pm_type').value;
+        
+        // Ensure both AM and PM are selected
+        if (!amType || !pmType) {
+            showAlert('error', 'Please select both AM and PM activities for half-day status.');
+            return false;
+        }
+        
+        // Validate the combination
+        if (!validateHalfDaySelection()) {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 // Add event listeners for time field changes

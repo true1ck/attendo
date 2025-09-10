@@ -305,105 +305,308 @@ def import_swipe_data(file_path):
 
 def detect_mismatches():
     """Detect mismatches between vendor entries, swipe data and leave/WFH approvals
+    Enhanced version with half-day support and detailed mismatch information
     Rules:
     - InOffice (full/half): must have swipe AP on that date; missing swipe => mismatch
     - WFH (full/half): should not have swipe AP; if swipe AP exists => mismatch; if no WFHRecord covering date => mismatch
     - Leave (full/half): must have LeaveRecord covering date; if swipe AP exists => mismatch
     - Missing vendor entry when swipe AP exists => mismatch
+    - Half-day combinations are analyzed per AM/PM with specific mismatch details
     Only considers last 60 days and approved statuses
     """
     try:
         vendors = Vendor.query.all()
         mismatches_found = 0
         start_date = date.today() - timedelta(days=60)
+        
         for vendor in vendors:
-            # Approved statuses window
+            # Get approved statuses in the window
             statuses = DailyStatus.query.filter(
                 DailyStatus.vendor_id == vendor.id,
                 DailyStatus.status_date >= start_date,
                 DailyStatus.approval_status == ApprovalStatus.APPROVED
             ).all()
-            # Build quick date map
             status_by_date = {s.status_date: s for s in statuses}
+            
             # Get swipe records in window
             swipes = SwipeRecord.query.filter(
                 SwipeRecord.vendor_id == vendor.id,
                 SwipeRecord.attendance_date >= start_date
             ).all()
             swipe_by_date = {s.attendance_date: s for s in swipes}
-            # Leave records -> expand to date set
-            leave_recs = LeaveRecord.query.filter(
-                LeaveRecord.vendor_id == vendor.id,
-                LeaveRecord.start_date >= start_date
-            ).all()
-            leave_dates = set()
-            for lr in leave_recs:
-                d = lr.start_date
-                while d <= lr.end_date:
-                    leave_dates.add(d)
-                    d += timedelta(days=1)
-            # WFH records -> expand to date set
-            wfh_recs = WFHRecord.query.filter(
-                WFHRecord.vendor_id == vendor.id,
-                WFHRecord.start_date >= start_date
-            ).all()
-            wfh_dates = set()
-            for wr in wfh_recs:
-                d = wr.start_date
-                while d <= wr.end_date:
-                    wfh_dates.add(d)
-                    d += timedelta(days=1)
-            # Union of relevant dates
+            
+            # Get leave and WFH records
+            leave_dates = _get_leave_dates(vendor, start_date)
+            wfh_dates = _get_wfh_dates(vendor, start_date)
+            
+            # Process all relevant dates
             all_dates = set(status_by_date.keys()) | set(swipe_by_date.keys()) | leave_dates | wfh_dates
+            
             for d in all_dates:
-                s = status_by_date.get(d)
+                status = status_by_date.get(d)
                 swipe = swipe_by_date.get(d)
+                
                 # Case: missing vendor entry but swipe AP exists
-                if not s and swipe and swipe.attendance_status == 'AP':
+                if not status and swipe and swipe.attendance_status == 'AP':
                     if not MismatchRecord.query.filter_by(vendor_id=vendor.id, mismatch_date=d).first():
-                        mm = MismatchRecord(vendor_id=vendor.id, mismatch_date=d, web_status=None, swipe_status='AP')
+                        mismatch_details = {
+                            'full_day_mismatch': {
+                                'reason': 'No vendor status submitted but swipe record shows present',
+                                'severity': 'high',
+                                'swipe_status': 'AP',
+                                'web_status': None
+                            }
+                        }
+                        mm = MismatchRecord(
+                            vendor_id=vendor.id,
+                            mismatch_date=d,
+                            web_status=None,
+                            swipe_status='AP'
+                        )
+                        mm.set_mismatch_details(mismatch_details)
                         models.db.session.add(mm)
                         mismatches_found += 1
                     continue
-                if not s:
+                
+                if not status:
                     continue
-                web_status = s.status
-                swipe_status = swipe.attendance_status if swipe else 'AA'
-                detail = None
-                detected = False
-                # In office must have swipe AP
-                if web_status in [AttendanceStatus.IN_OFFICE_FULL, AttendanceStatus.IN_OFFICE_HALF]:
-                    if swipe_status != 'AP':
-                        detected = True
-                        detail = 'In-Office status but no swipe present'
-                # WFH should not have swipe AP and must have WFH approval
-                elif web_status in [AttendanceStatus.WFH_FULL, AttendanceStatus.WFH_HALF]:
-                    if swipe_status == 'AP':
-                        detected = True
-                        detail = 'WFH marked but swipe shows present'
-                    elif d not in wfh_dates:
-                        detected = True
-                        detail = 'WFH marked but no WFH approval record'
-                # Leave should have leave record and no AP swipe
-                elif web_status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]:
-                    if d not in leave_dates:
-                        detected = True
-                        detail = 'Leave marked but no approved Leave record'
-                    elif swipe_status == 'AP':
-                        detected = True
-                        detail = 'Leave marked but swipe shows present'
-                if detected:
+                
+                # Analyze the status for mismatches
+                mismatch_info = _analyze_status_for_mismatches(status, swipe, d, leave_dates, wfh_dates)
+                
+                if mismatch_info['has_mismatch']:
                     if not MismatchRecord.query.filter_by(vendor_id=vendor.id, mismatch_date=d).first():
-                        mm = MismatchRecord(vendor_id=vendor.id, mismatch_date=d, web_status=web_status, swipe_status=swipe_status, manager_comments=detail)
+                        mm = MismatchRecord(
+                            vendor_id=vendor.id,
+                            mismatch_date=d,
+                            web_status=status.status,
+                            swipe_status=swipe.attendance_status if swipe else 'AA'
+                        )
+                        mm.set_mismatch_details(mismatch_info['details'])
                         models.db.session.add(mm)
                         mismatches_found += 1
+        
         models.db.session.commit()
-        print(f"Detected {mismatches_found} new mismatches")
+        print(f"Detected {mismatches_found} new mismatches with detailed analysis")
         return mismatches_found
+        
     except Exception as e:
         models.db.session.rollback()
         print(f"Error detecting mismatches: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return 0
+
+def _get_leave_dates(vendor, start_date):
+    """Get set of dates covered by leave records"""
+    leave_recs = LeaveRecord.query.filter(
+        LeaveRecord.vendor_id == vendor.id,
+        LeaveRecord.start_date >= start_date
+    ).all()
+    leave_dates = set()
+    for lr in leave_recs:
+        d = lr.start_date
+        while d <= lr.end_date:
+            leave_dates.add(d)
+            d += timedelta(days=1)
+    return leave_dates
+
+def _get_wfh_dates(vendor, start_date):
+    """Get set of dates covered by WFH records"""
+    wfh_recs = WFHRecord.query.filter(
+        WFHRecord.vendor_id == vendor.id,
+        WFHRecord.start_date >= start_date
+    ).all()
+    wfh_dates = set()
+    for wr in wfh_recs:
+        d = wr.start_date
+        while d <= wr.end_date:
+            wfh_dates.add(d)
+            d += timedelta(days=1)
+    return wfh_dates
+
+def _analyze_status_for_mismatches(status, swipe, date, leave_dates, wfh_dates):
+    """Analyze a daily status for mismatches with detailed half-day support"""
+    web_status = status.status
+    swipe_status = swipe.attendance_status if swipe else 'AA'
+    swipe_in_time = swipe.login_time if swipe else None
+    swipe_out_time = swipe.logout_time if swipe else None
+    
+    mismatch_details = {}
+    has_mismatch = False
+    
+    # Define AM/PM time windows (configurable)
+    AM_START = datetime.strptime('09:00', '%H:%M').time()
+    AM_END = datetime.strptime('13:00', '%H:%M').time()
+    PM_START = datetime.strptime('14:00', '%H:%M').time()
+    PM_END = datetime.strptime('18:00', '%H:%M').time()
+    
+    # Analyze based on status type
+    if status.is_half_day() and status.has_half_day_details():
+        # Half-day with detailed AM/PM information
+        has_mismatch, mismatch_details = _analyze_half_day_detailed(
+            status, swipe_status, swipe_in_time, swipe_out_time, 
+            date, leave_dates, wfh_dates, AM_START, AM_END, PM_START, PM_END
+        )
+    else:
+        # Full day or legacy half-day analysis
+        has_mismatch, mismatch_details = _analyze_full_day(
+            web_status, swipe_status, swipe_in_time, swipe_out_time,
+            date, leave_dates, wfh_dates
+        )
+    
+    return {
+        'has_mismatch': has_mismatch,
+        'details': mismatch_details
+    }
+
+def _analyze_half_day_detailed(status, swipe_status, swipe_in_time, swipe_out_time, 
+                             date, leave_dates, wfh_dates, AM_START, AM_END, PM_START, PM_END):
+    """Analyze half-day status with AM/PM details"""
+    has_mismatch = False
+    mismatch_details = {}
+    
+    am_type = status.half_am_type
+    pm_type = status.half_pm_type
+    
+    # Determine if swipe occurred in AM/PM periods
+    am_swipe_present = False
+    pm_swipe_present = False
+    
+    if swipe_in_time and swipe_out_time and swipe_status == 'AP':
+        # Check if swipe covers AM period
+        if swipe_in_time <= AM_END and swipe_out_time >= AM_START:
+            am_swipe_present = True
+        # Check if swipe covers PM period  
+        if swipe_in_time <= PM_END and swipe_out_time >= PM_START:
+            pm_swipe_present = True
+    elif swipe_status == 'AP':
+        # If we have AP but no detailed times, assume it covers both periods
+        am_swipe_present = True
+        pm_swipe_present = True
+    
+    # Analyze AM period
+    am_mismatch = _analyze_half_period('AM', am_type, am_swipe_present, date, leave_dates, wfh_dates)
+    if am_mismatch:
+        has_mismatch = True
+        mismatch_details['am_mismatch'] = am_mismatch
+    
+    # Analyze PM period
+    pm_mismatch = _analyze_half_period('PM', pm_type, pm_swipe_present, date, leave_dates, wfh_dates)
+    if pm_mismatch:
+        has_mismatch = True
+        mismatch_details['pm_mismatch'] = pm_mismatch
+    
+    return has_mismatch, mismatch_details
+
+def _analyze_half_period(period_name, period_type, swipe_present, date, leave_dates, wfh_dates):
+    """Analyze a single half-day period (AM or PM)"""
+    from models import HalfDayType
+    
+    if period_type == HalfDayType.IN_OFFICE:
+        if not swipe_present:
+            return {
+                'reason': f'{period_name} marked as in-office but no swipe record found for this period',
+                'severity': 'high',
+                'expected': 'swipe_present',
+                'actual': 'no_swipe'
+            }
+    elif period_type == HalfDayType.WFH:
+        if swipe_present:
+            return {
+                'reason': f'{period_name} marked as WFH but swipe record shows office presence',
+                'severity': 'high',
+                'expected': 'no_swipe',
+                'actual': 'swipe_present'
+            }
+        elif date not in wfh_dates:
+            return {
+                'reason': f'{period_name} marked as WFH but no WFH approval found',
+                'severity': 'medium',
+                'expected': 'wfh_approval',
+                'actual': 'no_approval'
+            }
+    elif period_type == HalfDayType.LEAVE:
+        if swipe_present:
+            return {
+                'reason': f'{period_name} marked as leave but swipe record shows office presence',
+                'severity': 'high',
+                'expected': 'no_swipe',
+                'actual': 'swipe_present'
+            }
+        elif date not in leave_dates:
+            return {
+                'reason': f'{period_name} marked as leave but no leave approval found',
+                'severity': 'medium',
+                'expected': 'leave_approval',
+                'actual': 'no_approval'
+            }
+    elif period_type == HalfDayType.ABSENT:
+        if swipe_present:
+            return {
+                'reason': f'{period_name} marked as absent but swipe record shows office presence',
+                'severity': 'high',
+                'expected': 'no_swipe',
+                'actual': 'swipe_present'
+            }
+    
+    return None
+
+def _analyze_full_day(web_status, swipe_status, swipe_in_time, swipe_out_time, date, leave_dates, wfh_dates):
+    """Analyze full-day or legacy half-day status"""
+    has_mismatch = False
+    mismatch_details = {}
+    
+    # In office must have swipe AP
+    if web_status in [AttendanceStatus.IN_OFFICE_FULL, AttendanceStatus.IN_OFFICE_HALF]:
+        if swipe_status != 'AP':
+            has_mismatch = True
+            mismatch_details['full_day_mismatch'] = {
+                'reason': 'In-office status but no swipe present',
+                'severity': 'high',
+                'expected': 'swipe_AP',
+                'actual': swipe_status
+            }
+    
+    # WFH should not have swipe AP and must have WFH approval
+    elif web_status in [AttendanceStatus.WFH_FULL, AttendanceStatus.WFH_HALF]:
+        if swipe_status == 'AP':
+            has_mismatch = True
+            mismatch_details['full_day_mismatch'] = {
+                'reason': 'WFH marked but swipe shows office presence',
+                'severity': 'high',
+                'expected': 'no_swipe',
+                'actual': 'swipe_AP'
+            }
+        elif date not in wfh_dates:
+            has_mismatch = True
+            mismatch_details['full_day_mismatch'] = {
+                'reason': 'WFH marked but no WFH approval record found',
+                'severity': 'medium',
+                'expected': 'wfh_approval',
+                'actual': 'no_approval'
+            }
+    
+    # Leave should have leave record and no AP swipe
+    elif web_status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]:
+        if date not in leave_dates:
+            has_mismatch = True
+            mismatch_details['full_day_mismatch'] = {
+                'reason': 'Leave marked but no approved leave record found',
+                'severity': 'medium',
+                'expected': 'leave_approval',
+                'actual': 'no_approval'
+            }
+        elif swipe_status == 'AP':
+            has_mismatch = True
+            mismatch_details['full_day_mismatch'] = {
+                'reason': 'Leave marked but swipe shows office presence',
+                'severity': 'high',
+                'expected': 'no_swipe',
+                'actual': 'swipe_AP'
+            }
+    
+    return has_mismatch, mismatch_details
 
 def import_leave_data(file_path):
     """Import leave data from Excel or CSV file"""

@@ -24,6 +24,12 @@ class AttendanceStatus(enum.Enum):
     LEAVE_HALF = "leave_half"
     ABSENT = "absent"
 
+class HalfDayType(enum.Enum):
+    IN_OFFICE = "in_office"
+    WFH = "wfh"
+    LEAVE = "leave"
+    ABSENT = "absent"
+
 class ApprovalStatus(enum.Enum):
     PENDING = "pending"
     APPROVED = "approved"
@@ -119,6 +125,10 @@ class DailyStatus(db.Model):
     break_duration = db.Column(db.Integer, default=0)  # Break duration in minutes
     total_hours = db.Column(db.Float, nullable=True)  # Calculated total hours
     
+    # Half-day type columns (nullable for backward compatibility)
+    half_am_type = db.Column(db.Enum(HalfDayType), nullable=True)  # AM half-day type
+    half_pm_type = db.Column(db.Enum(HalfDayType), nullable=True)  # PM half-day type
+    
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
     approval_status = db.Column(db.Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
     approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
@@ -128,6 +138,20 @@ class DailyStatus(db.Model):
     
     # Index for efficient queries
     __table_args__ = (db.Index('idx_vendor_date', 'vendor_id', 'status_date'),)
+    
+    def is_half_day(self):
+        """Check if this is a half-day status"""
+        return self.status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]
+    
+    def has_half_day_details(self):
+        """Check if half-day details are provided"""
+        return self.half_am_type is not None and self.half_pm_type is not None
+    
+    def get_half_day_description(self):
+        """Get human readable half-day description"""
+        if not self.has_half_day_details():
+            return None
+        return f"AM: {self.half_am_type.value.replace('_', ' ').title()}, PM: {self.half_pm_type.value.replace('_', ' ').title()}"
     
     def __repr__(self):
         return f'<DailyStatus {self.vendor.vendor_id} - {self.status_date} - {self.status.value}>'
@@ -183,6 +207,40 @@ class MismatchRecord(db.Model):
     approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     approved_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Detailed mismatch information stored as JSON
+    mismatch_details = db.Column(db.Text, nullable=True)  # JSON string with detailed mismatch info
+    
+    def set_mismatch_details(self, details_dict):
+        """Set mismatch details from dictionary"""
+        import json
+        self.mismatch_details = json.dumps(details_dict) if details_dict else None
+    
+    def get_mismatch_details(self):
+        """Get mismatch details as dictionary"""
+        import json
+        if self.mismatch_details:
+            try:
+                return json.loads(self.mismatch_details)
+            except json.JSONDecodeError:
+                return {}
+        return {}
+    
+    def get_mismatch_summary(self):
+        """Get a human-readable summary of mismatches"""
+        details = self.get_mismatch_details()
+        if not details:
+            return "No detailed mismatch information available"
+        
+        summary = []
+        if 'am_mismatch' in details:
+            summary.append(f"AM: {details['am_mismatch']['reason']}")
+        if 'pm_mismatch' in details:
+            summary.append(f"PM: {details['pm_mismatch']['reason']}")
+        if 'full_day_mismatch' in details:
+            summary.append(f"Full Day: {details['full_day_mismatch']['reason']}")
+            
+        return "; ".join(summary) if summary else "No specific mismatches"
     
     def __repr__(self):
         return f'<MismatchRecord {self.vendor.vendor_id} - {self.mismatch_date}>'
