@@ -13,6 +13,10 @@ import pandas as pd
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
 import pytz
+import threading
+import shutil
+import time
+from pathlib import Path
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -70,6 +74,23 @@ app.config['SYNC_MONITORING_INTERVAL_MINUTES'] = 30
 app.config['SYNC_VALIDATION_INTERVAL_HOURS'] = 6
 app.config['ADMIN_EMAILS'] = ['admin@attendo.com']
 app.config['SYNC_ALERT_FROM'] = 'attendo-sync@attendo.com'
+
+# Excel Sync Configuration
+app.config['EXCEL_SYNC_ENABLED'] = True
+app.config['EXCEL_LOCAL_FOLDER'] = "notification_configs"
+app.config['EXCEL_NETWORK_FOLDER'] = None  # Will be set via admin interface
+app.config['EXCEL_SYNC_INTERVAL'] = 600  # 10 minutes in seconds
+
+# Excel Sync Global Variables
+excel_sync_running = False
+excel_sync_paused = False
+excel_sync_thread = None
+excel_sync_status = {
+    'last_sync': None,
+    'status': 'Stopped',
+    'files_synced': 0,
+    'errors': []
+}
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -2888,6 +2909,216 @@ def api_profile_info():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# =============================================================================
+# EXCEL SYNC FUNCTIONALITY
+# =============================================================================
+
+def excel_log_message(message):
+    """Log message with timestamp for Excel sync"""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[EXCEL SYNC {timestamp}] {message}")
+
+def sync_excel_files():
+    """Copy all Excel files from local to network drive"""
+    global excel_sync_status
+    
+    if not app.config['EXCEL_NETWORK_FOLDER']:
+        excel_log_message("⚠️ Network folder not configured")
+        return
+    
+    try:
+        local_path = Path(app.config['EXCEL_LOCAL_FOLDER'])
+        network_path = Path(app.config['EXCEL_NETWORK_FOLDER'])
+        
+        if not local_path.exists():
+            raise FileNotFoundError(f"Local folder not found: {local_path}")
+        
+        # Create network folder if it doesn't exist
+        network_path.mkdir(parents=True, exist_ok=True)
+        
+        # Find all Excel files
+        excel_files = list(local_path.glob("*.xlsx"))
+        
+        if not excel_files:
+            excel_log_message("⚠️ No Excel files found in local folder")
+            return
+        
+        files_copied = 0
+        for file_path in excel_files:
+            try:
+                dest_path = network_path / file_path.name
+                shutil.copy2(file_path, dest_path)
+                excel_log_message(f"✅ Copied: {file_path.name}")
+                files_copied += 1
+            except Exception as e:
+                error_msg = f"❌ Failed to copy {file_path.name}: {str(e)}"
+                excel_log_message(error_msg)
+                excel_sync_status['errors'].append(error_msg)
+        
+        excel_sync_status['last_sync'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        excel_sync_status['files_synced'] = files_copied
+        excel_sync_status['status'] = 'Running'
+        
+        excel_log_message(f"📊 Sync completed: {files_copied}/{len(excel_files)} files")
+        
+    except Exception as e:
+        error_msg = f"❌ Sync failed: {str(e)}"
+        excel_log_message(error_msg)
+        excel_sync_status['errors'].append(error_msg)
+        excel_sync_status['status'] = 'Error'
+
+def excel_sync_loop():
+    """Main Excel sync loop that runs every 10 minutes"""
+    global excel_sync_running, excel_sync_paused
+    
+    excel_log_message("🚀 Excel sync service started")
+    
+    while excel_sync_running:
+        if not excel_sync_paused:
+            sync_excel_files()
+        else:
+            excel_sync_status['status'] = 'Paused'
+        
+        # Wait for next sync (check every 10 seconds for stop/pause commands)
+        for _ in range(app.config['EXCEL_SYNC_INTERVAL'] // 10):
+            if not excel_sync_running:
+                break
+            time.sleep(10)
+    
+    excel_log_message("🛑 Excel sync service stopped")
+
+def start_excel_sync():
+    """Start the Excel sync service"""
+    global excel_sync_running, excel_sync_thread
+    
+    if excel_sync_running:
+        return "Excel sync is already running"
+    
+    if not app.config['EXCEL_NETWORK_FOLDER']:
+        return "Network folder not configured. Please set it in Admin Settings."
+    
+    excel_sync_running = True
+    excel_sync_paused = False
+    excel_sync_thread = threading.Thread(target=excel_sync_loop, daemon=True)
+    excel_sync_thread.start()
+    return "Excel sync service started"
+
+def stop_excel_sync():
+    """Stop the Excel sync service"""
+    global excel_sync_running
+    excel_sync_running = False
+    excel_sync_status['status'] = 'Stopped'
+    return "Excel sync service stopped"
+
+def pause_excel_sync():
+    """Pause the Excel sync service"""
+    global excel_sync_paused
+    excel_sync_paused = True
+    excel_sync_status['status'] = 'Paused'
+    return "Excel sync paused"
+
+def resume_excel_sync():
+    """Resume the Excel sync service"""
+    global excel_sync_paused
+    excel_sync_paused = False
+    excel_sync_status['status'] = 'Running'
+    return "Excel sync resumed"
+
+# Excel Sync Admin Routes
+@app.route('/admin/excel-sync')
+@login_required
+def admin_excel_sync():
+    """Excel sync admin dashboard"""
+    if current_user.role != UserRole.ADMIN:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    return render_template('admin_excel_sync.html',
+                         sync_status=excel_sync_status,
+                         network_folder=app.config['EXCEL_NETWORK_FOLDER'],
+                         local_folder=app.config['EXCEL_LOCAL_FOLDER'],
+                         sync_running=excel_sync_running,
+                         sync_paused=excel_sync_paused)
+
+@app.route('/api/excel-sync/control/<action>', methods=['POST'])
+@login_required
+def api_excel_sync_control(action):
+    """Control Excel sync service via API"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if action == 'start':
+        message = start_excel_sync()
+    elif action == 'stop':
+        message = stop_excel_sync()
+    elif action == 'pause':
+        message = pause_excel_sync()
+    elif action == 'resume':
+        message = resume_excel_sync()
+    else:
+        return jsonify({'message': 'Unknown action'}), 400
+    
+    return jsonify({'message': message})
+
+@app.route('/api/excel-sync/force', methods=['POST'])
+@login_required
+def api_excel_sync_force():
+    """Force immediate Excel sync"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    sync_excel_files()
+    return jsonify({'message': 'Force sync completed'})
+
+@app.route('/api/excel-sync/config', methods=['POST'])
+@login_required
+def api_excel_sync_config():
+    """Configure Excel sync network folder"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        network_folder = data.get('network_folder', '').strip()
+        
+        if not network_folder:
+            return jsonify({'error': 'Network folder path is required'}), 400
+        
+        # Validate the path
+        try:
+            Path(network_folder).mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            return jsonify({'error': f'Invalid network folder path: {str(e)}'}), 400
+        
+        app.config['EXCEL_NETWORK_FOLDER'] = network_folder
+        
+        # Save to system config
+        set_system_config('excel_network_folder', network_folder, 'Excel sync network folder path', current_user.id)
+        
+        return jsonify({'message': 'Network folder configured successfully'})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/excel-sync/status')
+@login_required
+def api_excel_sync_status():
+    """Get Excel sync status"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    return jsonify({
+        'running': excel_sync_running,
+        'paused': excel_sync_paused,
+        'status': excel_sync_status['status'],
+        'last_sync': excel_sync_status['last_sync'],
+        'files_synced': excel_sync_status['files_synced'],
+        'error_count': len(excel_sync_status['errors']),
+        'errors': excel_sync_status['errors'][-10:],  # Last 10 errors
+        'network_folder': app.config['EXCEL_NETWORK_FOLDER'],
+        'local_folder': app.config['EXCEL_LOCAL_FOLDER']
+    })
+
 if __name__ == '__main__':
     print("\n" + "="*70)
     print("ATTENDO - Starting Application...")
@@ -2901,6 +3132,21 @@ if __name__ == '__main__':
     # Start notification scheduler
     start_notification_scheduler()
     print("Notification scheduler started!")
+    
+    # Load Excel sync network folder from system config
+    try:
+        with app.app_context():
+            network_folder_config = get_system_config('excel_network_folder')
+            if network_folder_config:
+                app.config['EXCEL_NETWORK_FOLDER'] = network_folder_config
+                print(f"Excel sync network folder loaded: {network_folder_config}")
+                
+                # Auto-start Excel sync if configured
+                if app.config['EXCEL_SYNC_ENABLED'] and Path(app.config['EXCEL_LOCAL_FOLDER']).exists():
+                    start_result = start_excel_sync()
+                    print(f"Excel sync service: {start_result}")
+    except Exception as e:
+        print(f"Excel sync initialization warning: {e}")
     
     print("="*70)
     print("ATTENDO is now running!")

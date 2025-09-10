@@ -38,7 +38,19 @@ This Documentation folder contains all user guides, system documentation, and te
    - Excel-based notification workflows
    - Recurrent notification triggers and custom alert configurations
 
-6. **`system_architecture_documentation.html`** - 🏗️ **System Architecture**
+6. **`Excel_Sync_Feature.md`** - 🔄 **Excel Sync Documentation**
+   - Automated Excel file synchronization to network drives
+   - Power Automate integration and configuration
+   - Real-time monitoring and admin controls
+   - Troubleshooting and best practices
+
+7. **`Excel_Sync_Quick_Reference.md`** - 📄 **Excel Sync Quick Reference**
+   - 5-minute setup guide
+   - Dashboard overview and controls
+   - API commands and troubleshooting
+   - Best practices checklist
+
+8. **`system_architecture_documentation.html`** - 🏗️ **System Architecture**
    - Technical system design
    - Database schemas
    - API documentation
@@ -88,9 +100,11 @@ All internal links use relative paths (`./filename.html`), so everything will co
 
 ### Advanced Features
 - 🔄 **Power Automate Integration** with Excel-based notification workflows
-- 📊 **Real-time Excel Sync** for automated notification triggers
+- 📊 **Real-time Excel Sync** for automated notification triggers to network drives
 - 🎯 **Smart Notification Targeting** based on user roles and events
 - 📧 **Multi-channel Delivery** through email, Teams, and SMS
+- 🕰️ **Automated Background Sync** every 10 minutes with admin controls
+- 🔍 **Real-time Monitoring** with error tracking and status display
 
 ### Visual Design
 - 🌈 **Beautiful gradients** and modern styling
@@ -120,10 +134,10 @@ For questions about the ATTENDO system or this documentation:
 
 ## 🏷️ Version Information
 
-- **Version**: 2.0
-- **Last Updated**: January 2025
-- **Total Guides**: 6 (including this README)
-- **Format**: HTML with embedded CSS/JS
+- **Version**: 2.1
+- **Last Updated**: September 2025
+- **Total Guides**: 8 (including this README + Excel Sync documentation)
+- **Format**: HTML with embedded CSS/JS + Markdown documentation
 
 ---
 

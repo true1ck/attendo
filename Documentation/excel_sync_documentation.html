@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Sync Administration - ATTENDO Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            padding: 60px 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header p {
+            font-size: 1.3rem;
+            font-weight: 300;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .container-custom {
+            max-width: 1200px;
+            margin: -40px auto 60px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .nav-tabs {
+            background: #f8f9fa;
+            border-bottom: 2px solid #17a2b8;
+            padding: 0 30px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #666;
+            font-weight: 600;
+            border: none;
+            padding: 20px 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            border-radius: 10px 10px 0 0;
+        }
+        
+        .nav-tabs .nav-link:hover:not(.active) {
+            background: rgba(23, 162, 184, 0.1);
+            color: #17a2b8;
+        }
+        
+        .tab-content {
+            padding: 40px;
+        }
+        
+        .section-title {
+            color: #17a2b8;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title i {
+            margin-right: 15px;
+            font-size: 2.5rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-left: 4px solid #17a2b8;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            color: #17a2b8;
+            margin-bottom: 15px;
+        }
+        
+        .feature-title {
+            color: #333;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .feature-desc {
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            text-decoration: none;
+            transform: translateX(-5px);
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            border: none;
+            border-radius: 15px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+        }
+        
+        .code-block {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .step-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <a href="./index.html" class="back-button">
+        <i class="fas fa-arrow-left"></i> Back to Documentation Hub
+    </a>
+
+    <div class="header">
+        <h1><i class="fas fa-file-excel"></i> Excel Sync Administration</h1>
+        <p>Complete guide for managing Excel file synchronization and automated data workflows</p>
+    </div>
+
+    <div class="container-custom">
+        <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                    <i class="fas fa-info-circle"></i> Overview
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="setup-tab" data-bs-toggle="tab" data-bs-target="#setup" type="button" role="tab">
+                    <i class="fas fa-cog"></i> Setup & Configuration
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab">
+                    <i class="fas fa-user-shield"></i> Administration
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="troubleshooting-tab" data-bs-toggle="tab" data-bs-target="#troubleshooting" type="button" role="tab">
+                    <i class="fas fa-tools"></i> Troubleshooting
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="mainTabsContent">
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="section-title">
+                    <i class="fas fa-info-circle"></i>
+                    Excel Sync Overview
+                </div>
+                
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-lightbulb"></i> What is Excel Sync?</h5>
+                    Excel Sync is ATTENDO's powerful data synchronization system that automatically exports attendance data to Excel files, integrates with OneDrive, and triggers Power Automate workflows for intelligent notifications.
+                </div>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <div class="feature-title">Automated Data Export</div>
+                        <div class="feature-desc">Real-time synchronization of attendance data to structured Excel files with customizable formatting and layouts.</div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">☁️</div>
+                        <div class="feature-title">OneDrive Integration</div>
+                        <div class="feature-desc">Seamless integration with Microsoft OneDrive for cloud storage and automatic file synchronization across devices.</div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <div class="feature-title">Power Automate Triggers</div>
+                        <div class="feature-desc">Excel file changes automatically trigger Power Automate workflows for notifications and downstream processes.</div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <div class="feature-title">Real-time Sync</div>
+                        <div class="feature-desc">Immediate data synchronization when attendance records are created, updated, or approved in the system.</div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <div class="feature-title">Multiple Export Formats</div>
+                        <div class="feature-desc">Support for various Excel templates and formats tailored to different reporting requirements and compliance needs.</div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🛡️</div>
+                        <div class="feature-title">Secure & Reliable</div>
+                        <div class="feature-desc">Enterprise-grade security with error handling, retry mechanisms, and comprehensive audit logging.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="setup" role="tabpanel">
+                <div class="section-title">
+                    <i class="fas fa-cog"></i>
+                    Setup & Configuration
+                </div>
+
+                <h4 id="getting-started"><i class="fas fa-play-circle"></i> Getting Started</h4>
+                
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h5>Configure OneDrive Integration</h5>
+                        <p>Set up your OneDrive connection for cloud file storage and synchronization.</p>
+                        <div class="code-block">
+# In your .env file
+ONEDRIVE_CLIENT_ID=your_client_id
+ONEDRIVE_CLIENT_SECRET=your_client_secret
+ONEDRIVE_REDIRECT_URI=your_redirect_uri
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <div>
+                        <h5>Set Excel Export Paths</h5>
+                        <p>Configure the local and cloud paths for Excel file exports.</p>
+                        <div class="code-block">
+# Excel sync configuration
+EXCEL_EXPORT_PATH=./exports/excel/
+ONEDRIVE_FOLDER_PATH=/ATTENDO/Reports/
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <div>
+                        <h5>Initialize Excel Templates</h5>
+                        <p>Set up your Excel templates with proper formatting and Power Automate triggers.</p>
+                        <p><strong>Required Excel Table Structure:</strong></p>
+                        <ul>
+                            <li><code>employee_id</code> - Vendor/Employee identifier</li>
+                            <li><code>date</code> - Attendance date</li>
+                            <li><code>status</code> - Work status (WFH/WFO/Leave/etc.)</li>
+                            <li><code>location</code> - Work location</li>
+                            <li><code>timestamp</code> - Record creation time</li>
+                            <li><code>manager_approval</code> - Approval status</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <div>
+                        <h5>Test the Connection</h5>
+                        <p>Verify that the Excel sync is working correctly with a test export.</p>
+                        <a href="#" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Run Test Export
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="admin" role="tabpanel">
+                <div class="section-title">
+                    <i class="fas fa-user-shield"></i>
+                    Excel Sync Administration
+                </div>
+
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-shield-alt"></i> Admin Access Required</h5>
+                    The Excel Sync administration panel requires administrator privileges. Contact your system administrator if you need access.
+                </div>
+
+                <h4><i class="fas fa-tachometer-alt"></i> Administration Panel Features</h4>
+                
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <div class="feature-title">Sync Status Dashboard</div>
+                        <div class="feature-desc">
+                            <ul>
+                                <li>Real-time sync status monitoring</li>
+                                <li>Last sync timestamp tracking</li>
+                                <li>Error and retry statistics</li>
+                                <li>Performance metrics</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">⚙️</div>
+                        <div class="feature-title">Configuration Management</div>
+                        <div class="feature-desc">
+                            <ul>
+                                <li>OneDrive connection settings</li>
+                                <li>Export schedule configuration</li>
+                                <li>Template management</li>
+                                <li>Notification preferences</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <div class="feature-title">Manual Sync Operations</div>
+                        <div class="feature-desc">
+                            <ul>
+                                <li>Force immediate sync</li>
+                                <li>Bulk data export</li>
+                                <li>Historical data sync</li>
+                                <li>Selective record export</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <div class="feature-title">Sync Logs & Audit</div>
+                        <div class="feature-desc">
+                            <ul>
+                                <li>Comprehensive sync logs</li>
+                                <li>Error tracking and alerts</li>
+                                <li>Performance analytics</li>
+                                <li>Audit trail management</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <h4><i class="fas fa-link"></i> Access the Admin Panel</h4>
+                <p>The Excel Sync administration panel is integrated into the main admin dashboard:</p>
+                <a href="../admin_dashboard" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-external-link-alt"></i> Open Excel Sync Admin Panel
+                </a>
+            </div>
+
+            <div class="tab-pane fade" id="troubleshooting" role="tabpanel">
+                <div class="section-title">
+                    <i class="fas fa-tools"></i>
+                    Troubleshooting Guide
+                </div>
+
+                <h4><i class="fas fa-exclamation-triangle"></i> Common Issues</h4>
+
+                <div class="feature-card">
+                    <div class="feature-title">🚫 Sync Not Working</div>
+                    <div class="feature-desc">
+                        <strong>Possible Causes:</strong>
+                        <ul>
+                            <li>OneDrive authentication expired</li>
+                            <li>Network connectivity issues</li>
+                            <li>File permissions problems</li>
+                            <li>Excel file is locked/open</li>
+                        </ul>
+                        <strong>Solutions:</strong>
+                        <ul>
+                            <li>Re-authenticate OneDrive connection</li>
+                            <li>Check network connectivity</li>
+                            <li>Verify file permissions</li>
+                            <li>Close Excel files before sync</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-title">⚠️ Power Automate Not Triggering</div>
+                    <div class="feature-desc">
+                        <strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Excel table structure changed</li>
+                            <li>Power Automate flow disabled</li>
+                            <li>Trigger conditions not met</li>
+                            <li>Flow quota exceeded</li>
+                        </ul>
+                        <strong>Solutions:</strong>
+                        <ul>
+                            <li>Verify Excel table schema</li>
+                            <li>Enable Power Automate flow</li>
+                            <li>Review trigger conditions</li>
+                            <li>Check Power Automate quotas</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-title">📊 Data Missing or Incorrect</div>
+                    <div class="feature-desc">
+                        <strong>Possible Causes:</strong>
+                        <ul>
+                            <li>Sync timing issues</li>
+                            <li>Data filtering problems</li>
+                            <li>Template formatting errors</li>
+                            <li>Partial sync completion</li>
+                        </ul>
+                        <strong>Solutions:</strong>
+                        <ul>
+                            <li>Force a complete resync</li>
+                            <li>Review data filters</li>
+                            <li>Validate Excel templates</li>
+                            <li>Check sync completion logs</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4><i class="fas fa-life-ring"></i> Getting Help</h4>
+                <div class="alert alert-info">
+                    <p>If you're still experiencing issues:</p>
+                    <ul class="mb-0">
+                        <li>Check the system logs in the admin panel</li>
+                        <li>Review the Power Automate flow history</li>
+                        <li>Contact your system administrator</li>
+                        <li>Submit a support ticket with error details</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
