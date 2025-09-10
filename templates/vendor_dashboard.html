@@ -570,20 +570,56 @@
                             {% endif %}
                         {% endif %}
                         
-                        <!-- Resolution Form -->
-                        <form action="{{ url_for('submit_mismatch_explanation', mismatch_id=mismatch.id) }}" method="POST">
-                            <div class="mb-3">
-                                <label class="form-label">Provide explanation for this mismatch:</label>
-                                <textarea class="form-control" name="reason" rows="3" required
-                                          placeholder="Please explain the reason for this mismatch. Consider the specific issues mentioned above in your explanation...">{{ mismatch.vendor_reason or '' }}</textarea>
+                        <!-- Resolution Form or Status -->
+                        {% if mismatch.vendor_reason and mismatch.vendor_submitted_at %}
+                            <!-- Explanation already submitted -->
+                            <div class="alert alert-success border-success">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <strong>Explanation Submitted</strong>
+                                </div>
+                                <p class="mb-2"><strong>Your Explanation:</strong></p>
+                                <div class="bg-light p-3 rounded mb-2">
+                                    <em>"{{ mismatch.vendor_reason }}"</em>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Submitted: {{ mismatch.vendor_submitted_at.strftime('%Y-%m-%d at %H:%M') }}
+                                    </small>
+                                    <div>
+                                        {% if mismatch.manager_approval.value == 'pending' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-hourglass-half me-1"></i>Waiting for Manager Approval
+                                            </span>
+                                        {% elif mismatch.manager_approval.value == 'approved' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Approved by Manager
+                                            </span>
+                                        {% elif mismatch.manager_approval.value == 'rejected' %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Rejected by Manager
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <button type="submit" class="btn btn-warning btn-sm">
-                                    <i class="fas fa-paper-plane me-1"></i>Submit Explanation
-                                </button>
-                                <small class="text-muted">Your explanation will be reviewed by your manager</small>
-                            </div>
-                        </form>
+                        {% else %}
+                            <!-- Show explanation form -->
+                            <form action="{{ url_for('submit_mismatch_explanation', mismatch_id=mismatch.id) }}" method="POST">
+                                <div class="mb-3">
+                                    <label class="form-label">Provide explanation for this mismatch:</label>
+                                    <textarea class="form-control" name="reason" rows="3" required
+                                              placeholder="Please explain the reason for this mismatch. Consider the specific issues mentioned above in your explanation...">{{ mismatch.vendor_reason or '' }}</textarea>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button type="submit" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-paper-plane me-1"></i>Submit Explanation
+                                    </button>
+                                    <small class="text-muted">Your explanation will be reviewed by your manager</small>
+                                </div>
+                            </form>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}

@@ -164,6 +164,7 @@
           <th>Employee Status</th>
           <th>Swipe Data</th>
           <th>Conflict</th>
+          <th>Vendor Explanation</th>
           <th>Manager Review</th>
           <th>Details</th>
           <th>Actions</th>
@@ -226,6 +227,19 @@
               {% endif %}
             </td>
             <td>
+              {% if m.vendor_reason %}
+                <div class="vendor-explanation" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ m.vendor_reason }}">
+                  <i class="fas fa-comment-dots text-primary me-1"></i>
+                  <span class="text-truncate d-inline-block" style="max-width: 150px;">{{ m.vendor_reason }}</span>
+                  {% if m.vendor_submitted_at %}
+                    <br><small class="text-muted"><i class="fas fa-clock me-1"></i>{{ m.vendor_submitted_at.strftime('%m/%d %H:%M') }}</small>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span class="text-muted"><i class="fas fa-clock me-1"></i>Waiting for explanation</span>
+              {% endif %}
+            </td>
+            <td>
               {% if m.manager_approval %}
                 {% if m.manager_approval.value == 'approved' %}
                   <span class="badge bg-success">Approved</span>
@@ -247,7 +261,7 @@
               {% endif %}
             </td>
             <td>
-              {% if m.manager_approval.value == 'pending' %}
+              {% if m.manager_approval.value == 'pending' and m.vendor_reason %}
                 <div class="btn-group" role="group">
                   <button class="btn btn-sm btn-success" onclick="approveMismatch({{ m.id }})" title="Approve">
                     <i class="fas fa-check"></i>
@@ -255,6 +269,12 @@
                   <button class="btn btn-sm btn-danger" onclick="rejectMismatch({{ m.id }})" title="Reject">
                     <i class="fas fa-times"></i>
                   </button>
+                </div>
+              {% elif m.manager_approval.value == 'pending' %}
+                <div class="text-center">
+                  <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i>Waiting for<br>vendor explanation
+                  </small>
                 </div>
               {% else %}
                 <span class="text-muted">
@@ -269,7 +289,7 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="8" class="text-center text-muted py-4">
+            <td colspan="9" class="text-center text-muted py-4">
               <i class="fas fa-check-circle fa-2x mb-2 text-success"></i><br>
               No mismatches found for your team members.
               {% if status_filter == 'pending' %}
@@ -296,6 +316,35 @@
     color: white;
     font-weight: bold;
     font-size: 12px;
+}
+
+.vendor-explanation {
+    max-width: 200px;
+    cursor: pointer;
+}
+
+.vendor-explanation:hover {
+    background-color: rgba(0,123,255,0.1);
+    border-radius: 4px;
+    padding: 2px 4px;
+}
+
+/* Table column width adjustments */
+th:nth-child(6) { /* Vendor Explanation column */
+    width: 15%;
+    min-width: 150px;
+}
+
+th:nth-child(7) { /* Manager Review column */
+    width: 10%;
+}
+
+th:nth-child(8) { /* Details column */
+    width: 10%;
+}
+
+th:nth-child(9) { /* Actions column */
+    width: 12%;
 }
 </style>
 

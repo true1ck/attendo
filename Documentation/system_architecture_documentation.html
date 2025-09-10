@@ -486,6 +486,33 @@
         <!-- Navigation Cards -->
         <div style="max-width: 1600px; margin: -50px auto 40px; position: relative; z-index: 10; padding: 0 20px;">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+                <!-- Setup Guide Card -->
+                <a href="./setup_guide.html" style="text-decoration: none; display: block;">
+                    <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
+                         onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#28a745'" 
+                         onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                        <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); opacity: 0.1; border-radius: 50%;"></div>
+                        <i class="fas fa-rocket" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #28a745; position: relative;"></i>
+                        <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Setup Guide</h3>
+                        <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Installation, configuration, and getting started</p>
+                    </div>
+                </a>
+                
+                <!-- System Architecture Card - Active -->
+                <a href="./system_architecture_documentation.html" style="text-decoration: none; display: block;">
+                    <div style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); color: white; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(111,66,193,0.4); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; transform: scale(1.05);" 
+                         onmouseover="this.style.transform='scale(1.08) translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(111,66,193,0.5)'" 
+                         onmouseout="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 35px rgba(111,66,193,0.4)'">
+                        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                        <i class="fas fa-sitemap" style="font-size: 3rem; margin-bottom: 20px; display: block; position: relative;"></i>
+                        <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">System Architecture</h3>
+                        <p style="margin: 0; font-size: 0.95rem; opacity: 0.95; line-height: 1.5;">Technical architecture and system flow diagrams</p>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
+                            <span style="font-size: 0.85rem; opacity: 0.9;">📍 Currently Viewing</span>
+                        </div>
+                    </div>
+                </a>
+
                 <!-- Vendor Guide Card -->
                 <a href="./vendor_documentation.html" style="text-decoration: none; display: block;">
                     <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
@@ -501,10 +528,10 @@
                 <!-- Manager Guide Card -->
                 <a href="./manager_documentation.html" style="text-decoration: none; display: block;">
                     <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
-                         onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#28a745'" 
+                         onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#007bff'" 
                          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
-                        <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); opacity: 0.1; border-radius: 50%;"></div>
-                        <i class="fas fa-user-tie" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #28a745; position: relative;"></i>
+                        <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); opacity: 0.1; border-radius: 50%;"></div>
+                        <i class="fas fa-user-tie" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #007bff; position: relative;"></i>
                         <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Manager Guide</h3>
                         <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Team management, approvals, and AI insights</p>
                     </div>
@@ -531,21 +558,6 @@
                         <i class="fas fa-bell" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #17a2b8; position: relative;"></i>
                         <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Notifications</h3>
                         <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Email, SMS, and alert configuration</p>
-                    </div>
-                </a>
-                
-                <!-- System Architecture Card - Active -->
-                <a href="./system_architecture_documentation.html" style="text-decoration: none; display: block;">
-                    <div style="background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); color: white; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(111,66,193,0.4); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; transform: scale(1.05);" 
-                         onmouseover="this.style.transform='scale(1.08) translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(111,66,193,0.5)'" 
-                         onmouseout="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 35px rgba(111,66,193,0.4)'">
-                        <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-                        <i class="fas fa-sitemap" style="font-size: 3rem; margin-bottom: 20px; display: block; position: relative;"></i>
-                        <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">System Architecture</h3>
-                        <p style="margin: 0; font-size: 0.95rem; opacity: 0.95; line-height: 1.5;">Technical architecture and system flow diagrams</p>
-                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-                            <span style="font-size: 0.85rem; opacity: 0.9;">📍 Currently Viewing</span>
-                        </div>
                     </div>
                 </a>
             </div>
@@ -582,6 +594,8 @@
                     <a class="nav-link active" href="#overview"><i class="fas fa-eye me-2"></i>System Overview</a>
                     <a class="nav-link" href="#architecture"><i class="fas fa-building me-2"></i>Architecture</a>
                     <a class="nav-link" href="#database"><i class="fas fa-database me-2"></i>Database Design</a>
+                    <a class="nav-link" href="#manager-features"><i class="fas fa-table me-2"></i>Manager Features</a>
+                    <a class="nav-link" href="#ai-features"><i class="fas fa-brain me-2"></i>AI Analytics</a>
                     <a class="nav-link" href="#components"><i class="fas fa-puzzle-piece me-2"></i>Components</a>
                     <a class="nav-link" href="#dataflow"><i class="fas fa-route me-2"></i>Data Flow</a>
                     <a class="nav-link" href="#api"><i class="fas fa-plug me-2"></i>API Design</a>
@@ -603,7 +617,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <div class="metric-card">
-                                <div class="metric-number">15+</div>
+                                <div class="metric-number">18+</div>
                                 <div class="metric-label">Core Components</div>
                             </div>
                         </div>
@@ -615,7 +629,7 @@
                         </div>
                         <div class="col-md-3">
                             <div class="metric-card">
-                                <div class="metric-number">30+</div>
+                                <div class="metric-number">35+</div>
                                 <div class="metric-label">API Endpoints</div>
                             </div>
                         </div>
@@ -637,6 +651,8 @@
                         <li><strong>Audit Trail:</strong> Complete activity logging</li>
                         <li><strong>Data Import/Export:</strong> CSV/Excel file processing</li>
                         <li><strong>Holiday Management:</strong> Automatic holiday handling</li>
+                        <li><strong>AI-Powered Analytics:</strong> Smart predictions and insights</li>
+                        <li><strong>Advanced Manager Tools:</strong> Table-based mismatch review interface</li>
                     </ul>
                     
                     <div class="tech-stack-grid">
@@ -670,6 +686,11 @@
                             <h6>Power Automate</h6>
                             <small>Workflow Integration</small>
                         </div>
+                        <div class="tech-item">
+                            <i class="fas fa-brain"></i>
+                            <h6>Scikit-Learn</h6>
+                            <small>AI/ML Analytics</small>
+                        </div>
                     </ul>
                 </div>
                 
@@ -686,8 +707,10 @@
                             <div class="component-grid">
                                 <div class="component">Vendor Dashboard</div>
                                 <div class="component">Manager Dashboard</div>
+                                <div class="component">Manager Mismatches Table</div>
                                 <div class="component">Admin Console</div>
                                 <div class="component">API Endpoints</div>
+                                <div class="component">AI Analytics</div>
                                 <div class="component">Documentation</div>
                             </div>
                         </div>
@@ -699,6 +722,8 @@
                                 <div class="component">Authorization</div>
                                 <div class="component">Notification Service</div>
                                 <div class="component">Reconciliation Engine</div>
+                                <div class="component">AI Prediction Engine</div>
+                                <div class="component">Manager Analytics</div>
                                 <div class="component">Report Generator</div>
                                 <div class="component">Excel Integration</div>
                             </div>
@@ -985,6 +1010,223 @@
                     </ul>
                 </div>
                 
+                <!-- Manager Mismatches Table Feature -->
+                <div class="feature-card" id="manager-features">
+                    <h3><i class="fas fa-table"></i>Manager Mismatches Table Interface</h3>
+                    <p>Advanced table-based interface for managers to efficiently review and resolve team attendance mismatches with comprehensive filtering and action capabilities.</p>
+                    
+                    <h4>Key Features & User Flow</h4>
+                    
+                    <div class="flow-diagram">
+                        <h4>Manager Mismatch Resolution Flow</h4>
+                        <div class="flow-row">
+                            <div class="flow-step">Manager Login</div>
+                            <div class="flow-step">Dashboard Overview</div>
+                            <div class="flow-step">Mismatches Table</div>
+                            <div class="flow-step">Filter & Sort</div>
+                        </div>
+                        <div class="flow-row">
+                            <div class="flow-step">Review AP/AA Codes</div>
+                            <div class="flow-step">Analyze Conflicts</div>
+                            <div class="flow-step">Approve/Reject</div>
+                            <div class="flow-step">Add Comments</div>
+                        </div>
+                        <div class="flow-row">
+                            <div class="flow-step">Notify Vendor</div>
+                            <div class="flow-step">Update Records</div>
+                            <div class="flow-step">Generate Reports</div>
+                        </div>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>Table Interface Features</span>
+                            <span class="method-badge">UI/UX</span>
+                        </div>
+                        <div class="endpoint-content">
+                            <ul>
+                                <li><strong>AP/AA Code Legend:</strong> Clear explanations of swipe status codes with visual indicators</li>
+                                <li><strong>Advanced Filtering:</strong> Filter by status (pending/approved/rejected), team member, and conflict priority</li>
+                                <li><strong>Interactive Tooltips:</strong> Hover tooltips on AP/AA badges explaining "Attendance Present" vs "Attendance Absent"</li>
+                                <li><strong>Color-Coded Priority:</strong> High (red), Medium (yellow), Low (blue) conflict classification</li>
+                                <li><strong>Direct Actions:</strong> Inline approve/reject buttons with comment prompts</li>
+                                <li><strong>Team Member Avatars:</strong> Visual identification with status-based color coding</li>
+                                <li><strong>Responsive Design:</strong> Mobile-friendly table with touch-optimized interactions</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>Smart Conflict Detection</span>
+                            <span class="method-badge">LOGIC</span>
+                        </div>
+                        <div class="endpoint-content">
+                            <div class="code-block">
+# Conflict Priority Classification Algorithm
+if (claimed_status in ['wfh_full', 'wfh_half', 'leave_full', 'leave_half'] and swipe_status == 'AP'):
+    priority = 'HIGH'  # Claimed remote but physically present
+elif (claimed_status in ['in_office_full', 'in_office_half'] and swipe_status == 'AA'):
+    priority = 'MEDIUM'  # Claimed office but not detected
+else:
+    priority = 'LOW'  # Approval or record issues
+                            </div>
+                            <ul>
+                                <li><strong>High Priority:</strong> Employee claimed WFH/Leave but swipe shows AP (physically present)</li>
+                                <li><strong>Medium Priority:</strong> Employee claimed office attendance but swipe shows AA (absent)</li>
+                                <li><strong>Low Priority:</strong> Approval workflow or record keeping issues</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h4>Navigation & Integration</h4>
+                    <ul>
+                        <li><strong>Dashboard Integration:</strong> Direct "Mismatches Table" button in manager quick actions</li>
+                        <li><strong>Per-Vendor Links:</strong> Table view filtered by specific team member from main dashboard</li>
+                        <li><strong>Breadcrumb Navigation:</strong> Clear path between dashboard, card view, and table view</li>
+                        <li><strong>Export Capabilities:</strong> Generate filtered reports in Excel format</li>
+                        <li><strong>Real-time Updates:</strong> Immediate reflection of approval actions across all views</li>
+                    </ul>
+                    
+                    <div class="tip-box">
+                        <strong><i class="fas fa-lightbulb me-2"></i>Manager Experience Enhancement:</strong>
+                        The table interface provides the same functionality as the admin reconciliation page but filtered specifically for the manager's team, ensuring role-appropriate data access and streamlined workflow.
+                    </div>
+                </div>
+                
+                <!-- AI Features Section -->
+                <div class="feature-card" id="ai-features">
+                    <h3><i class="fas fa-brain"></i>AI-Powered Analytics & Predictions</h3>
+                    <p>Advanced artificial intelligence features providing predictive analytics, behavioral insights, and automated recommendations for attendance management.</p>
+                    
+                    <h4>AI Engine Architecture</h4>
+                    
+                    <div class="architecture-diagram">
+                        <h4>AI Analytics Pipeline</h4>
+                        
+                        <div class="diagram-layer">
+                            <h5>Data Collection Layer</h5>
+                            <div class="component-grid">
+                                <div class="component">Historical Attendance</div>
+                                <div class="component">Swipe Patterns</div>
+                                <div class="component">Approval Trends</div>
+                                <div class="component">Mismatch History</div>
+                            </div>
+                        </div>
+                        
+                        <div class="diagram-layer">
+                            <h5>Feature Engineering</h5>
+                            <div class="component-grid">
+                                <div class="component">Temporal Patterns</div>
+                                <div class="component">Behavioral Metrics</div>
+                                <div class="component">Team Dynamics</div>
+                                <div class="component">Seasonal Trends</div>
+                            </div>
+                        </div>
+                        
+                        <div class="diagram-layer">
+                            <h5>ML Models</h5>
+                            <div class="component-grid">
+                                <div class="component">Attendance Prediction</div>
+                                <div class="component">Risk Assessment</div>
+                                <div class="component">Anomaly Detection</div>
+                                <div class="component">Team Optimization</div>
+                            </div>
+                        </div>
+                        
+                        <div class="diagram-layer">
+                            <h5>Insights & Actions</h5>
+                            <div class="component-grid">
+                                <div class="component">Predictions Dashboard</div>
+                                <div class="component">Alert System</div>
+                                <div class="component">Recommendations</div>
+                                <div class="component">Performance Metrics</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4>AI Features & Capabilities</h4>
+                    
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>Predictive Analytics</span>
+                            <span class="method-badge">PREDICTION</span>
+                        </div>
+                        <div class="endpoint-content">
+                            <ul>
+                                <li><strong>Attendance Prediction:</strong> Forecast likely WFH/office days for each team member</li>
+                                <li><strong>Mismatch Prediction:</strong> Identify vendors at high risk of attendance conflicts</li>
+                                <li><strong>Team Capacity Planning:</strong> Predict office occupancy and team availability</li>
+                                <li><strong>Seasonal Pattern Analysis:</strong> Identify trends based on holidays, weather, projects</li>
+                            </ul>
+                            <div class="code-block">
+# AI Prediction Example
+def predict_attendance_risk(vendor_id, date_range):
+    features = extract_behavioral_features(vendor_id)
+    risk_score = ml_model.predict_proba(features)
+    return {
+        'risk_level': 'HIGH' if risk_score > 0.7 else 'MEDIUM' if risk_score > 0.4 else 'LOW',
+        'confidence': risk_score,
+        'recommendations': generate_recommendations(features)
+    }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>Behavioral Analysis</span>
+                            <span class="method-badge">ANALYSIS</span>
+                        </div>
+                        <div class="endpoint-content">
+                            <ul>
+                                <li><strong>Pattern Recognition:</strong> Identify individual and team attendance patterns</li>
+                                <li><strong>Anomaly Detection:</strong> Flag unusual attendance behaviors for review</li>
+                                <li><strong>Compliance Scoring:</strong> Track adherence to company attendance policies</li>
+                                <li><strong>Performance Correlation:</strong> Analyze attendance vs productivity patterns</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>Manager Insights Dashboard</span>
+                            <span class="method-badge">INSIGHTS</span>
+                        </div>
+                        <div class="endpoint-content">
+                            <ul>
+                                <li><strong>Team Performance Metrics:</strong> AI-powered team efficiency and attendance analytics</li>
+                                <li><strong>Predictive Alerts:</strong> Early warning system for potential attendance issues</li>
+                                <li><strong>Optimization Recommendations:</strong> AI suggestions for improving team attendance policies</li>
+                                <li><strong>Resource Planning:</strong> Predicted office space and resource requirements</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h4>AI Model Integration</h4>
+                    
+                    <div class="flow-diagram">
+                        <h4>AI Analytics Pipeline Flow</h4>
+                        <div class="flow-row">
+                            <div class="flow-step">Data Ingestion</div>
+                            <div class="flow-step">Feature Processing</div>
+                            <div class="flow-step">Model Training</div>
+                            <div class="flow-step">Prediction Generation</div>
+                        </div>
+                        <div class="flow-row">
+                            <div class="flow-step">Insight Creation</div>
+                            <div class="flow-step">Dashboard Updates</div>
+                            <div class="flow-step">Alert Triggering</div>
+                            <div class="flow-step">Action Recommendations</div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-box">
+                        <strong><i class="fas fa-info-circle me-2"></i>AI Technology Stack:</strong>
+                        Built using Python's scikit-learn for machine learning models, pandas for data processing, and integrated with the main Flask application for real-time predictions and insights delivery.
+                    </div>
+                </div>
+                
                 <!-- Components -->
                 <div class="feature-card" id="components">
                     <h3><i class="fas fa-puzzle-piece"></i>System Components</h3>
@@ -1260,6 +1502,26 @@
                         </div>
                     </div>
                     
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>GET /manager/mismatches/table</span>
+                            <span class="method-badge">GET</span>
+                        </div>
+                        <div class="endpoint-content">
+                            Advanced table view for team attendance mismatches with filtering by status, vendor, and conflict priority
+                        </div>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>POST /manager/mismatch/{id}/approve</span>
+                            <span class="method-badge">POST</span>
+                        </div>
+                        <div class="endpoint-content">
+                            Approve or reject individual mismatch explanations with manager comments
+                        </div>
+                    </div>
+                    
                     <h4>Admin Endpoints</h4>
                     <div class="api-endpoint">
                         <div class="endpoint-header">
@@ -1278,6 +1540,37 @@
                         </div>
                         <div class="endpoint-content">
                             Import attendance machine data from Excel/CSV files
+                        </div>
+                    </div>
+                    
+                    <h4>AI Analytics Endpoints</h4>
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>GET /manager/ai-insights</span>
+                            <span class="method-badge">GET</span>
+                        </div>
+                        <div class="endpoint-content">
+                            AI-powered team insights dashboard with predictive analytics and recommendations
+                        </div>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>GET /api/ai/predict-attendance/{vendor_id}</span>
+                            <span class="method-badge">GET</span>
+                        </div>
+                        <div class="endpoint-content">
+                            Generate attendance predictions and risk assessments for individual team members
+                        </div>
+                    </div>
+                    
+                    <div class="api-endpoint">
+                        <div class="endpoint-header">
+                            <span>GET /api/ai/team-analytics</span>
+                            <span class="method-badge">GET</span>
+                        </div>
+                        <div class="endpoint-content">
+                            Comprehensive team performance analytics with behavioral insights and trends
                         </div>
                     </div>
                     
@@ -1304,7 +1597,7 @@
                     
                     <div class="tip-box">
                         <strong><i class="fas fa-lightbulb me-2"></i>API Documentation:</strong>
-                        Complete API documentation is available at <code>/docs</code> endpoint with interactive Swagger UI for testing all endpoints.
+                        Complete API documentation is available at <code>/docs</code> endpoint with interactive Swagger UI for testing all endpoints. New manager mismatches table and AI analytics endpoints are included with comprehensive parameter documentation.
                     </div>
                 </div>
                 
