@@ -3,10 +3,33 @@
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.0+-green.svg)](https://flask.palletsprojects.com)
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0+-orange.svg)](https://www.sqlalchemy.org)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 A comprehensive workforce management platform that streamlines attendance tracking, vendor management, and analytics for modern enterprises.
 
-## 🚀 Features
+> **🚀 Ready to Run:** Complete with sample data, database setup scripts, and comprehensive documentation.
+
+## 📸 Quick Demo
+
+![ATTENDO Dashboard](docs/images/dashboard-preview.png)
+
+*Multi-role dashboard with real-time attendance tracking, mismatch detection, and comprehensive reporting.*
+
+## 📚 Table of Contents
+
+- [🚀 Quick Start](#-quick-start)
+- [🎯 Features](#-features)
+- [🛠️ Technology Stack](#-technology-stack)
+- [📊 Database Schema](#-database-schema)
+- [📖 Complete Setup Guide](#-complete-setup-guide)
+- [📝 API Documentation](#-api-documentation)
+- [🏢 Architecture](#-architecture)
+- [🔧 Configuration](#-configuration)
+- [🧪 Testing](#-testing)
+- [🚀 Deployment](#-deployment)
+- [🤝 Contributing](#-contributing)
+
+## 🎯 Features
 
 ### 🔐 Authentication & Authorization
 - Role-based Access Control (Admin/Manager/Vendor)
@@ -60,38 +83,101 @@ A comprehensive workforce management platform that streamlines attendance tracki
 - **Swagger UI** - Interactive API documentation
 - **OpenAPI 3.0** - API specification standard
 
+## 📊 Database Schema
+
+ATTENDO uses a comprehensive database schema designed for enterprise workforce management:
+
+### Core Tables
+- **users** - Authentication and user accounts
+- **vendors** - Vendor profiles and company information
+- **managers** - Manager profiles and team assignments
+- **daily_statuses** - Daily attendance submissions
+- **swipe_records** - Physical attendance machine data
+- **holidays** - Company holiday calendar
+
+### Advanced Features
+- **mismatch_records** - Attendance discrepancy tracking
+- **notification_logs** - Email/SMS notification history
+- **audit_logs** - Complete system activity trail
+- **leave_records** - Leave management
+- **wfh_records** - Work from home tracking
+
+**View Database Schema:** Run `python scripts/view_database.py` after setup to explore all tables and relationships.
+
 ## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.8 or higher
-- pip (Python package manager)
+### 📍 Prerequisites
+- **Python 3.8+** ([Download](https://www.python.org/downloads/))
+- **Git** ([Download](https://git-scm.com/downloads))
+- **pip** (comes with Python)
 
-### Installation
+### ⚡ Installation Options
 
-1. **Clone the repository**
+#### Option 1: Basic Setup (Admin Only)
 ```bash
-git clone <repository-url>
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/vendor-timesheet-tool.git
 cd vendor-timesheet-tool
-```
 
-2. **Install dependencies**
-```bash
+# 2. Install dependencies
 pip install -r requirements.txt
-```
 
-3. **Run the application**
-```bash
+# 3. Run the application
 python app.py
 ```
 
-4. **Access the application**
-- Web Interface: http://localhost:5000
-- API Documentation: http://localhost:5000/api/docs
+**🌍 Access Points:**
+- **Web Interface:** http://localhost:5000
+- **API Documentation:** http://localhost:5000/api/docs
+- **Login:** `Admin` / `admin123`
 
-### Test Credentials
-- **Admin:** `admin` / `admin123`
-- **Manager:** `manager1` / `manager123`
-- **Vendor:** `vendor1` / `vendor123`
+#### Option 2: Complete Setup with Sample Data (🎆 Recommended)
+```bash
+# 1-2. Clone and install (same as above)
+
+# 3. Setup database with comprehensive sample data
+python scripts/setup_database_with_samples.py
+
+# 4. Generate realistic mismatches (optional - for demo)
+python scripts/generate_sample_mismatches.py
+
+# 5. Start the application
+python app.py
+```
+
+**📋 Explore Sample Data:**
+```bash
+python scripts/view_database.py  # Interactive database viewer
+```
+
+### 🔑 Test Credentials (Full Setup)
+
+| Role | Username | Password | Access Level |
+|------|----------|----------|-------------|
+| **Admin** | `Admin` | `admin123` | Full system access |
+| **Manager** | `manager1` | `manager123` | Team management, approvals |
+| **Manager** | `manager2` | `manager123` | Team management, approvals |
+| **Vendor** | `vendor1` | `vendor123` | Personal dashboard, status submission |
+| **Vendor** | `vendor2` | `vendor123` | Personal dashboard, status submission |
+| **Vendor** | `vendor3` | `vendor123` | Personal dashboard, status submission |
+
+### 🚀 What You Get
+
+✅ **Complete user accounts** (Admin, Managers, Vendors)  
+✅ **Historical attendance data** (30+ days of realistic data)  
+✅ **Mismatch scenarios** (WFH vs Office conflicts, missing swipes)  
+✅ **Holiday calendar** (System holidays pre-configured)  
+✅ **Sample reconciliation data** (CSV import ready)  
+✅ **Interactive API documentation** (Swagger UI)  
+
+## 📖 Complete Setup Guide
+
+**Need detailed instructions?** See **[SETUP.md](SETUP.md)** for:
+- 🛠️ Troubleshooting guide
+- 📊 Database schema deep-dive
+- ⚙️ Environment configuration
+- 📝 Step-by-step walkthrough
+- ✅ Verification checklist
 
 ## 📖 API Documentation
 
@@ -228,12 +314,86 @@ CMD ["python", "app.py"]
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/new-feature`)
-3. Commit your changes (`git commit -am 'Add new feature'`)
-4. Push to the branch (`git push origin feature/new-feature`)
-5. Create a Pull Request
+We welcome contributions to ATTENDO! Here's how you can help:
+
+### 🐛 Bug Reports & Feature Requests
+- 🔍 [Search existing issues](../../issues) first
+- 📝 [Create new issue](../../issues/new) with detailed description
+- 🎯 Use appropriate labels (bug, enhancement, question)
+
+### 💻 Code Contributions
+
+1. **Fork the repository**
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/vendor-timesheet-tool.git
+   cd vendor-timesheet-tool
+   ```
+
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+3. **Set up development environment**
+   ```bash
+   pip install -r requirements.txt
+   python scripts/setup_database_with_samples.py
+   ```
+
+4. **Make your changes**
+   - Follow existing code style
+   - Add tests for new features
+   - Update documentation if needed
+
+5. **Test your changes**
+   ```bash
+   python app.py  # Manual testing
+   python scripts/view_database.py  # Verify DB changes
+   ```
+
+6. **Commit and push**
+   ```bash
+   git add .
+   git commit -m "Add: Your descriptive commit message"
+   git push origin feature/your-feature-name
+   ```
+
+7. **Create Pull Request**
+   - 📝 Provide clear description of changes
+   - 🗂 Link related issues
+   - ✅ Ensure all checks pass
+
+### 📄 Documentation
+- Improve setup guides, API docs, or code comments
+- Add examples and use cases
+- Report documentation issues
 
 ---
 
-**A professional workforce management solution for modern enterprises**
+## 🎆 Acknowledgments
+
+- Built with ♥️ for MediaTek Hackathon
+- Powered by Flask, SQLAlchemy, and modern web technologies
+- Special thanks to all contributors and testers
+
+## 📞 Support
+
+- 📖 **Documentation:** [SETUP.md](SETUP.md) | [API Reference](docs/API_REFERENCE.md)
+- 🐛 **Issues:** [GitHub Issues](../../issues)
+- 💬 **Discussions:** [GitHub Discussions](../../discussions)
+- 📧 **Contact:** [Open an Issue](../../issues/new)
+
+---
+
+<div align="center">
+
+**🎯 ATTENDO - Professional Workforce Management**
+
+*Streamlining attendance tracking, vendor management, and analytics for modern enterprises*
+
+[![⭐ Star this project](https://img.shields.io/github/stars/YOUR_USERNAME/vendor-timesheet-tool?style=social)](../../stargazers)
+[![🍴 Fork this project](https://img.shields.io/github/forks/YOUR_USERNAME/vendor-timesheet-tool?style=social)](../../network/members)
+
+Made with ♥️ by [Your Name](https://github.com/YOUR_USERNAME)
+
+</div>
