@@ -289,67 +289,79 @@
     
     <!-- Navigation Cards -->
     <div style="max-width: 1600px; margin: -50px auto 40px; position: relative; z-index: 10; padding: 0 20px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px;">
+            <!-- Setup Guide Card -->
+            <a href="./setup_guide.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#ffc107'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-rocket" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #ffc107; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Setup Guide</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Quick setup instructions</p>
+                </div>
+            </a>
+            
+            <!-- System Architecture Card -->
+            <a href="./system_architecture_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#6f42c1'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-sitemap" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #6f42c1; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">System Architecture</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Technical diagrams</p>
+                </div>
+            </a>
+            
             <!-- Vendor Guide Card -->
             <a href="./vendor_documentation.html" style="text-decoration: none; display: block;">
-                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
-                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#6c757d'" 
-                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
-                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); opacity: 0.1; border-radius: 50%;"></div>
-                    <i class="fas fa-user" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #6c757d; position: relative;"></i>
-                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Vendor Guide</h3>
-                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Daily attendance submission, status tracking, and reports</p>
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#6c757d'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #6c757d; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Vendor Guide</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Daily attendance tracking</p>
                 </div>
             </a>
             
             <!-- Manager Guide Card -->
             <a href="./manager_documentation.html" style="text-decoration: none; display: block;">
-                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
-                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#28a745'" 
-                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
-                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); opacity: 0.1; border-radius: 50%;"></div>
-                    <i class="fas fa-user-tie" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #28a745; position: relative;"></i>
-                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Manager Guide</h3>
-                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Team management, approvals, and AI insights</p>
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#28a745'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user-tie" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #28a745; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Manager Guide</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Team management</p>
                 </div>
             </a>
             
             <!-- Admin Guide Card - Active -->
             <a href="./admin_documentation.html" style="text-decoration: none; display: block;">
-                <div style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 15px 35px rgba(220,53,69,0.4); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; transform: scale(1.05);" 
-                     onmouseover="this.style.transform='scale(1.08) translateY(-5px)'; this.style.boxShadow='0 20px 40px rgba(220,53,69,0.5)'" 
-                     onmouseout="this.style.transform='scale(1.05)'; this.style.boxShadow='0 15px 35px rgba(220,53,69,0.4)'">
-                    <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
-                    <i class="fas fa-user-shield" style="font-size: 3rem; margin-bottom: 20px; display: block; position: relative;"></i>
-                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Admin Guide</h3>
-                    <p style="margin: 0; font-size: 0.95rem; opacity: 0.95; line-height: 1.5;">System configuration and user management</p>
-                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.2);">
-                        <span style="font-size: 0.85rem; opacity: 0.9;">📍 Currently Viewing</span>
+                <div style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 10px 25px rgba(220,53,69,0.4); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; height: 140px; display: flex; flex-direction: column; justify-content: center; transform: scale(1.02);" 
+                     onmouseover="this.style.transform='scale(1.05) translateY(-3px)'; this.style.boxShadow='0 15px 30px rgba(220,53,69,0.5)'" 
+                     onmouseout="this.style.transform='scale(1.02)'; this.style.boxShadow='0 10px 25px rgba(220,53,69,0.4)'">
+                    <div style="position: absolute; top: -15px; right: -15px; width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    <i class="fas fa-user-shield" style="font-size: 2rem; margin-bottom: 8px; display: block; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Admin Guide</h3>
+                    <p style="margin: 0; font-size: 0.75rem; opacity: 0.95; line-height: 1.3;">System configuration</p>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">
+                        <span style="font-size: 0.7rem; opacity: 0.9;">📍 Current</span>
                     </div>
                 </div>
             </a>
             
             <!-- Notifications Card -->
             <a href="./NOTIFICATION_SYSTEM_GUIDE.html" style="text-decoration: none; display: block;">
-                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
-                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#17a2b8'" 
-                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
-                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); opacity: 0.1; border-radius: 50%;"></div>
-                    <i class="fas fa-bell" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #17a2b8; position: relative;"></i>
-                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">Notifications</h3>
-                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Email, SMS, and alert configuration</p>
-                </div>
-            </a>
-            
-            <!-- System Architecture Card -->
-            <a href="./system_architecture_documentation.html" style="text-decoration: none; display: block;">
-                <div style="background: white; color: #333; padding: 35px 30px; border-radius: 20px; text-align: center; box-shadow: 0 8px 25px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent;"
-                     onmouseover="this.style.transform='translateY(-8px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.15)'; this.style.borderColor='#6f42c1'" 
-                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
-                    <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); opacity: 0.1; border-radius: 50%;"></div>
-                    <i class="fas fa-sitemap" style="font-size: 3rem; margin-bottom: 20px; display: block; color: #6f42c1; position: relative;"></i>
-                    <h3 style="margin-bottom: 12px; font-size: 1.5rem; font-weight: 600;">System Architecture</h3>
-                    <p style="margin: 0; font-size: 0.95rem; color: #666; line-height: 1.5;">Technical architecture and system flow diagrams</p>
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#17a2b8'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-bell" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #17a2b8; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Notifications</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Email & SMS alerts</p>
                 </div>
             </a>
         </div>
@@ -915,36 +927,71 @@
                     
                     <!-- Notification Configuration -->
                     <div class="feature-card" id="notifications">
-                        <h3><i class="fas fa-bell"></i>Notification Configuration</h3>
-                        <p>Manage system-wide notification settings and templates.</p>
+                        <h3><i class="fas fa-bell"></i>Power Automate Notification Configuration</h3>
+                        <p>Manage the Excel-based Power Automate notification system and workflow configurations.</p>
                         
-                        <h4>Notification Channels</h4>
+                        <div style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                            <h4 style="color: white; margin-bottom: 15px;"><i class="fab fa-microsoft" style="margin-right: 8px;"></i>Power Automate Integration Management</h4>
+                            <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">ATTENDO's notification system runs on Microsoft Power Automate with Excel-based queues synchronized through OneDrive. As administrator, you manage the Excel notification tables and flow configurations.</p>
+                        </div>
+                        
+                        <h4>Excel Notification Tables Management</h4>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545; margin: 15px 0;">
+                            <p style="margin-bottom: 10px; font-weight: bold;">10+ Notification Tables You Manage:</p>
+                            <ul style="font-size: 0.9rem; margin: 0; columns: 2;">
+                                <li>01_daily_status_reminders.xlsx</li>
+                                <li>02_manager_summary_notifications.xlsx</li>
+                                <li>03_manager_all_complete_notifications.xlsx</li>
+                                <li>04_mismatch_notifications.xlsx</li>
+                                <li>05_manager_feedback_notifications.xlsx</li>
+                                <li>06_monthly_report_notifications.xlsx</li>
+                                <li>07_admin_system_alerts.xlsx</li>
+                                <li>08_holiday_reminder_notifications.xlsx</li>
+                                <li>09_late_submission_alerts.xlsx</li>
+                                <li>10_billing_correction_notifications.xlsx</li>
+                            </ul>
+                        </div>
+                        
+                        <h4>Power Automate Flow Configuration</h4>
                         <ul>
-                            <li><strong>Email:</strong> SMTP configuration</li>
-                            <li><strong>SMS:</strong> Gateway integration (optional)</li>
-                            <li><strong>In-App:</strong> System notifications</li>
-                            <li><strong>Webhooks:</strong> External system integration</li>
+                            <li><strong>OneDrive Integration:</strong> Configure Excel file locations and access permissions</li>
+                            <li><strong>Flow Scheduling:</strong> Set recurrence intervals for each notification type</li>
+                            <li><strong>Teams Integration:</strong> Configure Teams channels and webhook connections</li>
+                            <li><strong>Email Fallback:</strong> SMTP configuration for email delivery</li>
+                            <li><strong>Error Handling:</strong> Configure retry logic and failure notifications</li>
                         </ul>
                         
-                        <h4>Template Management</h4>
+                        <h4>Administrative Configuration Tasks</h4>
+                        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #856404; margin: 15px 0;">
+                            <ol style="margin: 0;">
+                                <li><strong>OneDrive Setup:</strong> Ensure Excel files are properly synchronized and accessible</li>
+                                <li><strong>Table Permissions:</strong> Configure read/write access for Power Automate service account</li>
+                                <li><strong>Flow Monitoring:</strong> Set up alerts for failed Power Automate flows</li>
+                                <li><strong>Template Customization:</strong> Modify Excel table schemas for new notification types</li>
+                                <li><strong>Testing Procedures:</strong> Validate notification delivery through all channels</li>
+                            </ol>
+                        </div>
+                        
+                        <h4>Power Automate Notification Templates</h4>
                         <ul>
-                            <li>Submission reminders</li>
-                            <li>Approval notifications</li>
-                            <li>Mismatch alerts</li>
-                            <li>System announcements</li>
-                            <li>Password reset emails</li>
-                            <li>Welcome messages</li>
+                            <li><strong>Daily Reminders:</strong> Vendor status submission prompts</li>
+                            <li><strong>Manager Summaries:</strong> Team attendance overview reports</li>
+                            <li><strong>Mismatch Alerts:</strong> Attendance reconciliation discrepancies</li>
+                            <li><strong>Completion Celebrations:</strong> Team achievement notifications</li>
+                            <li><strong>System Alerts:</strong> Critical administrative notifications</li>
+                            <li><strong>Monthly Reports:</strong> Comprehensive attendance analytics</li>
                         </ul>
                         
-                        <h4>Notification Rules</h4>
-                        <ol class="step-list">
-                            <li>Define trigger conditions</li>
-                            <li>Set recipient groups</li>
-                            <li>Configure timing/frequency</li>
-                            <li>Customize message content</li>
-                            <li>Test notification</li>
-                            <li>Activate rule</li>
-                        </ol>
+                        <h4>Notification Monitoring & Troubleshooting</h4>
+                        <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; border-left: 4px solid #0c5460; margin: 15px 0;">
+                            <ul style="margin: 0;">
+                                <li><strong>Flow Health Monitoring:</strong> Track Power Automate flow execution success rates</li>
+                                <li><strong>Queue Management:</strong> Monitor Excel table row counts and cleanup</li>
+                                <li><strong>Delivery Tracking:</strong> Verify notification delivery through Teams and email</li>
+                                <li><strong>Error Handling:</strong> Configure automatic retry policies and failure escalation</li>
+                                <li><strong>Performance Optimization:</strong> Adjust flow frequency based on usage patterns</li>
+                            </ul>
+                        </div>
                     </div>
                     
                     <!-- Backup & Recovery -->

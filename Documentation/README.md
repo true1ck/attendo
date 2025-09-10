@@ -34,9 +34,9 @@ This Documentation folder contains all user guides, system documentation, and te
    - Backup and recovery
 
 5. **`NOTIFICATION_SYSTEM_GUIDE.html`** - 🔔 **Notifications Guide**
-   - Email, SMS, and Teams integration
-   - Notification rules and triggers
-   - Custom alert configurations
+   - Email, SMS, and Teams integration via Power Automate
+   - Excel-based notification workflows
+   - Recurrent notification triggers and custom alert configurations
 
 6. **`system_architecture_documentation.html`** - 🏗️ **System Architecture**
    - Technical system design
@@ -85,6 +85,12 @@ This documentation folder is completely portable! You can:
 All internal links use relative paths (`./filename.html`), so everything will continue to work.
 
 ## 🎨 Features
+
+### Advanced Features
+- 🔄 **Power Automate Integration** with Excel-based notification workflows
+- 📊 **Real-time Excel Sync** for automated notification triggers
+- 🎯 **Smart Notification Targeting** based on user roles and events
+- 📧 **Multi-channel Delivery** through email, Teams, and SMS
 
 ### Visual Design
 - 🌈 **Beautiful gradients** and modern styling
