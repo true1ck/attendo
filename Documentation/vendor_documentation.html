@@ -198,6 +198,75 @@
             background: #f8f9fa;
         }
         
+        /* Vendor Workflow Diagram Styles */
+        .workflow-diagram {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .workflow-step {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .workflow-step:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .workflow-arrow {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin: 0 5px;
+        }
+        
+        .status-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .status-option {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .status-option:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .status-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--status-color);
+        }
+        
+        .office-full { --status-color: #28a745; }
+        .office-half { --status-color: #20c997; }
+        .wfh-full { --status-color: #17a2b8; }
+        .wfh-half { --status-color: #6c757d; }
+        .leave-full { --status-color: #ffc107; }
+        .leave-half { --status-color: #fd7e14; }
+        .absent { --status-color: #dc3545; }
+        
         .badge-status {
             padding: 5px 12px;
             border-radius: 20px;
@@ -711,6 +780,119 @@
                         </ul>
                     </div>
                     
+                    <!-- Vendor Process Flow Diagrams -->
+                    <div class="feature-card" id="vendor-workflows">
+                        <h3><i class="fas fa-project-diagram"></i>Vendor Process Flow</h3>
+                        <p>Visual guide to common vendor processes and workflows.</p>
+
+                        <!-- Daily Status Submission Flow -->
+                        <div class="workflow-diagram">
+                            <h4 style="text-align:center;color:#667eea;margin-bottom:20px;">Daily Status Submission Process</h4>
+                            <div style="text-align:center;">
+                                <span class="workflow-step">Login to ATTENDO</span>
+                                <span class="workflow-arrow">→</span>
+                                <span class="workflow-step">Check Dashboard</span>
+                                <span class="workflow-arrow">→</span>
+                                <span class="workflow-step">Submit Status</span>
+                                <span class="workflow-arrow">→</span>
+                                <span class="workflow-step">Add Comments</span>
+                                <span class="workflow-arrow">→</span>
+                                <span class="workflow-step">Confirm & Submit</span>
+                            </div>
+                        </div>
+
+                        <!-- Status Options Visual Guide -->
+                        <div class="workflow-diagram">
+                            <h4 style="text-align:center;color:#667eea;margin-bottom:20px;">Available Status Options</h4>
+                            <div class="status-options">
+                                <div class="status-option office-full">
+                                    <div class="status-icon"><i class="fas fa-building"></i></div>
+                                    <strong>In Office (Full Day)</strong>
+                                    <p style="font-size:0.9rem;color:#666;margin-top:8px;">Working full day from office</p>
+                                </div>
+                                <div class="status-option office-half">
+                                    <div class="status-icon"><i class="fas fa-building"></i></div>
+                                    <strong>In Office (Half Day)</strong>
+                                    <p style="font-size:0.9rem;color:#666;margin-top:8px;">Working half day from office</p>
+                                </div>
+                                <div class="status-option wfh-full">
+                                    <div class="status-icon"><i class="fas fa-home"></i></div>
+                                    <strong>Work From Home (Full)</strong>
+                                    <p style="font-size:0.9rem;color:#666;margin-top:8px;">Working full day remotely</p>
+                                </div>
+                                <div class="status-option wfh-half">
+                                    <div class="status-icon"><i class="fas fa-home"></i></div>
+                                    <strong>Work From Home (Half)</strong>
+                                    <p style="font-size:0.9rem;color:#666;margin-top:8px;">Working half day remotely</p>
+                                </div>
+                                <div class="status-option leave-full">
+                                    <div class="status-icon"><i class="fas fa-calendar-times"></i></div>
+                                    <strong>Leave (Full Day)</strong>
+                                    <p style="font-size:0.9rem;color:#666;margin-top:8px;">Taking full day leave</p>
+                                </div>
+                                <div class="status-option leave-half">
+                                    <div class="status-icon"><i class="fas fa-calendar-minus"></i></div>
+                                    <strong>Leave (Half Day)</strong>
+                                    <p style="font-size:0.9rem;color:#666;margin-top:8px;">Taking half day leave</p>
+                                </div>
+                                <div class="status-option absent">
+                                    <div class="status-icon"><i class="fas fa-user-times"></i></div>
+                                    <strong>Absent</strong>
+                                    <p style="font-size:0.9rem;color:#666;margin-top:8px;">Unplanned absence</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mismatch Resolution Flow -->
+                        <div class="workflow-diagram">
+                            <h4 style="text-align:center;color:#667eea;margin-bottom:20px;">Mismatch Resolution Process</h4>
+                            <svg viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+                                <rect x="30" y="50" width="120" height="50" rx="10" fill="#dc3545" />
+                                <text x="90" y="80" text-anchor="middle" fill="#fff" font-weight="700">Mismatch Alert</text>
+                                
+                                <rect x="180" y="50" width="120" height="50" rx="10" fill="#ffc107" />
+                                <text x="240" y="80" text-anchor="middle" fill="#000" font-weight="700">Review Details</text>
+                                
+                                <rect x="330" y="50" width="120" height="50" rx="10" fill="#17a2b8" />
+                                <text x="390" y="80" text-anchor="middle" fill="#fff" font-weight="700">Add Explanation</text>
+                                
+                                <rect x="480" y="50" width="120" height="50" rx="10" fill="#6f42c1" />
+                                <text x="540" y="80" text-anchor="middle" fill="#fff" font-weight="700">Submit</text>
+                                
+                                <rect x="630" y="50" width="120" height="50" rx="10" fill="#28a745" />
+                                <text x="690" y="80" text-anchor="middle" fill="#fff" font-weight="700">Manager Review</text>
+                                
+                                <!-- Arrows -->
+                                <line x1="150" y1="75" x2="180" y2="75" stroke="#667eea" stroke-width="3" marker-end="url(#vendorArrow)" />
+                                <line x1="300" y1="75" x2="330" y2="75" stroke="#667eea" stroke-width="3" marker-end="url(#vendorArrow)" />
+                                <line x1="450" y1="75" x2="480" y2="75" stroke="#667eea" stroke-width="3" marker-end="url(#vendorArrow)" />
+                                <line x1="600" y1="75" x2="630" y2="75" stroke="#667eea" stroke-width="3" marker-end="url(#vendorArrow)" />
+                                
+                                <defs>
+                                    <marker id="vendorArrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+                                        <path d="M0,0 L0,6 L6,3 z" fill="#667eea" />
+                                    </marker>
+                                </defs>
+                            </svg>
+                        </div>
+
+                        <!-- Report Generation Flow -->
+                        <div class="workflow-diagram">
+                            <h4 style="text-align:center;color:#667eea;margin-bottom:20px;">Report Generation Flow</h4>
+                            <div style="text-align:center;">
+                                <span class="workflow-step">Click View Report</span>
+                                <span class="workflow-arrow">→</span>
+                                <span class="workflow-step">Select Date Range</span>
+                                <span class="workflow-arrow">→</span>
+                                <span class="workflow-step">Choose Format</span>
+                                <span class="workflow-arrow">→</span>
+                                <span class="workflow-step">Generate Report</span>
+                                <span class="workflow-arrow">→</span>
+                                <span class="workflow-step">Download/View</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- FAQs Section -->
                     <div class="faq-section" id="faq">
                         <h2 class="mb-4"><i class="fas fa-question-circle me-2"></i>Frequently Asked Questions</h2>

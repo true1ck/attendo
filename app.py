@@ -1053,13 +1053,50 @@ def api_dashboard_stats():
         }
     else:  # Vendor
         vendor = current_user.vendor_profile
+        
+        # Calculate proper attendance rate for current month
+        attendance_rate = 0
+        if vendor:
+            today = date.today()
+            start_of_month = today.replace(day=1)
+            
+            # Get statuses for current month
+            month_statuses = DailyStatus.query.filter(
+                DailyStatus.vendor_id == vendor.id,
+                DailyStatus.status_date >= start_of_month,
+                DailyStatus.status_date <= today
+            ).all()
+            
+            # Calculate working days in current month up to today
+            working_days_this_month = 0
+            current_date = start_of_month
+            while current_date <= today:
+                if current_date.weekday() < 5:  # Monday to Friday
+                    is_holiday = Holiday.query.filter_by(holiday_date=current_date).first()
+                    if not is_holiday:
+                        working_days_this_month += 1
+                current_date += timedelta(days=1)
+            
+            # Calculate attendance with half-day weighting
+            working_day_submissions = 0
+            for status in month_statuses:
+                if status.status_date.weekday() < 5:  # Monday to Friday
+                    is_holiday = Holiday.query.filter_by(holiday_date=status.status_date).first()
+                    if not is_holiday:
+                        if status.status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]:
+                            working_day_submissions += 0.5
+                        else:
+                            working_day_submissions += 1
+            
+            attendance_rate = min(100.0, (working_day_submissions / working_days_this_month * 100)) if working_days_this_month > 0 else 0
+        
         stats = {
             'total_statuses': DailyStatus.query.filter_by(vendor_id=vendor.id).count() if vendor else 0,
             'pending_mismatches': MismatchRecord.query.filter_by(
                 vendor_id=vendor.id, 
                 manager_approval=ApprovalStatus.PENDING
             ).count() if vendor else 0,
-            'attendance_rate': 95.5,
+            'attendance_rate': round(attendance_rate, 1),
             'current_month_days': DailyStatus.query.filter(
                 DailyStatus.vendor_id == vendor.id,
                 DailyStatus.status_date >= date.today().replace(day=1)
@@ -1366,9 +1403,23 @@ def api_monthly_report_data():
                         total_working_days += 1
                 current_date += timedelta(days=1)
             
-            # Calculate attendance rate
+            # Calculate attendance rate properly (should not exceed 100%)
+            # Count half-days as 0.5 and only count working days
+            working_day_submissions = 0
+            for status in statuses:
+                # Only count submissions on actual working days
+                if status.status_date.weekday() < 5:  # Monday to Friday
+                    is_holiday = Holiday.query.filter_by(holiday_date=status.status_date).first()
+                    if not is_holiday:
+                        # Count half-days as 0.5, full days as 1
+                        if status.status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]:
+                            working_day_submissions += 0.5
+                        else:
+                            working_day_submissions += 1
+            
+            # Cap attendance rate at 100% to prevent over 100% values
+            attendance_rate = min(100.0, (working_day_submissions / total_working_days * 100)) if total_working_days > 0 else 0
             submitted_days = len(statuses)
-            attendance_rate = (submitted_days / total_working_days * 100) if total_working_days > 0 else 0
             
             return jsonify({
                 'success': True,
@@ -1440,7 +1491,12 @@ def api_monthly_report_data():
                 if not is_weekend and not is_holiday:
                     total_working_days += 1
                     day_statuses = statuses_by_date.get(d, [])
-                    submitted_working_statuses += len(day_statuses)
+                    # Count with half-day weighting for proper attendance rate
+                    for ds in day_statuses:
+                        if ds.status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]:
+                            submitted_working_statuses += 0.5
+                        else:
+                            submitted_working_statuses += 1
                     # Aggregate to categories
                     counts = {'in_office_full': 0, 'wfh_full': 0, 'leave_full': 0, 'absent': 0}
                     present_vendor_ids = set()
@@ -1463,7 +1519,7 @@ def api_monthly_report_data():
                 d += timedelta(days=1)
             
             potential_entries = total_working_days * team_size
-            attendance_rate = (submitted_working_statuses / potential_entries * 100) if potential_entries > 0 else 0
+            attendance_rate = min(100.0, (submitted_working_statuses / potential_entries * 100)) if potential_entries > 0 else 0
             
             return jsonify({
                 'success': True,
@@ -1526,7 +1582,12 @@ def api_monthly_report_data():
                 if not is_weekend and not is_holiday:
                     total_working_days += 1
                     day_statuses = statuses_by_date.get(d, [])
-                    submitted_working_statuses += len(day_statuses)
+                    # Count with half-day weighting for proper attendance rate
+                    for ds in day_statuses:
+                        if ds.status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]:
+                            submitted_working_statuses += 0.5
+                        else:
+                            submitted_working_statuses += 1
                     counts = {'in_office_full': 0, 'wfh_full': 0, 'leave_full': 0, 'absent': 0}
                     present_vendor_ids = set()
                     for ds in day_statuses:
@@ -1546,7 +1607,7 @@ def api_monthly_report_data():
                 d += timedelta(days=1)
             
             potential_entries = total_working_days * total_vendors
-            attendance_rate = (submitted_working_statuses / potential_entries * 100) if potential_entries > 0 else 0
+            attendance_rate = min(100.0, (submitted_working_statuses / potential_entries * 100)) if potential_entries > 0 else 0
             
             return jsonify({
                 'success': True,
@@ -1653,6 +1714,94 @@ def manager_mismatches():
                          team_vendors=team_vendors,
                          approval_statuses=ApprovalStatus)
 
+@app.route('/manager/mismatches/table')
+@login_required
+def manager_mismatches_table():
+    """Manager's team mismatches in table format (similar to admin reconciliation)"""
+    if current_user.role != UserRole.MANAGER:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    manager = current_user.manager_profile
+    if not manager:
+        flash('Manager profile not found', 'error')
+        return redirect(url_for('login'))
+    
+    # Get filters
+    status_filter = request.args.get('status', 'all')
+    vendor_filter = request.args.get('vendor', 'all')
+    conflict_filter = request.args.get('conflict', 'all')
+    
+    # Get team vendors
+    team_vendors = manager.team_vendors.all()
+    vendor_ids = [v.id for v in team_vendors]
+    
+    # Build query for mismatches
+    mismatch_query = MismatchRecord.query.filter(
+        MismatchRecord.vendor_id.in_(vendor_ids)
+    )
+    
+    # Apply status filter
+    if status_filter != 'all':
+        if status_filter == 'pending':
+            mismatch_query = mismatch_query.filter(
+                MismatchRecord.manager_approval == ApprovalStatus.PENDING
+            )
+        elif status_filter == 'approved':
+            mismatch_query = mismatch_query.filter(
+                MismatchRecord.manager_approval == ApprovalStatus.APPROVED
+            )
+        elif status_filter == 'rejected':
+            mismatch_query = mismatch_query.filter(
+                MismatchRecord.manager_approval == ApprovalStatus.REJECTED
+            )
+    
+    # Apply vendor filter
+    if vendor_filter != 'all':
+        vendor = next((v for v in team_vendors if v.vendor_id == vendor_filter), None)
+        if vendor:
+            mismatch_query = mismatch_query.filter(MismatchRecord.vendor_id == vendor.id)
+    
+    # Get mismatches ordered by date (latest first)
+    mismatches = mismatch_query.order_by(MismatchRecord.mismatch_date.desc()).limit(100).all()
+    
+    # Apply conflict filter after fetching (since it's based on logic)
+    if conflict_filter != 'all':
+        filtered_mismatches = []
+        for m in mismatches:
+            priority = 'low'  # default
+            if m.web_status and m.swipe_status:
+                if (m.web_status.value in ['wfh_full', 'wfh_half', 'leave_full', 'leave_half'] and m.swipe_status == 'AP'):
+                    priority = 'high'
+                elif (m.web_status.value in ['in_office_full', 'in_office_half'] and m.swipe_status == 'AA'):
+                    priority = 'medium'
+            
+            if conflict_filter == priority:
+                filtered_mismatches.append(m)
+        
+        mismatches = filtered_mismatches
+    
+    # Calculate summary stats
+    total_mismatches = len(mismatches)
+    pending_mismatches = len([m for m in mismatches if m.manager_approval == ApprovalStatus.PENDING])
+    approved_mismatches = len([m for m in mismatches if m.manager_approval == ApprovalStatus.APPROVED])
+    team_members_count = len(team_vendors)
+    
+    summary = {
+        'total': total_mismatches,
+        'pending': pending_mismatches,
+        'approved': approved_mismatches,
+        'team_members': team_members_count
+    }
+    
+    return render_template('manager_mismatches_table.html',
+                         mismatches=mismatches,
+                         summary=summary,
+                         status_filter=status_filter,
+                         vendor_filter=vendor_filter,
+                         conflict_filter=conflict_filter,
+                         team_vendors=team_vendors)
+
 @app.route('/manager/mismatch/<int:mismatch_id>/approve', methods=['POST'])
 @login_required
 def approve_mismatch_explanation(mismatch_id):
@@ -1756,7 +1905,22 @@ def manager_reports():
                     working_days += 1
             current_date += timedelta(days=1)
         
-        attendance_rate = (total_days / working_days * 100) if working_days > 0 else 0
+        # Calculate attendance rate properly (should not exceed 100%)
+        # Count half-days as 0.5 and only count working days
+        working_day_submissions = 0
+        for s in statuses:
+            # Only count submissions on actual working days
+            if s.status_date.weekday() < 5:  # Monday to Friday
+                is_holiday = Holiday.query.filter_by(holiday_date=s.status_date).first()
+                if not is_holiday:
+                    # Count half-days as 0.5, full days as 1
+                    if s.status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]:
+                        working_day_submissions += 0.5
+                    else:
+                        working_day_submissions += 1
+        
+        # Cap attendance rate at 100% to prevent over 100% values
+        attendance_rate = min(100.0, (working_day_submissions / working_days * 100)) if working_days > 0 else 0
         
         report_data.append({
             'vendor': vendor,
@@ -1841,7 +2005,22 @@ def api_export_team_report():
         wfh_days = len([s for s in statuses if s.status in [AttendanceStatus.WFH_FULL, AttendanceStatus.WFH_HALF]])
         leave_days = len([s for s in statuses if s.status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]])
         pending_days = len([s for s in statuses if s.approval_status == ApprovalStatus.PENDING])
-        attendance_rate = round((total_days / working_days_period * 100), 1) if working_days_period > 0 else 0
+        # Calculate attendance rate properly (should not exceed 100%)
+        # Count half-days as 0.5 and only count working days
+        working_day_submissions = 0
+        for s in statuses:
+            # Only count submissions on actual working days
+            if s.status_date.weekday() < 5:  # Monday to Friday
+                is_holiday = Holiday.query.filter_by(holiday_date=s.status_date).first()
+                if not is_holiday:
+                    # Count half-days as 0.5, full days as 1
+                    if s.status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]:
+                        working_day_submissions += 0.5
+                    else:
+                        working_day_submissions += 1
+        
+        # Cap attendance rate at 100% to prevent over 100% values
+        attendance_rate = min(100.0, round((working_day_submissions / working_days_period * 100), 1)) if working_days_period > 0 else 0
         rows.append({
             'Vendor Name': v.full_name,
             'Vendor ID': v.vendor_id,

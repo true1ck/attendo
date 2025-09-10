@@ -163,93 +163,197 @@ def add_wfh(vendor_id, start_d, end_d):
 
 
 def create_special_cases():
+    """Create comprehensive mismatch scenarios covering all major categories
+    Categories covered:
+    1. Status vs Swipe Mismatches
+    2. Approval Record Mismatches 
+    3. Time Validation Mismatches
+    4. Missing Submission Mismatches
+    5. Overtime Mismatches
+    6. Weekend/Holiday Mismatches
+    7. Half-day Specific Mismatches
+    
+    Limited to 1-2 cases per category for realistic testing
+    """
     with app.app_context():
         vendors = Vendor.query.order_by(Vendor.id).all()
         if not vendors:
             print("❌ No vendors found. Please run 2_load_sample_data.py first.")
             return 0
-        days = next_business_days(6)
-        v_targets = vendors[:3]  # use first 3 vendors for deterministic cases
+        
+        days = next_business_days(10)  # Need more days for varied scenarios
+        v_targets = vendors[:5] if len(vendors) >= 5 else vendors  # Use up to 5 vendors
         created = 0
 
-        # Case 1: WFH claimed but swipe shows present (no WFH approval)
+        print("\n🎯 Creating Enhanced Comprehensive Mismatch Scenarios...")
+        
+        # Category 1: Status vs Swipe Mismatches (2 cases)
+        print("\n📝 Category 1: Status vs Swipe Mismatches")
+        
+        # Case 1a: WFH claimed but swipe shows present
         d1 = days[0]
         v = v_targets[0]
         upsert_daily_status(v.id, d1, AttendanceStatus.WFH_FULL, location='Home', approved=True)
-        upsert_swipe(v.id, d1, present=True, partial=False)
+        upsert_swipe(v.id, d1, present=True, partial=False)  # Full day swipe conflicts with WFH
+        print(f"  ✓ Case 1a: WFH status but office swipe present on {d1} (Vendor: {v.vendor_id})")
         created += 1
 
-        # Case 2: In-office claimed but no swipe (AA)
+        # Case 1b: In-office claimed but no swipe
         d2 = days[1]
-        v = v_targets[0]
-        upsert_daily_status(v.id, d2, AttendanceStatus.IN_OFFICE_FULL, location='Office', approved=True)
-        upsert_swipe(v.id, d2, present=False)
+        v = v_targets[1]
+        upsert_daily_status(v.id, d2, AttendanceStatus.IN_OFFICE_FULL, location='BL-A-5F', approved=True)
+        upsert_swipe(v.id, d2, present=False)  # No swipe conflicts with office claim
+        print(f"  ✓ Case 1b: Office status but no swipe record on {d2} (Vendor: {v.vendor_id})")
         created += 1
 
-        # Case 3: Leave claimed but swipe shows present
+        # Category 2: Approval Record Mismatches (2 cases)
+        print("\n📋 Category 2: Approval Record Mismatches")
+        
+        # Case 2a: Leave claimed but no Leave approval record
         d3 = days[2]
-        v = v_targets[1]
+        v = v_targets[2]
         upsert_daily_status(v.id, d3, AttendanceStatus.LEAVE_FULL, location='N/A', approved=True)
-        # Optionally also record a leave approval to cover the date
-        add_leave(v.id, d3, d3, leave_type='Casual Leave')
-        upsert_swipe(v.id, d3, present=True)
+        upsert_swipe(v.id, d3, present=False)
+        # Intentionally no LeaveRecord to create approval mismatch
+        print(f"  ✓ Case 2a: Leave status but no approval record on {d3} (Vendor: {v.vendor_id})")
         created += 1
 
-        # Case 4: Leave claimed but no Leave approval record (and no swipe)
+        # Case 2b: WFH claimed but no WFH approval record
         d4 = days[3]
-        v = v_targets[1]
-        upsert_daily_status(v.id, d4, AttendanceStatus.LEAVE_FULL, location='N/A', approved=True)
-        upsert_swipe(v.id, d4, present=False)
-        # No LeaveRecord added intentionally
+        v = v_targets[3]
+        upsert_daily_status(v.id, d4, AttendanceStatus.WFH_FULL, location='Home', approved=True)
+        upsert_swipe(v.id, d4, present=False)  # No swipe is correct for WFH
+        # Intentionally no WFHRecord to create approval mismatch
+        print(f"  ✓ Case 2b: WFH status but no approval record on {d4} (Vendor: {v.vendor_id})")
         created += 1
 
-        # Case 5: Swipe AP exists but no daily status at all
+        # Category 3: Missing Submission Mismatches (1 case)
+        print("\n❓ Category 3: Missing Submission Mismatches")
+        
+        # Case 3: Swipe present but no daily status submitted
         d5 = days[4]
-        v = v_targets[2]
-        # Ensure no DailyStatus for d5
-        ds = DailyStatus.query.filter_by(vendor_id=v.id, status_date=d5).first()
-        if ds:
-            db.session.delete(ds)
-        upsert_swipe(v.id, d5, present=True)
+        v = v_targets[0]  # Reuse vendor
+        # Ensure no DailyStatus exists
+        existing_ds = DailyStatus.query.filter_by(vendor_id=v.id, status_date=d5).first()
+        if existing_ds:
+            db.session.delete(existing_ds)
+        upsert_swipe(v.id, d5, present=True, partial=False)  # Swipe shows present
+        print(f"  ✓ Case 3: Swipe record exists but no status submitted on {d5} (Vendor: {v.vendor_id})")
         created += 1
 
-        # Case 6: Absent claimed but partial swipe exists (login only)
+        # Category 4: Time Validation Mismatches (2 cases)
+        print("\n⏰ Category 4: Time Validation Mismatches")
+        
+        # Case 4a: Early departure scenario
         d6 = days[5]
-        v = v_targets[2]
-        upsert_daily_status(v.id, d6, AttendanceStatus.ABSENT, location='N/A', approved=True)
-        upsert_swipe(v.id, d6, present=True, partial=True)
+        v = v_targets[1]  # Reuse vendor
+        upsert_daily_status(v.id, d6, AttendanceStatus.IN_OFFICE_FULL, location='BL-A-5F', approved=True)
+        # Create swipe with early departure (logout before 3 PM)
+        sr = SwipeRecord.query.filter_by(vendor_id=v.id, attendance_date=d6).first()
+        if not sr:
+            sr = SwipeRecord(
+                vendor_id=v.id,
+                attendance_date=d6,
+                weekday=d6.strftime('%A'),
+                shift_code='G',
+                login_time=time(9, 15),
+                logout_time=time(14, 30),  # Early departure at 2:30 PM
+                total_hours=5.25,
+                extra_hours=0.0,
+                attendance_status='AP'
+            )
+            db.session.add(sr)
+        print(f"  ✓ Case 4a: Early departure at 14:30 on {d6} (Vendor: {v.vendor_id})")
+        created += 1
+        
+        # Case 4b: Late arrival scenario
+        d7 = days[6]
+        v = v_targets[2]  # Reuse vendor
+        upsert_daily_status(v.id, d7, AttendanceStatus.IN_OFFICE_FULL, location='BL-A-5F', approved=True)
+        # Create swipe with late arrival (login after 11 AM)
+        sr = SwipeRecord.query.filter_by(vendor_id=v.id, attendance_date=d7).first()
+        if not sr:
+            sr = SwipeRecord(
+                vendor_id=v.id,
+                attendance_date=d7,
+                weekday=d7.strftime('%A'),
+                shift_code='G',
+                login_time=time(11, 45),  # Late arrival at 11:45 AM
+                logout_time=time(18, 0),
+                total_hours=6.25,
+                extra_hours=0.0,
+                attendance_status='AP'
+            )
+            db.session.add(sr)
+        print(f"  ✓ Case 4b: Late arrival at 11:45 on {d7} (Vendor: {v.vendor_id})")
         created += 1
 
-        # Case 7: Half-day WFH but swipe AP present
-        d7 = days[0] - timedelta(days=7)  # a week earlier (business day assumed)
-        while d7.weekday() >= 5:
-            d7 -= timedelta(days=1)
-        v = v_targets[0]
-        upsert_daily_status(v.id, d7, AttendanceStatus.WFH_HALF, location='Home', approved=True)
-        upsert_swipe(v.id, d7, present=True)
+        # Category 5: Overtime Mismatches (1 case)
+        print("\n💼 Category 5: Overtime Mismatches")
+        
+        # Case 5: Overtime hours mismatch between swipe and status
+        d8 = days[7]
+        v = v_targets[3]  # Reuse vendor
+        # Create status with total hours different from swipe extra hours
+        upsert_daily_status(v.id, d8, AttendanceStatus.IN_OFFICE_FULL, location='BL-A-5F', approved=True)
+        ds = DailyStatus.query.filter_by(vendor_id=v.id, status_date=d8).first()
+        if ds:
+            ds.total_hours = 10.0  # Claiming 10 total hours (2 hours overtime)
+        
+        # Create swipe showing different extra hours
+        sr = SwipeRecord.query.filter_by(vendor_id=v.id, attendance_date=d8).first()
+        if not sr:
+            sr = SwipeRecord(
+                vendor_id=v.id,
+                attendance_date=d8,
+                weekday=d8.strftime('%A'),
+                shift_code='G',
+                login_time=time(9, 0),
+                logout_time=time(18, 30),
+                total_hours=9.5,
+                extra_hours=1.5,  # Swipe shows 1.5h extra vs status claiming 2h
+                attendance_status='AP'
+            )
+            db.session.add(sr)
+        print(f"  ✓ Case 5: Overtime mismatch - Status: 2h extra, Swipe: 1.5h extra on {d8} (Vendor: {v.vendor_id})")
         created += 1
 
-        # Case 8: Half-day In-Office but swipe absent
-        d8 = d7 - timedelta(days=1)
-        while d8.weekday() >= 5:
-            d8 -= timedelta(days=1)
-        v = v_targets[1]
-        upsert_daily_status(v.id, d8, AttendanceStatus.IN_OFFICE_HALF, location='Office', approved=True)
-        upsert_swipe(v.id, d8, present=False)
+        # Category 6: Weekend/Holiday Mismatches (1 case)
+        print("\n📅 Category 6: Weekend/Holiday Mismatches")
+        
+        # Case 6: Status submitted on weekend
+        # Find next Saturday
+        weekend_date = date.today()
+        while weekend_date.weekday() != 5:  # Find Saturday
+            weekend_date += timedelta(days=1)
+        # Make sure it's within reasonable range
+        if (weekend_date - date.today()).days > 7:
+            weekend_date = weekend_date - timedelta(days=7)
+            
+        v = v_targets[4 % len(v_targets)]  # Use available vendor
+        upsert_daily_status(v.id, weekend_date, AttendanceStatus.IN_OFFICE_FULL, location='BL-A-5F', approved=True)
+        upsert_swipe(v.id, weekend_date, present=True, partial=False)
+        print(f"  ✓ Case 6: Weekend work status on {weekend_date.strftime('%A, %Y-%m-%d')} (Vendor: {v.vendor_id})")
         created += 1
 
-        # Case 9: Half-day Leave but swipe AP present and no leave approval
-        d9 = d8 - timedelta(days=1)
-        while d9.weekday() >= 5:
-            d9 -= timedelta(days=1)
-        v = v_targets[2]
-        upsert_daily_status(v.id, d9, AttendanceStatus.LEAVE_HALF, location='N/A', approved=True)
-        upsert_swipe(v.id, d9, present=True)
-        # No LeaveRecord on purpose
-        created += 1
-
+        # Category 7: Half-day Specific Mismatches (kept from enhanced scenarios)
+        # Note: These will be covered by the existing create_enhanced_half_day_scenarios() function
+        # which provides more detailed AM/PM half-day conflict scenarios
+        
         db.session.commit()
-        print(f"✅ Injected {created} special-case day scenarios across vendors {', '.join([vt.vendor_id for vt in v_targets])}")
+        
+        print(f"\n✅ Enhanced Comprehensive Mismatch Scenarios Complete!")
+        print(f"Total scenarios created: {created}")
+        print(f"\nCategories covered:")
+        print(f"  • Status vs Swipe Mismatches: 2 cases")
+        print(f"  • Approval Record Mismatches: 2 cases")
+        print(f"  • Missing Submission Mismatches: 1 case")
+        print(f"  • Time Validation Mismatches: 2 cases")
+        print(f"  • Overtime Mismatches: 1 case")
+        print(f"  • Weekend/Holiday Mismatches: 1 case")
+        print(f"\nVendors used: {', '.join([vt.vendor_id for vt in v_targets])}")
+        print(f"\n📈 These scenarios will generate realistic mismatches for testing and demo purposes.")
+        
         return created
 
 def create_enhanced_half_day_scenarios():

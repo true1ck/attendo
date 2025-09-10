@@ -1,0 +1,148 @@
+<!-- Swipe Status Codes Help Modal -->
+<div class="modal fade" id="swipeCodesHelpModal" tabindex="-1" aria-labelledby="swipeCodesHelpModalLabel" aria-hidden="true">
+  <div class=\"modal-dialog modal-lg\">\r
+    <div class=\"modal-content\">\r
+      <div class=\"modal-header bg-primary text-white\">\r
+        <h5 class=\"modal-title\" id=\"swipeCodesHelpModalLabel\">\r
+          <i class=\"fas fa-question-circle me-2\"></i>Understanding Swipe Data Status Codes\r
+        </h5>\r
+        <button type=\"button\" class=\"btn-close btn-close-white\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>\r
+      </div>\r
+      <div class=\"modal-body\">\r
+        <div class=\"row mb-4\">\r
+          <div class=\"col-md-6\">\r
+            <div class=\"card border-success\">\r
+              <div class=\"card-header bg-success text-white text-center\">\r
+                <h4 class=\"mb-0\">AP</h4>\r
+                <small>Attendance Present</small>\r
+              </div>\r
+              <div class=\"card-body\">\r
+                <div class=\"d-flex align-items-center mb-3\">\r
+                  <i class=\"fas fa-building fa-2x text-success me-3\"></i>\r
+                  <div>\r
+                    <strong>Employee was physically in office</strong><br>\r
+                    <small class=\"text-muted\">Card reader/biometric system detected entry</small>\r
+                  </div>\r
+                </div>\r
+                <ul class=\"small mb-0\">\r
+                  <li>Employee swiped ID card or used biometric scanner</li>\r
+                  <li>System recorded login/logout times</li>\r
+                  <li>Physical presence in office confirmed</li>\r
+                  <li>Total working hours calculated</li>\r
+                </ul>\r
+              </div>\r
+            </div>\r
+          </div>\r
+          \r
+          <div class=\"col-md-6\">\r
+            <div class=\"card border-danger\">\r
+              <div class=\"card-header bg-danger text-white text-center\">\r
+                <h4 class=\"mb-0\">AA</h4>\r
+                <small>Attendance Absent</small>\r
+              </div>\r
+              <div class=\"card-body\">\r
+                <div class=\"d-flex align-items-center mb-3\">\r
+                  <i class=\"fas fa-times-circle fa-2x text-danger me-3\"></i>\r
+                  <div>\r
+                    <strong>No physical office presence detected</strong><br>\r
+                    <small class=\"text-muted\">No swipe/scan recorded for the day</small>\r
+                  </div>\r
+                </div>\r
+                <ul class=\"small mb-0\">\r
+                  <li>No card swipe or biometric scan</li>\r
+                  <li>No login/logout times recorded</li>\r
+                  <li>Could indicate WFH, Leave, or Absence</li>\r
+                  <li>Zero office hours recorded</li>\r
+                </ul>\r
+              </div>\r
+            </div>\r
+          </div>\r
+        </div>\r
+        \r
+        <div class=\"alert alert-info\">\r
+          <h6><i class=\"fas fa-balance-scale me-2\"></i>How Mismatch Detection Works</h6>\r
+          <p class=\"mb-2\">The system compares <strong>employee-submitted status</strong> with <strong>actual swipe data</strong> to detect conflicts:</p>\r
+          \r
+          <div class=\"row\">\r
+            <div class=\"col-md-6\">\r
+              <h6 class=\"text-success\"><i class=\"fas fa-check-circle me-1\"></i>Valid Examples</h6>\r
+              <ul class=\"small\">\r
+                <li><strong>In Office + AP:</strong> Employee claimed office work and swipe confirms presence</li>\r
+                <li><strong>WFH + AA:</strong> Employee claimed work from home and no office swipe detected</li>\r
+                <li><strong>Leave + AA:</strong> Employee took leave and no office swipe detected</li>\r
+              </ul>\r
+            </div>\r
+            \r
+            <div class=\"col-md-6\">\r
+              <h6 class=\"text-danger\"><i class=\"fas fa-exclamation-triangle me-1\"></i>Mismatch Examples</h6>\r
+              <ul class=\"small\">\r
+                <li><strong>WFH + AP:</strong> Claimed work from home but swipe shows office presence</li>\r
+                <li><strong>Leave + AP:</strong> Claimed leave but swipe shows office presence</li>\r
+                <li><strong>In Office + AA:</strong> Claimed office work but no swipe detected</li>\r
+              </ul>\r
+            </div>\r
+          </div>\r
+        </div>\r
+        \r
+        <div class=\"alert alert-warning\">\r
+          <h6><i class=\"fas fa-shield-alt me-2\"></i>Manager Approval Override</h6>\r
+          <p class=\"mb-0\">If a manager has <strong>approved</strong> an employee's WFH or Leave status, the system will NOT flag it as a mismatch even if separate approval records are missing. Manager approval takes precedence over missing documentation.</p>\r
+        </div>\r
+        \r
+        <div class=\"row mt-4\">\r
+          <div class=\"col-12\">\r
+            <h6><i class=\"fas fa-cogs me-2\"></i>Technical Details</h6>\r
+            <div class=\"table-responsive\">\r
+              <table class=\"table table-sm table-bordered\">\r
+                <thead class=\"table-light\">\r
+                  <tr>\r
+                    <th>Status Code</th>\r
+                    <th>Full Name</th>\r
+                    <th>Shift Code</th>\r
+                    <th>Login/Logout</th>\r
+                    <th>Working Hours</th>\r
+                  </tr>\r
+                </thead>\r
+                <tbody>\r
+                  <tr>\r
+                    <td><span class=\"badge bg-success\">AP</span></td>\r
+                    <td>Attendance Present</td>\r
+                    <td>G (General)</td>\r
+                    <td>Recorded</td>\r
+                    <td>Calculated</td>\r
+                  </tr>\r
+                  <tr>\r
+                    <td><span class=\"badge bg-danger\">AA</span></td>\r
+                    <td>Attendance Absent</td>\r
+                    <td>A (Absent)</td>\r
+                    <td>Not Recorded</td>\r
+                    <td>0 Hours</td>\r
+                  </tr>\r
+                </tbody>\r
+              </table>\r
+            </div>\r
+          </div>\r
+        </div>\r
+      </div>\r
+      \r
+      <div class=\"modal-footer\">\r
+        <button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">\r
+          <i class=\"fas fa-times me-1\"></i>Close\r
+        </button>\r
+        <button type=\"button\" class=\"btn btn-primary\" onclick=\"window.open('/admin/reconciliation', '_blank')\">\r
+          <i class=\"fas fa-external-link-alt me-1\"></i>View Reconciliation Report\r
+        </button>\r
+      </div>\r
+    </div>\r
+  </div>\r
+</div>\r
+\r
+<!-- Floating Help Button -->\r
+<div class=\"position-fixed\" style=\"bottom: 20px; right: 20px; z-index: 1050;\">\r
+  <button class=\"btn btn-info btn-lg rounded-circle shadow\" \r
+          data-bs-toggle=\"modal\" \r
+          data-bs-target=\"#swipeCodesHelpModal\"\r
+          title=\"Learn about AP/AA codes\">\r
+    <i class=\"fas fa-question\"></i>\r
+  </button>\r
+</div>

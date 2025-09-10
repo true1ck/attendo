@@ -256,6 +256,250 @@
             backdrop-filter: blur(10px);
         }
         
+        /* System Overview Diagram Styles */
+        .system-overview {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 40px 0;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+        
+        .system-overview h2 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .architecture-diagram {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .architecture-layer {
+            background: white;
+            border: 2px solid #e0e6ed;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .architecture-layer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .layer-title {
+            color: #667eea;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .layer-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .component-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 8px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .component-box:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .user-roles-diagram {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .role-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .role-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--role-color);
+        }
+        
+        .role-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .role-icon {
+            font-size: 3.5rem;
+            color: var(--role-color);
+            margin-bottom: 15px;
+        }
+        
+        .role-title {
+            color: #333;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .role-description {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .vendor-role { --role-color: #6c757d; }
+        .manager-role { --role-color: #28a745; }
+        .admin-role { --role-color: #dc3545; }
+        
+        .data-flow-diagram {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .flow-step {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .flow-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        
+        .flow-content {
+            flex: 1;
+        }
+        
+        .flow-title {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .flow-desc {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .feature-ecosystem {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+        
+        .feature-category {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--category-color);
+        }
+        
+        .feature-category:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        
+        .category-icon {
+            font-size: 2.5rem;
+            color: var(--category-color);
+            margin-bottom: 15px;
+        }
+        
+        .category-title {
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            color: #666;
+            font-size: 0.9rem;
+            padding: 5px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+        
+        .feature-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--category-color);
+            font-weight: bold;
+        }
+        
+        .core-features { --category-color: #667eea; }
+        .integrations { --category-color: #28a745; }
+        .analytics { --category-color: #ffc107; }
+        .security { --category-color: #dc3545; }
+        
         @media (max-width: 768px) {
             .main-header h1 {
                 font-size: 2.5rem;
@@ -375,6 +619,209 @@
                     </ul>
                 </div>
             </a>
+        </div>
+        
+        <!-- System Overview Section -->
+        <div class="system-overview">
+            <h2><i class="fas fa-sitemap"></i> System Architecture Overview</h2>
+            
+            <div class="architecture-diagram">
+                <div class="architecture-layer">
+                    <div class="layer-title">🌐 Presentation Layer</div>
+                    <div class="component-grid">
+                        <div class="component-box">Vendor Dashboard</div>
+                        <div class="component-box">Manager Portal</div>
+                        <div class="component-box">Admin Console</div>
+                        <div class="component-box">API Gateway</div>
+                        <div class="component-box">Documentation</div>
+                    </div>
+                </div>
+                
+                <div class="architecture-layer">
+                    <div class="layer-title">⚙️ Business Logic Layer</div>
+                    <div class="component-grid">
+                        <div class="component-box">Authentication</div>
+                        <div class="component-box">Authorization</div>
+                        <div class="component-box">Notification Engine</div>
+                        <div class="component-box">Reconciliation</div>
+                        <div class="component-box">Report Generator</div>
+                        <div class="component-box">Excel Integration</div>
+                    </div>
+                </div>
+                
+                <div class="architecture-layer">
+                    <div class="layer-title">💾 Data Access Layer</div>
+                    <div class="component-grid">
+                        <div class="component-box">SQLAlchemy ORM</div>
+                        <div class="component-box">Database Models</div>
+                        <div class="component-box">Query Builders</div>
+                        <div class="component-box">Migration Scripts</div>
+                    </div>
+                </div>
+                
+                <div class="architecture-layer">
+                    <div class="layer-title">🗄️ Data Storage & Integrations</div>
+                    <div class="component-grid">
+                        <div class="component-box">SQLite Database</div>
+                        <div class="component-box">Excel Files</div>
+                        <div class="component-box">Power Automate</div>
+                        <div class="component-box">SMTP Server</div>
+                        <div class="component-box">Teams Integration</div>
+                        <div class="component-box">Audit Logs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Roles Diagram -->
+        <div class="system-overview">
+            <h2><i class="fas fa-users"></i> User Roles & Responsibilities</h2>
+            
+            <div class="user-roles-diagram">
+                <div class="role-card vendor-role">
+                    <div class="role-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="role-title">Vendors</div>
+                    <div class="role-description">
+                        Submit daily attendance status, track work hours, manage personal records, and receive notifications about status changes.
+                    </div>
+                </div>
+                
+                <div class="role-card manager-role">
+                    <div class="role-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <div class="role-title">Managers</div>
+                    <div class="role-description">
+                        Oversee team attendance, approve/reject submissions, access AI insights, generate reports, and manage team operations.
+                    </div>
+                </div>
+                
+                <div class="role-card admin-role">
+                    <div class="role-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="role-title">Administrators</div>
+                    <div class="role-description">
+                        Full system control, user management, system configuration, data imports, holiday management, and system monitoring.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Flow Diagram -->
+        <div class="system-overview">
+            <h2><i class="fas fa-route"></i> System Data Flow</h2>
+            
+            <div class="data-flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <div class="flow-content">
+                        <div class="flow-title">Vendor Status Submission</div>
+                        <div class="flow-desc">Vendors log in and submit daily attendance status with location and comments</div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <div class="flow-content">
+                        <div class="flow-title">Real-time Processing</div>
+                        <div class="flow-desc">System validates data, updates database, and triggers Excel file updates</div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <div class="flow-content">
+                        <div class="flow-title">Power Automate Integration</div>
+                        <div class="flow-desc">Excel changes trigger Power Automate workflows for notifications</div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <div class="flow-content">
+                        <div class="flow-title">Manager Review & Approval</div>
+                        <div class="flow-desc">Managers receive notifications and can approve/reject submissions</div>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="flow-number">5</div>
+                    <div class="flow-content">
+                        <div class="flow-title">Reconciliation & Reporting</div>
+                        <div class="flow-desc">System compares with swipe data, detects mismatches, and generates reports</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Feature Ecosystem -->
+        <div class="system-overview">
+            <h2><i class="fas fa-puzzle-piece"></i> Feature Ecosystem</h2>
+            
+            <div class="feature-ecosystem">
+                <div class="feature-category core-features">
+                    <div class="category-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="category-title">Core Features</div>
+                    <ul class="feature-list">
+                        <li>Multi-role dashboard system</li>
+                        <li>Real-time status submissions</li>
+                        <li>Automated approval workflows</li>
+                        <li>Attendance reconciliation</li>
+                        <li>Holiday management</li>
+                        <li>Audit trail logging</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-category integrations">
+                    <div class="category-icon">
+                        <i class="fas fa-plug"></i>
+                    </div>
+                    <div class="category-title">Integrations</div>
+                    <ul class="feature-list">
+                        <li>Microsoft Power Automate</li>
+                        <li>Excel table automation</li>
+                        <li>SMTP email notifications</li>
+                        <li>Microsoft Teams alerts</li>
+                        <li>SMS gateway support</li>
+                        <li>RESTful API access</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-category analytics">
+                    <div class="category-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="category-title">Analytics & Reporting</div>
+                    <ul class="feature-list">
+                        <li>AI-powered insights</li>
+                        <li>Monthly compliance reports</li>
+                        <li>Attendance trend analysis</li>
+                        <li>Mismatch detection alerts</li>
+                        <li>Performance dashboards</li>
+                        <li>Custom report generation</li>
+                    </ul>
+                </div>
+                
+                <div class="feature-category security">
+                    <div class="category-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="category-title">Security & Compliance</div>
+                    <ul class="feature-list">
+                        <li>Role-based access control</li>
+                        <li>Secure authentication</li>
+                        <li>Data encryption support</li>
+                        <li>Comprehensive audit logs</li>
+                        <li>GDPR compliance ready</li>
+                        <li>Backup & recovery tools</li>
+                    </ul>
+                </div>
+            </div>
         </div>
         
         <div class="quick-start">

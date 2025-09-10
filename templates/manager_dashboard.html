@@ -189,11 +189,15 @@
                                         </button>
                                     {% endif %}
                                     
-                                    {% if has_mismatch %}
+                    {% if has_mismatch %}
                                         <button class="btn btn-sm btn-outline-danger ms-1" onclick="viewMismatches('{{ vendor.vendor_id }}')"
                                                 title="View Mismatches">
                                             <i class="fas fa-exclamation-triangle"></i>
                                         </button>
+                                        <a class="btn btn-sm btn-outline-info ms-1" href="/manager/mismatches/table?vendor={{ vendor.vendor_id }}"
+                                                title="View in Table Format">
+                                            <i class="fas fa-table"></i>
+                                        </a>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -313,6 +317,13 @@
                     <button class="btn btn-outline-warning" onclick="viewMismatches()">
                         <i class="fas fa-exclamation-triangle me-2"></i>Review Mismatches
                     </button>
+                    <a class="btn btn-outline-primary" href="/manager/mismatches/table">
+                        <i class="fas fa-table me-2"></i>Mismatches Table
+                    </a>
+                    <small class="text-muted mt-1 d-block">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>AP</strong>=Present, <strong>AA</strong>=Absent in swipe data
+                    </small>
                     <button class="btn btn-primary" onclick="viewAIInsights()">
                         <i class="fas fa-brain me-2"></i>AI Predictions
                     </button>
