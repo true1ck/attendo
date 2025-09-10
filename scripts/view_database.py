@@ -16,8 +16,9 @@ from colorama import init, Fore, Style
 # Initialize colorama for colored terminal output
 init(autoreset=True)
 
-# Add current directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Ensure project root (parent of scripts) is on path
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, PROJECT_ROOT)
 
 # Import models
 from models import (

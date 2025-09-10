@@ -17,6 +17,12 @@ from datetime import datetime, timedelta, date, time
 import random
 
 from flask import Flask
+import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 # Reuse the app config (database path)
 from app import app, db

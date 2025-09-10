@@ -11,6 +11,13 @@ Usage:
 import random
 from datetime import datetime, date, timedelta, time
 
+import sys
+from pathlib import Path
+
+# Ensure project root is in sys.path
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
 from app import app, db
 from models import User, Vendor, DailyStatus, SwipeRecord, MismatchRecord, AttendanceStatus, ApprovalStatus
 from utils import detect_mismatches

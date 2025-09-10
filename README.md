@@ -122,7 +122,10 @@ cd vendor-timesheet-tool
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Run the application
+# 3. Initialize database
+python 1_initialize_database.py
+
+# 4. Run the application
 python app.py
 ```
 
@@ -135,11 +138,11 @@ python app.py
 ```bash
 # 1-2. Clone and install (same as above)
 
-# 3. Setup database with comprehensive sample data
-python scripts/setup_database_with_samples.py
+# 3. Initialize database
+python 1_initialize_database.py
 
-# 4. Generate realistic mismatches (optional - for demo)
-python scripts/generate_sample_mismatches.py
+# 4. Load comprehensive sample data
+python 2_load_sample_data.py
 
 # 5. Start the application
 python app.py
@@ -147,7 +150,8 @@ python app.py
 
 **📋 Explore Sample Data:**
 ```bash
-python scripts/view_database.py  # Interactive database viewer
+python scripts/view_database.py --summary  # Quick overview
+python scripts/view_database.py           # Interactive database viewer
 ```
 
 ### 🔑 Test Credentials (Full Setup)
@@ -170,14 +174,13 @@ python scripts/view_database.py  # Interactive database viewer
 ✅ **Sample reconciliation data** (CSV import ready)  
 ✅ **Interactive API documentation** (Swagger UI)  
 
-## 📖 Complete Setup Guide
+## 📖 Setup Guides
 
-**Need detailed instructions?** See **[SETUP.md](SETUP.md)** for:
-- 🛠️ Troubleshooting guide
-- 📊 Database schema deep-dive
-- ⚙️ Environment configuration
-- 📝 Step-by-step walkthrough
-- ✅ Verification checklist
+### ⚡ **[QUICK_START.md](QUICK_START.md)** - 2-Minute Setup
+Perfect for first-time setup with exact commands to copy/paste.
+
+### 📚 **[SETUP.md](SETUP.md)** - Complete Guide
+Detailed instructions with troubleshooting, configuration, and verification.
 
 ## 📖 API Documentation
 
