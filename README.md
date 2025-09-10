@@ -144,14 +144,18 @@ python 1_initialize_database.py
 # 4. Load comprehensive sample data
 python 2_load_sample_data.py
 
-# 5. Start the application
+# 5. Add special cases & mismatches (for full demo)
+python 3_Add_Special_Cases_SampleData.py
+
+# 6. Start the application
 python app.py
 ```
 
 **📋 Explore Sample Data:**
 ```bash
-python scripts/view_database.py --summary  # Quick overview
-python scripts/view_database.py           # Interactive database viewer
+python 4_ViewDatabase.py --summary        # Quick overview  
+python 4_ViewDatabase.py --mismatches     # View all 59 mismatches
+python 4_ViewDatabase.py                  # Interactive menu
 ```
 
 ### 🔑 Test Credentials (Full Setup)
@@ -165,14 +169,15 @@ python scripts/view_database.py           # Interactive database viewer
 | **Vendor** | `vendor2` | `vendor123` | Personal dashboard, status submission |
 | **Vendor** | `vendor3` | `vendor123` | Personal dashboard, status submission |
 
-### 🚀 What You Get
+### 🚀 What You Get (Complete Setup)
 
-✅ **Complete user accounts** (Admin, Managers, Vendors)  
-✅ **Historical attendance data** (30+ days of realistic data)  
-✅ **Mismatch scenarios** (WFH vs Office conflicts, missing swipes)  
+✅ **Complete user accounts** (Admin + 3 Managers + 5 Vendors)  
+✅ **Historical attendance data** (45 days of realistic patterns)  
+✅ **59+ mismatch scenarios** (WFH conflicts, missing swipes, edge cases)  
 ✅ **Holiday calendar** (System holidays pre-configured)  
 ✅ **Sample reconciliation data** (CSV import ready)  
-✅ **Interactive API documentation** (Swagger UI)  
+✅ **Leave & WFH records** (For approval workflow testing)  
+✅ **Interactive API documentation** (Swagger UI)
 
 ## 📖 Setup Guides
 

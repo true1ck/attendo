@@ -27,7 +27,13 @@ python 2_load_sample_data.py
 ```
 **Creates:** 9 users, 45 days of attendance data, realistic scenarios
 
-### Step 4: Start Application
+### Step 4: Add Special Cases & Mismatches (For Full Demo)
+```bash
+python 3_Add_Special_Cases_SampleData.py
+```
+**Creates:** 59+ mismatch scenarios, special cases, edge cases for testing
+
+### Step 5: Start Application
 ```bash
 python app.py
 ```
@@ -47,22 +53,33 @@ python app.py
 | **Vendor** | `vendor4` | `vendor123` | Daily attendance |
 | **Vendor** | `vendor5` | `vendor123` | Daily attendance |
 
-## 📊 What You Get
+## 📊 What You Get (After All 3 Scripts)
 
-✅ **497 sample records** across all tables  
-✅ **175 attendance records** (45 days of data)  
-✅ **175 swipe records** with realistic office hours  
+✅ **550+ sample records** across all tables  
+✅ **175+ attendance records** (45 days of realistic data)  
+✅ **175+ swipe records** with office hours and conflicts  
 ✅ **9 user accounts** (1 Admin + 3 Managers + 5 Vendors)  
+✅ **59+ mismatch records** for reconciliation demo  
 ✅ **Holiday calendar** with national holidays  
 ✅ **Audit trail** with 100+ activity logs  
-✅ **Notification logs** with sample messages  
+✅ **Leave & WFH records** for approval testing  
+✅ **Special cases:** WFH conflicts, missing swipes, approval gaps
 
 ## 🔍 View Sample Data
+
+### Option 1: New Comprehensive Viewer (🎆 Recommended)
 ```bash
-python scripts/view_database.py --summary    # Quick overview
-python scripts/view_database.py --users     # View all users
-python scripts/view_database.py --status    # View attendance data
-python scripts/view_database.py             # Interactive mode
+python 4_ViewDatabase.py                    # Interactive menu
+python 4_ViewDatabase.py --summary          # Quick overview
+python 4_ViewDatabase.py --users            # View all users  
+python 4_ViewDatabase.py --mismatches       # View all 59 mismatches
+python 4_ViewDatabase.py --all              # Show everything
+```
+
+### Option 2: Original Viewer
+```bash
+python scripts/view_database.py --summary   # Quick overview
+python scripts/view_database.py            # Interactive mode
 ```
 
 ## 🧪 Test the Features
