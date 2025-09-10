@@ -1,27 +1,31 @@
 # Core web framework
-Flask==2.3.3
-Werkzeug==2.3.7
+Flask
+Werkzeug
 
 # Database layer
-SQLAlchemy==2.0.21
-Flask-SQLAlchemy==3.0.5
+SQLAlchemy
+Flask-SQLAlchemy
 
 # Auth / sessions
-Flask-Login==0.6.3
+Flask-Login
 
 # Scheduling (notifications etc.)
-APScheduler==3.10.4
-pytz==2023.3
+APScheduler
+schedule
+pytz
 
 # API docs (Swagger UI)
-flask-swagger-ui==5.21.0
-PyYAML==6.0.2
+flask-swagger-ui
+PyYAML
 
 # Data processing / Excel & CSV import-export
-pandas==2.1.1
-numpy==1.25.2
-openpyxl==3.1.2
-xlrd==2.0.1
+pandas
+numpy
+openpyxl
+xlrd
 
-# Optional: environment config (safe to keep, used in some helpers)
-python-dotenv==1.0.0
+# Config / Env
+python-dotenv
+
+# HTTP utilities
+requests

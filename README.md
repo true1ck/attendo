@@ -16,6 +16,7 @@ A comprehensive workforce management platform that streamlines attendance tracki
 ### 📊 Dashboard & Reporting
 - Real-time Dashboards for all user roles
 - Interactive Charts and visualizations
+- AI Insights (heuristic absence/WFH predictions)
 - Monthly Attendance Reports with Excel export
 - Comprehensive audit trail
 - Custom Report Scheduling
@@ -117,6 +118,15 @@ The complete API documentation is available via Swagger UI at `/api/docs` when t
 #### Analytics & Reports
 - `GET /api/charts/attendance-trends` - Chart data
 - `GET /api/export/monthly-report` - Export reports
+
+#### AI Insights
+- `GET /manager/ai-insights` - Manager AI insights page
+- `GET /api/ai/report?window=7&format=excel|json` - Export AI insights
+- `POST /api/ai/schedule` - Set AI analysis schedule
+- `GET /api/ai/model-logs` - Recent AI-related logs
+- `POST /api/ai/override` - Emergency enable/disable toggle
+
+See docs/AI_MODEL.md for a concise overview of how AI Insights works.
 
 ## 🏗️ Architecture
 
