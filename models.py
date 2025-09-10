@@ -108,6 +108,17 @@ class DailyStatus(db.Model):
     status = db.Column(db.Enum(AttendanceStatus), nullable=False)
     location = db.Column(db.String(100))  # Office/Home/Other
     comments = db.Column(db.Text)
+    
+    # Time tracking fields
+    in_time = db.Column(db.Time, nullable=True)  # Start time for the day
+    out_time = db.Column(db.Time, nullable=True)  # End time for the day
+    office_in_time = db.Column(db.Time, nullable=True)  # For half-day office timing
+    office_out_time = db.Column(db.Time, nullable=True)  # For half-day office timing
+    wfh_in_time = db.Column(db.Time, nullable=True)  # For half-day WFH timing
+    wfh_out_time = db.Column(db.Time, nullable=True)  # For half-day WFH timing
+    break_duration = db.Column(db.Integer, default=0)  # Break duration in minutes
+    total_hours = db.Column(db.Float, nullable=True)  # Calculated total hours
+    
     submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
     approval_status = db.Column(db.Enum(ApprovalStatus), default=ApprovalStatus.PENDING)
     approved_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)

@@ -1,0 +1,290 @@
+{% extends "base_simple.html" %}
+
+{% block title %}My Profile - Vendor Timesheet Tool{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-user-circle me-2"></i>My Profile</h2>
+        <nav>
+            {% if current_user.role.value == 'vendor' %}
+                <a class="btn btn-outline-primary" href="{{ url_for('vendor_dashboard') }}">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            {% elif current_user.role.value == 'manager' %}
+                <a class="btn btn-outline-primary" href="{{ url_for('manager_dashboard') }}">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            {% elif current_user.role.value == 'admin' %}
+                <a class="btn btn-outline-primary" href="{{ url_for('admin_dashboard') }}">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            {% endif %}
+        </nav>
+    </div>
+
+    <div class="row">
+                <!-- Profile Information Card -->
+                <div class="col-md-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-user-circle"></i>
+                                Profile Information
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label"><strong>Username</strong></label>
+                                    <p class="form-control-plaintext">{{ user.username }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label"><strong>Email</strong></label>
+                                    <p class="form-control-plaintext">{{ user.email }}</p>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label"><strong>Role</strong></label>
+                                    <p class="form-control-plaintext">
+                                        <span class="badge bg-{{ 'primary' if user.role.value == 'admin' else 'secondary' if user.role.value == 'manager' else 'info' }}">
+                                            {{ user.role.value.title() }}
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label"><strong>Account Status</strong></label>
+                                    <p class="form-control-plaintext">
+                                        <span class="badge bg-{{ 'success' if user.is_active else 'danger' }}">
+                                            {{ 'Active' if user.is_active else 'Inactive' }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label"><strong>Account Created</strong></label>
+                                    <p class="form-control-plaintext">
+                                        {{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else 'N/A' }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label"><strong>Last Login</strong></label>
+                                    <p class="form-control-plaintext">
+                                        {{ user.last_login.strftime('%Y-%m-%d %H:%M') if user.last_login else 'Never' }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Role-specific information -->
+                            {% if vendor_profile %}
+                                <hr>
+                                <h6><i class="fas fa-id-card"></i> Vendor Details</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Full Name</strong></label>
+                                        <p class="form-control-plaintext">{{ vendor_profile.full_name }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Vendor ID</strong></label>
+                                        <p class="form-control-plaintext">{{ vendor_profile.vendor_id }}</p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Department</strong></label>
+                                        <p class="form-control-plaintext">{{ vendor_profile.department }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Company</strong></label>
+                                        <p class="form-control-plaintext">{{ vendor_profile.company }}</p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Band</strong></label>
+                                        <p class="form-control-plaintext">{{ vendor_profile.band }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Location</strong></label>
+                                        <p class="form-control-plaintext">{{ vendor_profile.location }}</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            {% if manager_profile %}
+                                <hr>
+                                <h6><i class="fas fa-users-cog"></i> Manager Details</h6>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Full Name</strong></label>
+                                        <p class="form-control-plaintext">{{ manager_profile.full_name }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Manager ID</strong></label>
+                                        <p class="form-control-plaintext">{{ manager_profile.manager_id }}</p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Department</strong></label>
+                                        <p class="form-control-plaintext">{{ manager_profile.department }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Team Name</strong></label>
+                                        <p class="form-control-plaintext">{{ manager_profile.team_name }}</p>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Phone</strong></label>
+                                        <p class="form-control-plaintext">{{ manager_profile.phone or 'Not provided' }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label"><strong>Team Size</strong></label>
+                                        <p class="form-control-plaintext">
+                                            <span class="badge bg-info">{{ team_count or 0 }} vendors</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Password Change Card -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-key"></i>
+                                Change Password
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('change_password') }}" id="passwordForm">
+                                <div class="mb-3">
+                                    <label for="current_password" class="form-label">Current Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="current_password" 
+                                               name="current_password" required>
+                                        <button class="btn btn-outline-secondary" type="button" 
+                                                onclick="togglePassword('current_password')">
+                                            <i class="fas fa-eye" id="current_password_icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label">New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="new_password" 
+                                               name="new_password" required minlength="6">
+                                        <button class="btn btn-outline-secondary" type="button" 
+                                                onclick="togglePassword('new_password')">
+                                            <i class="fas fa-eye" id="new_password_icon"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text">Password must be at least 6 characters long.</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control" id="confirm_password" 
+                                               name="confirm_password" required minlength="6">
+                                        <button class="btn btn-outline-secondary" type="button" 
+                                                onclick="togglePassword('confirm_password')">
+                                            <i class="fas fa-eye" id="confirm_password_icon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i>
+                                        Change Password
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Account Information Card -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="card-title mb-0">
+                                <i class="fas fa-info-circle"></i>
+                                Account Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>Note:</strong> Only password can be changed from this page. 
+                                    {% if current_user.role.value != 'admin' %}
+                                        Contact your administrator to update other profile information.
+                                    {% else %}
+                                        Use the admin panel to update other profile information.
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</div>
+
+<script>
+// Toggle password visibility
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    const icon = document.getElementById(fieldId + '_icon');
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        field.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+// Password validation
+document.getElementById('passwordForm').addEventListener('submit', function(e) {
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (newPassword !== confirmPassword) {
+        e.preventDefault();
+        alert('New passwords do not match!');
+        return;
+    }
+    
+    if (newPassword.length < 6) {
+        e.preventDefault();
+        alert('New password must be at least 6 characters long!');
+        return;
+    }
+});
+
+// Real-time password match validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const newPassword = document.getElementById('new_password').value;
+    const confirmPassword = this.value;
+    const submitBtn = document.querySelector('button[type="submit"]');
+    
+    if (confirmPassword && newPassword !== confirmPassword) {
+        this.classList.add('is-invalid');
+        submitBtn.disabled = true;
+    } else {
+        this.classList.remove('is-invalid');
+        submitBtn.disabled = false;
+    }
+});
+</script>
+{% endblock %}

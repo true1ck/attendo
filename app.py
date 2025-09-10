@@ -868,6 +868,140 @@ def api_ai_model_logs():
         })
     return jsonify({'status': 'success', 'logs': data})
 
+@app.route('/api/manager/vendor-summary/<string:vendor_id>')
+@login_required
+def get_vendor_summary(vendor_id):
+    """Get detailed summary for a specific vendor"""
+    if current_user.role != UserRole.MANAGER:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    manager = current_user.manager_profile
+    if not manager:
+        return jsonify({'error': 'Manager profile not found'}), 404
+    
+    try:
+        # Find the vendor
+        vendor = Vendor.query.filter_by(vendor_id=vendor_id).first()
+        if not vendor:
+            return jsonify({'error': 'Vendor not found'}), 404
+        
+        # Verify vendor is in manager's team
+        if vendor.manager_id != manager.manager_id:
+            return jsonify({'error': 'You can only view summary for your team members'}), 403
+        
+        # Get date range (last 30 days)
+        end_date = date.today()
+        start_date = end_date - timedelta(days=30)
+        
+        # Get all statuses in date range
+        statuses = DailyStatus.query.filter(
+            DailyStatus.vendor_id == vendor.id,
+            DailyStatus.status_date >= start_date,
+            DailyStatus.status_date <= end_date
+        ).order_by(DailyStatus.status_date.desc()).all()
+        
+        # Calculate statistics
+        stats = {
+            'in_office_full': 0,
+            'in_office_half': 0,
+            'wfh_full': 0,
+            'wfh_half': 0,
+            'leave_full': 0,
+            'leave_half': 0,
+            'total_submitted': len(statuses),
+            'pending_approval': 0,
+            'approved': 0,
+            'rejected': 0
+        }
+        
+        recent_activities = []
+        
+        for status in statuses:
+            # Count by status type
+            if status.status == AttendanceStatus.IN_OFFICE_FULL:
+                stats['in_office_full'] += 1
+            elif status.status == AttendanceStatus.IN_OFFICE_HALF:
+                stats['in_office_half'] += 1
+            elif status.status == AttendanceStatus.WFH_FULL:
+                stats['wfh_full'] += 1
+            elif status.status == AttendanceStatus.WFH_HALF:
+                stats['wfh_half'] += 1
+            elif status.status == AttendanceStatus.LEAVE_FULL:
+                stats['leave_full'] += 1
+            elif status.status == AttendanceStatus.LEAVE_HALF:
+                stats['leave_half'] += 1
+            
+            # Count by approval status
+            if status.approval_status == ApprovalStatus.PENDING:
+                stats['pending_approval'] += 1
+            elif status.approval_status == ApprovalStatus.APPROVED:
+                stats['approved'] += 1
+            elif status.approval_status == ApprovalStatus.REJECTED:
+                stats['rejected'] += 1
+            
+            # Add to recent activities
+            recent_activities.append({
+                'date': status.status_date.strftime('%Y-%m-%d'),
+                'status': status.status.value.replace('_', ' ').title(),
+                'location': status.location or '-',
+                'approval': status.approval_status.value.title(),
+                'submitted_at': status.submitted_at.strftime('%Y-%m-%d %H:%M') if status.submitted_at else '-'
+            })
+        
+        # Calculate working days in period
+        working_days = 0
+        current_date = start_date
+        while current_date <= end_date:
+            if current_date.weekday() < 5:  # Monday to Friday
+                is_holiday = Holiday.query.filter_by(holiday_date=current_date).first()
+                if not is_holiday:
+                    working_days += 1
+            current_date += timedelta(days=1)
+        
+        # Get pending mismatches
+        pending_mismatches = MismatchRecord.query.filter_by(
+            vendor_id=vendor.id,
+            manager_approval=ApprovalStatus.PENDING
+        ).count()
+        
+        # Calculate rates
+        stats['total_office'] = stats['in_office_full'] + stats['in_office_half']
+        stats['total_wfh'] = stats['wfh_full'] + stats['wfh_half']
+        stats['total_leave'] = stats['leave_full'] + stats['leave_half']
+        stats['submission_rate'] = round((stats['total_submitted'] / working_days * 100), 1) if working_days > 0 else 0
+        stats['office_rate'] = round((stats['total_office'] / stats['total_submitted'] * 100), 1) if stats['total_submitted'] > 0 else 0
+        stats['wfh_rate'] = round((stats['total_wfh'] / stats['total_submitted'] * 100), 1) if stats['total_submitted'] > 0 else 0
+        stats['working_days'] = working_days
+        stats['pending_mismatches'] = pending_mismatches
+        
+        vendor_summary = {
+            'vendor': {
+                'id': vendor.vendor_id,
+                'name': vendor.full_name,
+                'email': vendor.user_account.email if vendor.user_account else 'N/A',
+                'department': vendor.department,
+                'company': vendor.company,
+                'band': vendor.band,
+                'location': vendor.location,
+                'created_at': vendor.created_at.strftime('%Y-%m-%d') if vendor.created_at else 'N/A'
+            },
+            'period': {
+                'start_date': start_date.strftime('%Y-%m-%d'),
+                'end_date': end_date.strftime('%Y-%m-%d'),
+                'working_days': working_days
+            },
+            'statistics': stats,
+            'recent_activities': recent_activities[:10]  # Last 10 activities
+        }
+        
+        return jsonify({
+            'status': 'success',
+            'data': vendor_summary
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 @app.route('/api/ai/override', methods=['POST'])
 @login_required
 def api_ai_override():
@@ -1943,6 +2077,32 @@ def vendor_submit_status():
         location = request.form.get('location', '')
         comments = request.form.get('comments', '')
         
+        # Time tracking fields
+        in_time = request.form.get('in_time')
+        out_time = request.form.get('out_time')
+        office_in_time = request.form.get('office_in_time')
+        office_out_time = request.form.get('office_out_time')
+        wfh_in_time = request.form.get('wfh_in_time')
+        wfh_out_time = request.form.get('wfh_out_time')
+        break_duration = int(request.form.get('break_duration', 0)) if request.form.get('break_duration') else 0
+        total_hours = float(request.form.get('total_hours', 0)) if request.form.get('total_hours') else None
+        
+        # Convert time strings to time objects
+        def parse_time(time_str):
+            if time_str:
+                try:
+                    return datetime.strptime(time_str, '%H:%M').time()
+                except ValueError:
+                    return None
+            return None
+        
+        in_time_obj = parse_time(in_time)
+        out_time_obj = parse_time(out_time)
+        office_in_time_obj = parse_time(office_in_time)
+        office_out_time_obj = parse_time(office_out_time)
+        wfh_in_time_obj = parse_time(wfh_in_time)
+        wfh_out_time_obj = parse_time(wfh_out_time)
+        
         # Convert string to enum
         status_map = {
             'in_office_full': AttendanceStatus.IN_OFFICE_FULL,
@@ -1969,6 +2129,14 @@ def vendor_submit_status():
             existing_status.status = status
             existing_status.location = location
             existing_status.comments = comments
+            existing_status.in_time = in_time_obj
+            existing_status.out_time = out_time_obj
+            existing_status.office_in_time = office_in_time_obj
+            existing_status.office_out_time = office_out_time_obj
+            existing_status.wfh_in_time = wfh_in_time_obj
+            existing_status.wfh_out_time = wfh_out_time_obj
+            existing_status.break_duration = break_duration
+            existing_status.total_hours = total_hours
             existing_status.submitted_at = datetime.utcnow()
             existing_status.approval_status = ApprovalStatus.PENDING
         else:
@@ -1977,7 +2145,15 @@ def vendor_submit_status():
                 status_date=status_date,
                 status=status,
                 location=location,
-                comments=comments
+                comments=comments,
+                in_time=in_time_obj,
+                out_time=out_time_obj,
+                office_in_time=office_in_time_obj,
+                office_out_time=office_out_time_obj,
+                wfh_in_time=wfh_in_time_obj,
+                wfh_out_time=wfh_out_time_obj,
+                break_duration=break_duration,
+                total_hours=total_hours
             )
             db.session.add(new_status)
         
@@ -2355,6 +2531,130 @@ def submit_mismatch_explanation(mismatch_id):
         flash(f'Error submitting explanation: {str(e)}', 'error')
     
     return redirect(url_for('vendor_dashboard'))
+
+@app.route('/profile')
+@login_required
+def profile():
+    """User profile page - view personal information"""
+    # Get user profile information based on role
+    profile_data = {
+        'user': current_user,
+        'vendor_profile': None,
+        'manager_profile': None
+    }
+    
+    if current_user.role == UserRole.VENDOR:
+        profile_data['vendor_profile'] = current_user.vendor_profile
+    elif current_user.role == UserRole.MANAGER:
+        profile_data['manager_profile'] = current_user.manager_profile
+        # Get team size for managers
+        if profile_data['manager_profile']:
+            team_count = Vendor.query.filter_by(manager_id=profile_data['manager_profile'].manager_id).count()
+            profile_data['team_count'] = team_count
+    
+    return render_template('profile.html', **profile_data)
+
+@app.route('/profile/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """Change user password"""
+    try:
+        current_password = request.form.get('current_password', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        confirm_password = request.form.get('confirm_password', '').strip()
+        
+        # Validation
+        if not current_password:
+            flash('Current password is required', 'error')
+            return redirect(url_for('profile'))
+        
+        if not new_password:
+            flash('New password is required', 'error')
+            return redirect(url_for('profile'))
+        
+        if len(new_password) < 6:
+            flash('New password must be at least 6 characters long', 'error')
+            return redirect(url_for('profile'))
+        
+        if new_password != confirm_password:
+            flash('New passwords do not match', 'error')
+            return redirect(url_for('profile'))
+        
+        # Verify current password
+        if not current_user.check_password(current_password):
+            flash('Current password is incorrect', 'error')
+            return redirect(url_for('profile'))
+        
+        # Update password
+        old_values = {'password_changed': False}
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        # Create audit log
+        try:
+            create_audit_log(current_user.id, 'UPDATE', 'users', current_user.id, 
+                           old_values, {'password_changed': True})
+        except Exception:
+            pass
+        
+        flash('Password changed successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error changing password: {str(e)}', 'error')
+    
+    return redirect(url_for('profile'))
+
+@app.route('/api/profile/info')
+@login_required
+def api_profile_info():
+    """API endpoint to get user profile information"""
+    try:
+        profile_info = {
+            'id': current_user.id,
+            'username': current_user.username,
+            'email': current_user.email,
+            'role': current_user.role.value,
+            'is_active': current_user.is_active,
+            'created_at': current_user.created_at.isoformat() if current_user.created_at else None,
+            'last_login': current_user.last_login.isoformat() if current_user.last_login else None
+        }
+        
+        # Add role-specific information
+        if current_user.role == UserRole.VENDOR and current_user.vendor_profile:
+            vendor = current_user.vendor_profile
+            manager = Manager.query.filter_by(manager_id=vendor.manager_id).first() if vendor.manager_id else None
+            
+            profile_info['vendor_info'] = {
+                'vendor_id': vendor.vendor_id,
+                'full_name': vendor.full_name,
+                'department': vendor.department,
+                'company': vendor.company,
+                'band': vendor.band,
+                'location': vendor.location,
+                'manager_name': manager.full_name if manager else 'Not Assigned',
+                'created_at': vendor.created_at.isoformat() if vendor.created_at else None
+            }
+            
+        elif current_user.role == UserRole.MANAGER and current_user.manager_profile:
+            manager = current_user.manager_profile
+            team_count = Vendor.query.filter_by(manager_id=manager.manager_id).count()
+            
+            profile_info['manager_info'] = {
+                'manager_id': manager.manager_id,
+                'full_name': manager.full_name,
+                'department': manager.department,
+                'team_name': manager.team_name,
+                'email': manager.email,
+                'phone': manager.phone,
+                'team_count': team_count,
+                'created_at': manager.created_at.isoformat() if manager.created_at else None
+            }
+        
+        return jsonify(profile_info)
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     print("\n" + "="*70)

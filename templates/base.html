@@ -327,7 +327,7 @@
                             <i class="fas fa-user-circle fa-lg"></i>
                         </button>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#" onclick="showProfile()"><i class="fas fa-user me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fas fa-user me-2"></i>Profile</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>
@@ -431,9 +431,6 @@
                 .catch(error => console.error('Error fetching notifications:', error));
         }
         
-        function showProfile() {
-            alert('Profile feature coming soon!');
-        }
         
         // Update notification badge
         function updateNotificationBadge() {

@@ -116,6 +116,7 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Status</th>
+                                <th>Time</th>
                                 <th>Location</th>
                                 <th>Approval</th>
                                 <th>Actions</th>
@@ -140,6 +141,19 @@
                                         <span class="badge bg-secondary">Leave - Half</span>
                                     {% else %}
                                         <span class="badge bg-danger">{{ status.status.value.replace('_', ' ').title() }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if status.total_hours %}
+                                        <small class="text-success"><strong>{{ "%.1f"|format(status.total_hours) }}h</strong></small><br>
+                                    {% endif %}
+                                    {% if status.in_time and status.out_time %}
+                                        <small>{{ status.in_time.strftime('%H:%M') }} - {{ status.out_time.strftime('%H:%M') }}</small>
+                                    {% elif status.office_in_time and status.wfh_in_time %}
+                                        <small><i class="fas fa-building"></i> {{ status.office_in_time.strftime('%H:%M') }}-{{ status.office_out_time.strftime('%H:%M') if status.office_out_time else '?' }}</small><br>
+                                        <small><i class="fas fa-home"></i> {{ status.wfh_in_time.strftime('%H:%M') }}-{{ status.wfh_out_time.strftime('%H:%M') if status.wfh_out_time else '?' }}</small>
+                                    {% else %}
+                                        <small class="text-muted">-</small>
                                     {% endif %}
                                 </td>
                                 <td>{{ status.location or '-' }}</td>
@@ -167,7 +181,7 @@
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="5" class="text-center text-muted">No status history found. Submit your first status!</td>
+                                <td colspan="6" class="text-center text-muted">No status history found. Submit your first status!</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -248,54 +262,137 @@
     </div>
 </div>
 
-<!-- Status Submission Modal -->
+<!-- Enhanced Status Submission Modal -->
 <div class="modal fade" id="submitStatusModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Submit Daily Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-clock me-2"></i>Submit Daily Status</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form action="{{ url_for('vendor_submit_status') }}" method="POST">
+            <form action="{{ url_for('vendor_submit_status') }}" method="POST" id="statusForm">
                 <div class="modal-body">
-                    <div class="row">
+                    <!-- Basic Information -->
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="status_date" class="form-label">Date</label>
-                                <input type="date" class="form-control" id="status_date" name="status_date" 
-                                       value="{{ today.strftime('%Y-%m-%d') }}" required>
-                            </div>
+                            <label for="status_date" class="form-label">Date</label>
+                            <input type="date" class="form-control" id="status_date" name="status_date" 
+                                   value="{{ today.strftime('%Y-%m-%d') }}" required>
                         </div>
                         <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="status" class="form-label">Status</label>
-                                <select class="form-select" id="status" name="status" required>
-                                    <option value="">Select Status</option>
-                                    <option value="in_office_full">In Office - Full Day</option>
-                                    <option value="in_office_half">In Office - Half Day</option>
-                                    <option value="wfh_full">Work From Home - Full Day</option>
-                                    <option value="wfh_half">Work From Home - Half Day</option>
-                                    <option value="leave_full">On Leave - Full Day</option>
-                                    <option value="leave_half">On Leave - Half Day</option>
-                                    <option value="absent">Absent</option>
-                                </select>
+                            <label for="status" class="form-label">Work Status</label>
+                            <select class="form-select" id="status" name="status" required onchange="handleStatusChange()">
+                                <option value="">Select Status</option>
+                                <option value="in_office_full">In Office - Full Day</option>
+                                <option value="in_office_half">In Office - Half Day</option>
+                                <option value="wfh_full">Work From Home - Full Day</option>
+                                <option value="wfh_half">Work From Home - Half Day</option>
+                                <option value="leave_full">On Leave - Full Day</option>
+                                <option value="leave_half">On Leave - Half Day</option>
+                                <option value="absent">Absent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   placeholder="e.g., BL-A-5F, Home, Client Site, Conference Room">
+                        </div>
+                    </div>
+
+                    <!-- Time Tracking Section -->
+                    <div id="timeTrackingSection" style="display: none;">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="fas fa-stopwatch me-2"></i>Time Tracking</h6>
+                            </div>
+                            <div class="card-body">
+                                <!-- Full Day Timing -->
+                                <div id="fullDayTiming" class="row mb-3" style="display: none;">
+                                    <div class="col-md-4">
+                                        <label for="in_time" class="form-label">Check In Time</label>
+                                        <input type="time" class="form-control" id="in_time" name="in_time">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="out_time" class="form-label">Check Out Time</label>
+                                        <input type="time" class="form-control" id="out_time" name="out_time">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="break_duration" class="form-label">Break Duration (minutes)</label>
+                                        <input type="number" class="form-control" id="break_duration" name="break_duration" 
+                                               min="0" max="480" value="60" onchange="calculateTotalHours()">
+                                    </div>
+                                </div>
+
+                                <!-- Half Day Timing -->
+                                <div id="halfDayTiming" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Half Day Schedule:</strong> Please provide timing for both parts of your day.
+                                    </div>
+                                    
+                                    <!-- Office Half -->
+                                    <div id="officeHalf" class="mb-3" style="display: none;">
+                                        <h6 class="text-primary mb-2"><i class="fas fa-building me-1"></i>Office Time</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="office_in_time" class="form-label">Office Check In</label>
+                                                <input type="time" class="form-control" id="office_in_time" name="office_in_time">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="office_out_time" class="form-label">Office Check Out</label>
+                                                <input type="time" class="form-control" id="office_out_time" name="office_out_time">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- WFH Half -->
+                                    <div id="wfhHalf" class="mb-3" style="display: none;">
+                                        <h6 class="text-info mb-2"><i class="fas fa-home me-1"></i>Work From Home Time</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <label for="wfh_in_time" class="form-label">WFH Start Time</label>
+                                                <input type="time" class="form-control" id="wfh_in_time" name="wfh_in_time">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="wfh_out_time" class="form-label">WFH End Time</label>
+                                                <input type="time" class="form-control" id="wfh_out_time" name="wfh_out_time">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="break_duration_half" class="form-label">Total Break Duration (minutes)</label>
+                                            <input type="number" class="form-control" id="break_duration_half" name="break_duration" 
+                                                   min="0" max="240" value="30" onchange="calculateTotalHours()">
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-end">
+                                            <div class="alert alert-success mb-0 w-100">
+                                                <small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span> hours</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Location</label>
-                        <input type="text" class="form-control" id="location" name="location" 
-                               placeholder="e.g., BL-A-5F, Home, Client Site">
-                    </div>
+
+                    <!-- Comments -->
                     <div class="mb-3">
                         <label for="comments" class="form-label">Comments (Optional)</label>
                         <textarea class="form-control" id="comments" name="comments" rows="3" 
-                                  placeholder="Any additional comments or notes"></textarea>
+                                  placeholder="Any additional comments, meeting details, or special notes"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Submit Status</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i>Submit Status
+                    </button>
                 </div>
             </form>
         </div>
@@ -549,6 +646,172 @@ document.getElementById('edit_status').addEventListener('change', function() {
     } else if (status.includes('leave') || status === 'absent') {
         locationField.value = '';
     }
+});
+
+// Enhanced Time Tracking Functions
+function handleStatusChange() {
+    const status = document.getElementById('status').value;
+    const timeTrackingSection = document.getElementById('timeTrackingSection');
+    const fullDayTiming = document.getElementById('fullDayTiming');
+    const halfDayTiming = document.getElementById('halfDayTiming');
+    const officeHalf = document.getElementById('officeHalf');
+    const wfhHalf = document.getElementById('wfhHalf');
+    
+    // Hide all sections first
+    timeTrackingSection.style.display = 'none';
+    fullDayTiming.style.display = 'none';
+    halfDayTiming.style.display = 'none';
+    officeHalf.style.display = 'none';
+    wfhHalf.style.display = 'none';
+    
+    // Clear all time fields
+    clearAllTimeFields();
+    
+    if (status === 'in_office_full' || status === 'wfh_full') {
+        // Show full day timing
+        timeTrackingSection.style.display = 'block';
+        fullDayTiming.style.display = 'block';
+        setDefaultFullDayTimes(status);
+    } else if (status === 'in_office_half' || status === 'wfh_half') {
+        // Show half day timing with appropriate sections
+        timeTrackingSection.style.display = 'block';
+        halfDayTiming.style.display = 'block';
+        
+        if (status === 'in_office_half') {
+            officeHalf.style.display = 'block';
+            wfhHalf.style.display = 'block';
+        } else if (status === 'wfh_half') {
+            wfhHalf.style.display = 'block';
+            officeHalf.style.display = 'block';
+        }
+        setDefaultHalfDayTimes(status);
+    }
+    
+    // Auto-fill location
+    const locationField = document.getElementById('location');
+    if (status.includes('wfh')) {
+        locationField.value = 'Home';
+    } else if (status.includes('in_office')) {
+        locationField.value = 'BL-A-5F';
+    } else if (status.includes('leave') || status === 'absent') {
+        locationField.value = '';
+    }
+}
+
+function clearAllTimeFields() {
+    document.getElementById('in_time').value = '';
+    document.getElementById('out_time').value = '';
+    document.getElementById('office_in_time').value = '';
+    document.getElementById('office_out_time').value = '';
+    document.getElementById('wfh_in_time').value = '';
+    document.getElementById('wfh_out_time').value = '';
+    document.getElementById('break_duration').value = '60';
+    document.getElementById('break_duration_half').value = '30';
+    document.getElementById('totalHoursDisplay').textContent = '0.0';
+}
+
+function setDefaultFullDayTimes(status) {
+    const currentTime = new Date();
+    const currentHour = currentTime.getHours();
+    
+    // Set default times based on current time or standard office hours
+    if (currentHour < 9) {
+        document.getElementById('in_time').value = '09:00';
+        document.getElementById('out_time').value = '18:00';
+    } else {
+        const inTime = currentHour < 12 ? `${currentHour.toString().padStart(2, '0')}:00` : '09:00';
+        const outTime = currentHour < 18 ? '18:00' : `${(currentHour + 1).toString().padStart(2, '0')}:00`;
+        document.getElementById('in_time').value = inTime;
+        document.getElementById('out_time').value = outTime;
+    }
+    
+    calculateTotalHours();
+}
+
+function setDefaultHalfDayTimes(status) {
+    if (status === 'in_office_half') {
+        // Morning office, afternoon WFH
+        document.getElementById('office_in_time').value = '09:00';
+        document.getElementById('office_out_time').value = '13:00';
+        document.getElementById('wfh_in_time').value = '14:00';
+        document.getElementById('wfh_out_time').value = '18:00';
+    } else if (status === 'wfh_half') {
+        // Morning WFH, afternoon office
+        document.getElementById('wfh_in_time').value = '09:00';
+        document.getElementById('wfh_out_time').value = '13:00';
+        document.getElementById('office_in_time').value = '14:00';
+        document.getElementById('office_out_time').value = '18:00';
+    }
+    
+    calculateTotalHours();
+}
+
+function calculateTotalHours() {
+    const status = document.getElementById('status').value;
+    let totalMinutes = 0;
+    
+    if (status.includes('full')) {
+        const inTime = document.getElementById('in_time').value;
+        const outTime = document.getElementById('out_time').value;
+        const breakDuration = parseInt(document.getElementById('break_duration').value) || 0;
+        
+        if (inTime && outTime) {
+            totalMinutes = getMinutesBetweenTimes(inTime, outTime) - breakDuration;
+        }
+    } else if (status.includes('half')) {
+        const officeIn = document.getElementById('office_in_time').value;
+        const officeOut = document.getElementById('office_out_time').value;
+        const wfhIn = document.getElementById('wfh_in_time').value;
+        const wfhOut = document.getElementById('wfh_out_time').value;
+        const breakDuration = parseInt(document.getElementById('break_duration_half').value) || 0;
+        
+        if (officeIn && officeOut) {
+            totalMinutes += getMinutesBetweenTimes(officeIn, officeOut);
+        }
+        if (wfhIn && wfhOut) {
+            totalMinutes += getMinutesBetweenTimes(wfhIn, wfhOut);
+        }
+        totalMinutes -= breakDuration;
+    }
+    
+    const totalHours = Math.max(0, totalMinutes / 60);
+    document.getElementById('totalHoursDisplay').textContent = totalHours.toFixed(1);
+    
+    // Set hidden field for form submission
+    let totalHoursField = document.querySelector('input[name="total_hours"]');
+    if (!totalHoursField) {
+        totalHoursField = document.createElement('input');
+        totalHoursField.type = 'hidden';
+        totalHoursField.name = 'total_hours';
+        document.getElementById('statusForm').appendChild(totalHoursField);
+    }
+    totalHoursField.value = totalHours.toFixed(2);
+}
+
+function getMinutesBetweenTimes(startTime, endTime) {
+    const [startHour, startMin] = startTime.split(':').map(Number);
+    const [endHour, endMin] = endTime.split(':').map(Number);
+    
+    const startMinutes = startHour * 60 + startMin;
+    let endMinutes = endHour * 60 + endMin;
+    
+    // Handle next day scenarios
+    if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+    }
+    
+    return endMinutes - startMinutes;
+}
+
+// Add event listeners for time field changes
+document.addEventListener('DOMContentLoaded', function() {
+    const timeFields = ['in_time', 'out_time', 'office_in_time', 'office_out_time', 'wfh_in_time', 'wfh_out_time'];
+    timeFields.forEach(field => {
+        const element = document.getElementById(field);
+        if (element) {
+            element.addEventListener('change', calculateTotalHours);
+        }
+    });
 });
 </script>
 
