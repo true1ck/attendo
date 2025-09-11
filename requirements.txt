@@ -1,6 +1,29 @@
+#===============================================================================
+# ATTENDO - Unified Notification System Requirements
+# 
+# This file contains all dependencies for the complete ATTENDO system including:
+# - Main Flask web application 
+# - Unified Power Automate notification system
+# - Excel processing and data handling
+# - API endpoints and documentation
+# - Testing and development tools
+#
+# ENTERPRISE COMPATIBILITY:
+# - No specific versions specified for maximum compatibility
+# - Compatible with enterprise networks and proxy environments
+# - Includes fallback packages for different Python versions
+#
+# INSTALLATION:
+# - pip install -r requirements.txt
+# - python -m pip install -r requirements.txt (if pip not in PATH)
+#===============================================================================
+
 # Core web framework
 Flask
 Werkzeug
+flask-cors
+Flask-JWT-Extended
+flask-restx
 
 # Database layer
 SQLAlchemy
@@ -22,6 +45,7 @@ PyYAML
 pandas
 numpy
 openpyxl
+xlsxwriter
 xlrd
 
 # Config / Env
@@ -29,3 +53,45 @@ python-dotenv
 
 # HTTP utilities
 requests
+
+# ===== UNIFIED NOTIFICATION SYSTEM SPECIFIC =====
+# File handling and concurrency protection
+filelock
+
+# Date and time handling
+python-dateutil
+
+# Data validation and serialization
+pydantic
+pydantic-settings
+
+# Development and testing
+pytest
+mypy
+black
+flake8
+
+# Enterprise compatibility packages
+typing-extensions
+importlib-metadata
+setuptools
+wheel
+
+# Logging and monitoring
+rich
+
+# CLI utilities
+click
+colorama
+
+# Email and communication (for notifications)
+email-validator
+
+# JSON handling
+jsonschema
+
+# Additional utility packages
+more-itertools
+markupsafe
+jinja2
+itsdangerous
