@@ -127,10 +127,6 @@ def power_automate_excel_refresh():
         
         # Write daily reminders file with proper table formatting
         try:
-            if daily_reminders_file.exists():
-                backup_file = excel_folder / f"PA_backup_{daily_reminders_file.name}"
-                shutil.copy2(daily_reminders_file, backup_file)
-                print(f"✅ Created backup: {backup_file}")
             
             # Save as Excel table for Power Automate compatibility
             if excel_table_formatter:
@@ -204,9 +200,6 @@ def power_automate_excel_refresh():
         
         # Write manager summary file with proper table formatting
         try:
-            if manager_summary_file.exists():
-                backup_file = excel_folder / f"PA_backup_{manager_summary_file.name}"
-                shutil.copy2(manager_summary_file, backup_file)
             
             # Save as Excel table for Power Automate compatibility
             if excel_table_formatter:
@@ -275,9 +268,6 @@ def power_automate_excel_refresh():
         
         # Write late submissions file with proper table formatting
         try:
-            if late_submissions_file.exists():
-                backup_file = excel_folder / f"PA_backup_{late_submissions_file.name}"
-                shutil.copy2(late_submissions_file, backup_file)
             
             # Save as Excel table for Power Automate compatibility
             if excel_table_formatter:

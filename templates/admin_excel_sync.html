@@ -151,6 +151,12 @@
                         This will preserve the table structure but remove all notification data rows.
                     </p>
                     
+                    <div class="alert alert-info alert-sm mb-3" style="font-size: 0.9em;">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> Excel temporary lock files (~$*.xlsx) are automatically filtered out and won't appear below.
+                        These files are created when Excel has the notification files open and are not the actual notification files.
+                    </div>
+                    
                     <div id="notification-files-container">
                         <div class="text-center">
                             <div class="spinner-border spinner-border-sm" role="status">
@@ -302,8 +308,15 @@ function loadNotificationFiles() {
             'Content-Type': 'application/json',
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('API Response Status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('API Response Data:', data);
         if (data.success && data.files && data.files.length > 0) {
             // Display files with controls
             let html = '<div class="row">';
@@ -323,7 +336,13 @@ function loadNotificationFiles() {
                     
                 const statusBadge = file.data_rows === 0 
                     ? '<span class="badge badge-success">No Data</span>' 
-                    : `<span class="badge badge-info">${dataRowsText}</span>`;
+                    : file.data_rows === 'Error'
+                        ? '<span class="badge badge-danger">Error</span>'
+                        : `<span class="badge badge-info">${dataRowsText}</span>`;
+                
+                const buttonText = file.data_rows === 0 
+                    ? '✅ No Notifications' 
+                    : '🛑 Stop Notifications';
                 
                 html += `
                     <div class="col-md-6 col-lg-4 mb-3">
@@ -338,7 +357,7 @@ function loadNotificationFiles() {
                                 <button class="btn btn-sm ${buttonClass} ${buttonDisabled}" 
                                         onclick="clearNotificationFile('${file.name}', '${file.display_name}')" 
                                         ${buttonDisabled}>
-                                    🛑 Stop Notifications
+                                    ${buttonText}
                                 </button>
                             </div>
                         </div>
@@ -349,10 +368,16 @@ function loadNotificationFiles() {
             html += '</div>';
             container.innerHTML = html;
         } else {
+            const warningMessage = data.message === 'Network folder not configured' 
+                ? 'Network folder is not configured. Please set the network folder path above to enable notification controls.'
+                : data.message === 'Network folder not found'
+                    ? 'The configured network folder does not exist. Please check the network folder path above.'
+                    : data.message || 'No notification files found.';
+                    
             container.innerHTML = `
                 <div class="alert alert-warning" role="alert">
                     <i class="fas fa-exclamation-triangle"></i>
-                    ${data.message || 'No notification files found or network folder not configured.'}
+                    ${warningMessage}
                 </div>
             `;
         }

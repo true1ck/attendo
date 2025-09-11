@@ -2994,7 +2994,11 @@ def clear_notification_data(file_name=None):
             if not files_to_process[0].exists():
                 return {'success': False, 'message': f'File not found: {file_name}', 'cleared': 0}
         else:
-            files_to_process = list(network_path.glob("*.xlsx"))
+            all_excel_files = list(network_path.glob("*.xlsx"))
+            # Filter out temporary Excel lock files and backup files
+            files_to_process = [p for p in all_excel_files if not p.name.startswith("~$") 
+                              and not p.name.startswith("PA_backup_")
+                              and not p.name.lower().startswith("pa_backup_")]
         
         if not files_to_process:
             excel_log_message("⚠️ No Excel files found in network folder")
@@ -3346,6 +3350,10 @@ def api_list_notification_files():
             return jsonify({'files': [], 'message': 'Network folder not found'})
         
         excel_files = list(network_path.glob("*.xlsx"))
+        # Exclude Power Automate backup files and Excel temporary lock files from admin listing
+        excel_files = [p for p in excel_files if not p.name.startswith("PA_backup_") 
+                      and not p.name.lower().startswith("pa_backup_")
+                      and not p.name.startswith("~$")]
         
         file_info = []
         for file_path in excel_files:

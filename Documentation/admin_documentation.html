@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATTENDO - Administrator User Guide</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .documentation-container {
+            background: white;
+            margin: 20px auto;
+            max-width: 1200px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header-section h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .header-section p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+        
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px 20px;
+            height: 100%;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .sidebar h5 {
+            color: #dc3545;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+        
+        .sidebar .nav-link {
+            color: #333;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: #dc3545;
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .sidebar .nav-link.active {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .content-section {
+            padding: 40px;
+        }
+        
+        .feature-card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+        
+        .feature-card:hover {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transform: translateY(-3px);
+        }
+        
+        .feature-card h3 {
+            color: #dc3545;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .feature-card h3 i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .feature-card h4 {
+            color: #fd7e14;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .step-list {
+            counter-reset: step-counter;
+            padding-left: 0;
+        }
+        
+        .step-list li {
+            list-style: none;
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 15px;
+            counter-increment: step-counter;
+        }
+        
+        .step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #dc3545;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .tip-box {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .tip-box strong {
+            color: #721c24;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .warning-box strong {
+            color: #856404;
+        }
+        
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .info-box strong {
+            color: #0c5460;
+        }
+        
+        .badge-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .quick-access {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .quick-access h5 {
+            margin-bottom: 20px;
+        }
+        
+        .quick-access .btn {
+            background: white;
+            color: #dc3545;
+            border: none;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        
+        .quick-access .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .faq-section {
+            margin-top: 40px;
+        }
+        
+        .faq-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .faq-item h5 {
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+        
+        .permission-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        
+        .permission-table th {
+            background: #dc3545;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .permission-table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .permission-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                position: static;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Unified Navigation Header -->
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 50px 20px 80px; position: relative; overflow: hidden;">
+        <!-- Wave Pattern -->
+        <svg style="position: absolute; bottom: 0; left: 0; width: 100%; height: 120px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+            <path fill="#f0f2f5" fill-opacity="1" d="M0,192L48,197.3C96,203,192,213,288,229.3C384,245,480,267,576,250.7C672,235,768,181,864,181.3C960,181,1056,235,1152,234.7C1248,235,1344,181,1392,154.7L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+        </svg>
+        <!-- Decorative Elements -->
+        <div style="position: absolute; top: 20px; right: 20px; width: 150px; height: 150px; background: rgba(255,255,255,0.1); border-radius: 50%; filter: blur(40px);"></div>
+        <div style="position: absolute; bottom: 50px; left: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.08); border-radius: 50%; filter: blur(60px);"></div>
+        
+        <div style="text-align: center; position: relative; z-index: 1;">
+            <h1 style="color: white; font-size: 3rem; margin-bottom: 10px; font-weight: 600; text-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                <i class="fas fa-book-open" style="margin-right: 15px; font-size: 2.5rem; vertical-align: middle;"></i>ATTENDO Documentation
+            </h1>
+            <p style="color: rgba(255,255,255,0.95); font-size: 1.2rem; font-weight: 300; letter-spacing: 0.5px;">Complete User Guide & System Documentation</p>
+        </div>
+    </div>
+    
+    <!-- Navigation Cards -->
+    <div style="max-width: 1600px; margin: -50px auto 40px; position: relative; z-index: 10; padding: 0 20px;">
+        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px;">
+            <!-- Setup Guide Card -->
+            <a href="./setup_guide.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#ffc107'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-rocket" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #ffc107; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Setup Guide</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Quick setup instructions</p>
+                </div>
+            </a>
+            
+            <!-- System Architecture Card -->
+            <a href="./system_architecture_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#6f42c1'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-sitemap" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #6f42c1; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">System Architecture</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Technical diagrams</p>
+                </div>
+            </a>
+            
+            <!-- Vendor Guide Card -->
+            <a href="./vendor_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#6c757d'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #6c757d; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Vendor Guide</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Daily attendance tracking</p>
+                </div>
+            </a>
+            
+            <!-- Manager Guide Card -->
+            <a href="./manager_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#28a745'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-user-tie" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #28a745; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Manager Guide</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Team management</p>
+                </div>
+            </a>
+            
+            <!-- Admin Guide Card - Active -->
+            <a href="./admin_documentation.html" style="text-decoration: none; display: block;">
+                <div style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 10px 25px rgba(220,53,69,0.4); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; height: 140px; display: flex; flex-direction: column; justify-content: center; transform: scale(1.02);" 
+                     onmouseover="this.style.transform='scale(1.05) translateY(-3px)'; this.style.boxShadow='0 15px 30px rgba(220,53,69,0.5)'" 
+                     onmouseout="this.style.transform='scale(1.02)'; this.style.boxShadow='0 10px 25px rgba(220,53,69,0.4)'">
+                    <div style="position: absolute; top: -15px; right: -15px; width: 50px; height: 50px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                    <i class="fas fa-user-shield" style="font-size: 2rem; margin-bottom: 8px; display: block; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Admin Guide</h3>
+                    <p style="margin: 0; font-size: 0.75rem; opacity: 0.95; line-height: 1.3;">System configuration</p>
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">
+                        <span style="font-size: 0.7rem; opacity: 0.9;">📍 Current</span>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- Notifications Card -->
+            <a href="./NOTIFICATION_SYSTEM_GUIDE.html" style="text-decoration: none; display: block;">
+                <div style="background: white; color: #333; padding: 20px 15px; border-radius: 15px; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; border: 2px solid transparent; height: 140px; display: flex; flex-direction: column; justify-content: center;"
+                     onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.15)'; this.style.borderColor='#17a2b8'" 
+                     onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.borderColor='transparent'">
+                    <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); opacity: 0.1; border-radius: 50%;"></div>
+                    <i class="fas fa-bell" style="font-size: 2rem; margin-bottom: 8px; display: block; color: #17a2b8; position: relative;"></i>
+                    <h3 style="margin-bottom: 5px; font-size: 1rem; font-weight: 600;">Notifications</h3>
+                    <p style="margin: 0; font-size: 0.75rem; color: #666; line-height: 1.3;">Email & SMS alerts</p>
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <div class="documentation-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <h1><i class="fas fa-user-shield me-2"></i>ATTENDO Administrator Guide</h1>
+            <p>Complete system administration and management documentation</p>
+            <div class="mt-3">
+                <span class="badge bg-white text-danger px-3 py-2">Administrator Edition</span>
+                <span class="badge bg-white text-danger px-3 py-2 ms-2">Version 2.0</span>
+            </div>
+        </div>
+        
+        <div class="row g-0">
+            <!-- Sidebar Navigation -->
+            <div class="col-md-3">
+                <div class="sidebar">
+                    <h5><i class="fas fa-compass me-2"></i>Navigation</h5>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#getting-started">Getting Started</a>
+                        <a class="nav-link" href="#dashboard">Admin Dashboard</a>
+                        <a class="nav-link" href="#user-management">User Management</a>
+                        <a class="nav-link" href="#vendor-management">Vendor Management</a>
+                        <a class="nav-link" href="#manager-management">Manager Management</a>
+                        <a class="nav-link" href="#teams">Teams & Groups</a>
+                        <a class="nav-link" href="#holidays">Holiday Management</a>
+                        <a class="nav-link" href="#system-settings">System Settings</a>
+                        <a class="nav-link" href="#bulk-import">Bulk Import</a>
+                        <a class="nav-link" href="#reconciliation">Reconciliation</a>
+                        <a class="nav-link" href="#billing">Billing Corrections</a>
+                        <a class="nav-link" href="#audit-logs">Audit Logs</a>
+                        <a class="nav-link" href="#reports">Reports & Analytics</a>
+                        <a class="nav-link" href="#notifications">Notification Config</a>
+                        <a class="nav-link" href="#backup">Backup & Recovery</a>
+                        <a class="nav-link" href="#security">Security</a>
+                        <a class="nav-link" href="#faq">FAQs</a>
+                        <a class="nav-link" href="#support">Support</a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <div class="content-section">
+                    <!-- Quick Access Buttons -->
+                    <div class="quick-access">
+                        <h5><i class="fas fa-rocket me-2"></i>Administrator Quick Actions</h5>
+                        <div class="d-flex flex-wrap">
+                            <button class="btn btn-light"><i class="fas fa-user-plus me-2"></i>Add User</button>
+                            <button class="btn btn-light"><i class="fas fa-upload me-2"></i>Bulk Import</button>
+                            <button class="btn btn-light"><i class="fas fa-cog me-2"></i>System Settings</button>
+                            <button class="btn btn-light"><i class="fas fa-calendar me-2"></i>Manage Holidays</button>
+                            <button class="btn btn-light"><i class="fas fa-file-alt me-2"></i>Audit Logs</button>
+                            <button class="btn btn-light"><i class="fas fa-chart-line me-2"></i>System Reports</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Getting Started Section -->
+                    <div class="feature-card" id="getting-started">
+                        <h3><i class="fas fa-play-circle"></i>Getting Started as Administrator</h3>
+                        <p>Welcome to ATTENDO Administrator Portal! As an admin, you have complete control over the system configuration, user management, and operational oversight.</p>
+                        
+                        <h4>Your Responsibilities</h4>
+                        <ul>
+                            <li>Manage all users (Vendors, Managers, Admins)</li>
+                            <li>Configure system settings and policies</li>
+                            <li>Set up and maintain holiday calendars</li>
+                            <li>Perform bulk data imports and exports</li>
+                            <li>Handle reconciliation and billing corrections</li>
+                            <li>Monitor system health and audit logs</li>
+                            <li>Generate executive reports</li>
+                            <li>Manage notification configurations</li>
+                            <li>Ensure data security and backups</li>
+                        </ul>
+                        
+                        <h4>Default Admin Credentials</h4>
+                        <ul>
+                            <li><strong>Username:</strong> Admin</li>
+                            <li><strong>Default Password:</strong> admin123</li>
+                            <li><strong>Email:</strong> admin@attendo.com</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Security Alert:</strong> 
+                            Change the default admin password immediately after first login. Enable two-factor authentication for admin accounts.
+                        </div>
+                    </div>
+                    
+                    <!-- Admin Dashboard -->
+                    <div class="feature-card" id="dashboard">
+                        <h3><i class="fas fa-tachometer-alt"></i>Administrator Dashboard</h3>
+                        <p>The admin dashboard provides a comprehensive overview of the entire system's health and status.</p>
+                        
+                        <h4>Dashboard Components</h4>
+                        <ul>
+                            <li><strong>System Statistics:</strong>
+                                <ul>
+                                    <li>Total Users (Vendors, Managers, Admins)</li>
+                                    <li>Today's Submissions count</li>
+                                    <li>System Issues and alerts</li>
+                                    <li>Database size and performance metrics</li>
+                                </ul>
+                            </li>
+                            <li><strong>Quick Actions Panel:</strong>
+                                <ul>
+                                    <li>Add New User</li>
+                                    <li>Bulk Import Data</li>
+                                    <li>System Configuration</li>
+                                    <li>View Audit Logs</li>
+                                </ul>
+                            </li>
+                            <li><strong>Upcoming Holidays:</strong> Next 5 holidays display</li>
+                            <li><strong>System Health Monitor:</strong> Real-time system status</li>
+                        </ul>
+                        
+                        <h4>Key Metrics to Monitor</h4>
+                        <ul>
+                            <li>Daily active users</li>
+                            <li>Submission compliance rate</li>
+                            <li>Pending approvals across all managers</li>
+                            <li>Unresolved mismatches</li>
+                            <li>System response time</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- User Management -->
+                    <div class="feature-card" id="user-management">
+                        <h3><i class="fas fa-users-cog"></i>User Management</h3>
+                        <p>Comprehensive user administration for all system roles.</p>
+                        
+                        <h4>User Roles & Permissions</h4>
+                        <table class="permission-table">
+                            <thead>
+                                <tr>
+                                    <th>Role</th>
+                                    <th>Key Permissions</th>
+                                    <th>Access Level</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Admin</strong></td>
+                                    <td>Full system control, all configurations</td>
+                                    <td>Unrestricted</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Manager</strong></td>
+                                    <td>Team management, approvals, reports</td>
+                                    <td>Team-level</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Vendor</strong></td>
+                                    <td>Submit status, view own records</td>
+                                    <td>Self-only</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h4>Creating New Users</h4>
+                        <ol class="step-list">
+                            <li>Navigate to User Management section</li>
+                            <li>Click "Add New User" button</li>
+                            <li>Select user role (Vendor/Manager/Admin)</li>
+                            <li>Enter required information:
+                                <ul>
+                                    <li>Username (unique identifier)</li>
+                                    <li>Email address</li>
+                                    <li>Full name</li>
+                                    <li>Department/Company</li>
+                                    <li>Initial password</li>
+                                </ul>
+                            </li>
+                            <li>Assign to manager (for vendors)</li>
+                            <li>Set activation status</li>
+                            <li>Click "Create User"</li>
+                        </ol>
+                        
+                        <h4>User Account Actions</h4>
+                        <ul>
+                            <li><strong>Activate/Deactivate:</strong> Enable or disable user access</li>
+                            <li><strong>Reset Password:</strong> Force password reset on next login</li>
+                            <li><strong>Change Role:</strong> Modify user permissions</li>
+                            <li><strong>Update Profile:</strong> Edit user information</li>
+                            <li><strong>Delete User:</strong> Permanently remove (with data archival)</li>
+                        </ul>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Admin Tip:</strong> 
+                            Always deactivate users instead of deleting to maintain audit trail integrity.
+                        </div>
+                    </div>
+                    
+                    <!-- Vendor Management -->
+                    <div class="feature-card" id="vendor-management">
+                        <h3><i class="fas fa-user-tag"></i>Vendor Management</h3>
+                        <p>Specialized management features for vendor accounts.</p>
+                        
+                        <h4>Vendor Profile Fields</h4>
+                        <ul>
+                            <li><strong>Vendor ID:</strong> Unique employee identifier</li>
+                            <li><strong>Full Name:</strong> Complete name</li>
+                            <li><strong>Department:</strong> Organizational unit</li>
+                            <li><strong>Company:</strong> Vendor company name</li>
+                            <li><strong>Band/Level:</strong> Designation level (B1, B2, etc.)</li>
+                            <li><strong>Location:</strong> Default work location</li>
+                            <li><strong>Manager Assignment:</strong> Reporting manager</li>
+                        </ul>
+                        
+                        <h4>Vendor Operations</h4>
+                        <ol class="step-list">
+                            <li><strong>Add Vendor:</strong> Create new vendor account with profile</li>
+                            <li><strong>Update Details:</strong> Modify vendor information</li>
+                            <li><strong>Change Manager:</strong> Reassign to different manager</li>
+                            <li><strong>View History:</strong> Check attendance records</li>
+                            <li><strong>Export Data:</strong> Download vendor-specific reports</li>
+                        </ol>
+                        
+                        <h4>Bulk Vendor Operations</h4>
+                        <ul>
+                            <li>Mass manager reassignment</li>
+                            <li>Bulk status activation/deactivation</li>
+                            <li>Department-wide updates</li>
+                            <li>Company-wide policy changes</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Manager Management -->
+                    <div class="feature-card" id="manager-management">
+                        <h3><i class="fas fa-user-tie"></i>Manager Management</h3>
+                        <p>Configure and maintain manager accounts and their teams.</p>
+                        
+                        <h4>Manager Setup Process</h4>
+                        <ol class="step-list">
+                            <li>Create manager user account</li>
+                            <li>Set manager profile details:
+                                <ul>
+                                    <li>Manager ID</li>
+                                    <li>Department</li>
+                                    <li>Team name</li>
+                                    <li>Contact information</li>
+                                </ul>
+                            </li>
+                            <li>Assign vendors to manager's team</li>
+                            <li>Configure notification preferences</li>
+                            <li>Set approval delegation (if needed)</li>
+                        </ol>
+                        
+                        <h4>Manager Capabilities Configuration</h4>
+                        <ul>
+                            <li>Maximum team size limits</li>
+                            <li>Approval authority levels</li>
+                            <li>Report generation permissions</li>
+                            <li>Bulk action permissions</li>
+                            <li>AI insights access</li>
+                        </ul>
+                        
+                        <div class="info-box">
+                            <strong><i class="fas fa-info-circle me-2"></i>Best Practice:</strong> 
+                            Limit manager teams to 15-20 vendors for optimal oversight and timely approvals.
+                        </div>
+                    </div>
+                    
+                    <!-- Teams & Groups -->
+                    <div class="feature-card" id="teams">
+                        <h3><i class="fas fa-sitemap"></i>Teams & Organizational Structure</h3>
+                        <p>Manage organizational hierarchy and team structures.</p>
+                        
+                        <h4>Team Management Features</h4>
+                        <ul>
+                            <li><strong>View Teams:</strong> See all manager-vendor assignments</li>
+                            <li><strong>Reorganize Teams:</strong> Move vendors between managers</li>
+                            <li><strong>Department Groups:</strong> Organize by departments</li>
+                            <li><strong>Company Units:</strong> Group by vendor companies</li>
+                        </ul>
+                        
+                        <h4>Team Operations</h4>
+                        <ol class="step-list">
+                            <li>Access Teams & Groups section</li>
+                            <li>Select manager to view team</li>
+                            <li>Use drag-and-drop to reassign vendors</li>
+                            <li>Balance team sizes for optimal management</li>
+                            <li>Save team structure changes</li>
+                        </ol>
+                        
+                        <h4>Team Analytics</h4>
+                        <ul>
+                            <li>Team size distribution</li>
+                            <li>Department-wise vendor count</li>
+                            <li>Manager workload analysis</li>
+                            <li>Cross-functional team metrics</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Holiday Management -->
+                    <div class="feature-card" id="holidays">
+                        <h3><i class="fas fa-calendar-alt"></i>Holiday Management</h3>
+                        <p>Configure company-wide holidays and special non-working days.</p>
+                        
+                        <h4>Adding Holidays</h4>
+                        <ol class="step-list">
+                            <li>Navigate to Holiday Management</li>
+                            <li>Click "Add Holiday"</li>
+                            <li>Enter holiday details:
+                                <ul>
+                                    <li>Date</li>
+                                    <li>Holiday name</li>
+                                    <li>Description/Type</li>
+                                    <li>Applicable locations (if regional)</li>
+                                </ul>
+                            </li>
+                            <li>Set recurrence (for annual holidays)</li>
+                            <li>Save holiday configuration</li>
+                        </ol>
+                        
+                        <h4>Holiday Types</h4>
+                        <ul>
+                            <li><strong>National Holidays:</strong> Country-wide observances</li>
+                            <li><strong>Regional Holidays:</strong> State/location specific</li>
+                            <li><strong>Company Holidays:</strong> Organization-specific days off</li>
+                            <li><strong>Optional Holidays:</strong> Employee choice holidays</li>
+                        </ul>
+                        
+                        <h4>Bulk Holiday Import</h4>
+                        <p>Import holidays from Excel/CSV file:</p>
+                        <ul>
+                            <li>Download holiday template</li>
+                            <li>Fill in holiday data</li>
+                            <li>Upload file</li>
+                            <li>Review and confirm import</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- System Settings -->
+                    <div class="feature-card" id="system-settings">
+                        <h3><i class="fas fa-cogs"></i>System Settings</h3>
+                        <p>Configure global system parameters and policies.</p>
+                        
+                        <h4>Core Settings</h4>
+                        <ul>
+                            <li><strong>Working Hours:</strong> Define standard office timings</li>
+                            <li><strong>Weekend Configuration:</strong> Set non-working days</li>
+                            <li><strong>Submission Deadline:</strong> Daily status submission cutoff</li>
+                            <li><strong>Approval Timeout:</strong> Auto-escalation periods</li>
+                            <li><strong>Session Timeout:</strong> Security timeout settings</li>
+                        </ul>
+                        
+                        <h4>Notification Settings</h4>
+                        <ul>
+                            <li><strong>Daily Reminders:</strong> Enable/disable and set timing</li>
+                            <li><strong>Manager Alerts:</strong> Configure alert triggers</li>
+                            <li><strong>Mismatch Notifications:</strong> Set thresholds</li>
+                            <li><strong>Email Templates:</strong> Customize notification messages</li>
+                            <li><strong>SMS Integration:</strong> Configure SMS gateway (if available)</li>
+                        </ul>
+                        
+                        <h4>Policy Configuration</h4>
+                        <ul>
+                            <li>Password complexity requirements</li>
+                            <li>Maximum login attempts</li>
+                            <li>Data retention periods</li>
+                            <li>Audit log settings</li>
+                            <li>Export permissions</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Caution:</strong> 
+                            System setting changes affect all users. Test in a staging environment first if available.
+                        </div>
+                    </div>
+                    
+                    <!-- Bulk Import -->
+                    <div class="feature-card" id="bulk-import">
+                        <h3><i class="fas fa-upload"></i>Bulk Data Import</h3>
+                        <p>Import large volumes of data efficiently.</p>
+                        
+                        <h4>Supported Import Types</h4>
+                        <ul>
+                            <li><strong>User Import:</strong> Bulk create users from Excel/CSV</li>
+                            <li><strong>Swipe Data Import:</strong> Biometric attendance records</li>
+                            <li><strong>Leave Records:</strong> Historical leave data</li>
+                            <li><strong>WFH Records:</strong> Work from home history</li>
+                            <li><strong>Holiday List:</strong> Annual holiday calendar</li>
+                        </ul>
+                        
+                        <h4>Import Process</h4>
+                        <ol class="step-list">
+                            <li>Download the appropriate template</li>
+                            <li>Prepare data in required format</li>
+                            <li>Validate data for errors</li>
+                            <li>Upload file to system</li>
+                            <li>Review import preview</li>
+                            <li>Handle any validation errors</li>
+                            <li>Confirm and process import</li>
+                            <li>Review import summary report</li>
+                        </ol>
+                        
+                        <h4>Data Validation Rules</h4>
+                        <ul>
+                            <li>Unique ID constraints</li>
+                            <li>Required field validation</li>
+                            <li>Date format checking</li>
+                            <li>Reference integrity (manager-vendor links)</li>
+                            <li>Duplicate detection</li>
+                        </ul>
+                        
+                        <h4>Import Best Practices</h4>
+                        <ul>
+                            <li>Always backup before major imports</li>
+                            <li>Test with small sample first</li>
+                            <li>Import during off-peak hours</li>
+                            <li>Keep import logs for audit</li>
+                            <li>Verify data post-import</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Reconciliation -->
+                    <div class="feature-card" id="reconciliation">
+                        <h3><i class="fas fa-balance-scale"></i>Attendance Reconciliation</h3>
+                        <p>Manage system-wide reconciliation between web submissions and swipe records.</p>
+                        
+                        <h4>Reconciliation Dashboard</h4>
+                        <ul>
+                            <li><strong>Total Mismatches:</strong> System-wide count</li>
+                            <li><strong>Pending Review:</strong> Awaiting manager action</li>
+                            <li><strong>Approved/Rejected:</strong> Resolution statistics</li>
+                            <li><strong>Trend Analysis:</strong> Mismatch patterns over time</li>
+                        </ul>
+                        
+                        <h4>Admin Reconciliation Actions</h4>
+                        <ol class="step-list">
+                            <li>View all mismatches across system</li>
+                            <li>Filter by date range, vendor, manager</li>
+                            <li>Override manager decisions if needed</li>
+                            <li>Bulk approve valid system issues</li>
+                            <li>Generate reconciliation reports</li>
+                            <li>Export for external audit</li>
+                        </ol>
+                        
+                        <h4>Common Reconciliation Scenarios</h4>
+                        <ul>
+                            <li>System-wide swipe machine failures</li>
+                            <li>Database synchronization issues</li>
+                            <li>Mass attendance corrections</li>
+                            <li>Holiday/weekend adjustments</li>
+                            <li>Emergency closure handling</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Billing Corrections -->
+                    <div class="feature-card" id="billing">
+                        <h3><i class="fas fa-file-invoice-dollar"></i>Billing Corrections</h3>
+                        <p>Handle attendance-related billing adjustments and corrections.</p>
+                        
+                        <h4>Billing Correction Process</h4>
+                        <ol class="step-list">
+                            <li>Access Billing Corrections module</li>
+                            <li>Select vendor and date range</li>
+                            <li>Enter correction details:
+                                <ul>
+                                    <li>Original hours</li>
+                                    <li>Corrected hours</li>
+                                    <li>Adjustment reason</li>
+                                    <li>Supporting documentation</li>
+                                </ul>
+                            </li>
+                            <li>Calculate billing impact</li>
+                            <li>Get approval if required</li>
+                            <li>Apply correction</li>
+                            <li>Generate adjustment report</li>
+                        </ol>
+                        
+                        <h4>Correction Types</h4>
+                        <ul>
+                            <li>Attendance hour adjustments</li>
+                            <li>Overtime corrections</li>
+                            <li>Holiday pay adjustments</li>
+                            <li>Leave balance corrections</li>
+                            <li>Retroactive changes</li>
+                        </ul>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Audit Trail:</strong> 
+                            All billing corrections are permanently logged with timestamp, user, and justification.
+                        </div>
+                    </div>
+                    
+                    <!-- Audit Logs -->
+                    <div class="feature-card" id="audit-logs">
+                        <h3><i class="fas fa-file-alt"></i>Audit Logs</h3>
+                        <p>Comprehensive system activity tracking and compliance reporting.</p>
+                        
+                        <h4>Logged Activities</h4>
+                        <ul>
+                            <li>User logins/logouts</li>
+                            <li>Status submissions and edits</li>
+                            <li>Approval/rejection actions</li>
+                            <li>User management changes</li>
+                            <li>System configuration updates</li>
+                            <li>Data imports/exports</li>
+                            <li>Billing corrections</li>
+                            <li>Security events</li>
+                        </ul>
+                        
+                        <h4>Audit Log Features</h4>
+                        <ul>
+                            <li><strong>Search & Filter:</strong> By user, action, date, table</li>
+                            <li><strong>Export:</strong> Download for compliance reporting</li>
+                            <li><strong>Retention:</strong> Configure auto-archival periods</li>
+                            <li><strong>Alerts:</strong> Set up notifications for specific events</li>
+                            <li><strong>Analysis:</strong> Pattern detection for security</li>
+                        </ul>
+                        
+                        <h4>Compliance Reporting</h4>
+                        <ol class="step-list">
+                            <li>Select reporting period</li>
+                            <li>Choose audit categories</li>
+                            <li>Apply filters as needed</li>
+                            <li>Generate compliance report</li>
+                            <li>Review and sign off</li>
+                            <li>Archive for records</li>
+                        </ol>
+                    </div>
+                    
+                    <!-- Reports & Analytics -->
+                    <div class="feature-card" id="reports">
+                        <h3><i class="fas fa-chart-line"></i>System Reports & Analytics</h3>
+                        <p>Generate executive-level reports and system analytics.</p>
+                        
+                        <h4>Available System Reports</h4>
+                        <ul>
+                            <li><strong>Executive Dashboard:</strong> High-level KPIs</li>
+                            <li><strong>Attendance Analytics:</strong> Organization-wide patterns</li>
+                            <li><strong>Compliance Report:</strong> Policy adherence metrics</li>
+                            <li><strong>Manager Performance:</strong> Approval efficiency</li>
+                            <li><strong>Vendor Analytics:</strong> Attendance trends</li>
+                            <li><strong>System Usage:</strong> Platform adoption metrics</li>
+                            <li><strong>Cost Analysis:</strong> Billing and overtime reports</li>
+                        </ul>
+                        
+                        <h4>Custom Report Builder</h4>
+                        <ol class="step-list">
+                            <li>Select data sources (tables)</li>
+                            <li>Choose fields to include</li>
+                            <li>Apply filters and conditions</li>
+                            <li>Set grouping and sorting</li>
+                            <li>Add calculations/aggregations</li>
+                            <li>Preview report</li>
+                            <li>Save as template for reuse</li>
+                        </ol>
+                        
+                        <h4>Report Scheduling</h4>
+                        <ul>
+                            <li>Daily operational reports</li>
+                            <li>Weekly management summaries</li>
+                            <li>Monthly compliance reports</li>
+                            <li>Quarterly trend analysis</li>
+                            <li>Annual audit reports</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Notification Configuration -->
+                    <div class="feature-card" id="notifications">
+                        <h3><i class="fas fa-bell"></i>Power Automate Notification Configuration</h3>
+                        <p>Manage the Excel-based Power Automate notification system and workflow configurations.</p>
+                        
+                        <div style="background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%); color: white; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                            <h4 style="color: white; margin-bottom: 15px;"><i class="fab fa-microsoft" style="margin-right: 8px;"></i>Power Automate Integration Management</h4>
+                            <p style="margin: 0; font-size: 0.95rem; line-height: 1.6;">ATTENDO's notification system runs on Microsoft Power Automate with Excel-based queues synchronized through OneDrive. As administrator, you manage the Excel notification tables and flow configurations.</p>
+                        </div>
+                        
+                        <h4>Excel Notification Tables Management</h4>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545; margin: 15px 0;">
+                            <p style="margin-bottom: 10px; font-weight: bold;">10+ Notification Tables You Manage:</p>
+                            <ul style="font-size: 0.9rem; margin: 0; columns: 2;">
+                                <li>01_daily_status_reminders.xlsx</li>
+                                <li>02_manager_summary_notifications.xlsx</li>
+                                <li>03_manager_all_complete_notifications.xlsx</li>
+                                <li>04_mismatch_notifications.xlsx</li>
+                                <li>05_manager_feedback_notifications.xlsx</li>
+                                <li>06_monthly_report_notifications.xlsx</li>
+                                <li>07_admin_system_alerts.xlsx</li>
+                                <li>08_holiday_reminder_notifications.xlsx</li>
+                                <li>09_late_submission_alerts.xlsx</li>
+                                <li>10_billing_correction_notifications.xlsx</li>
+                            </ul>
+                        </div>
+                        
+                        <h4>Power Automate Flow Configuration</h4>
+                        <ul>
+                            <li><strong>OneDrive Integration:</strong> Configure Excel file locations and access permissions</li>
+                            <li><strong>Flow Scheduling:</strong> Set recurrence intervals for each notification type</li>
+                            <li><strong>Teams Integration:</strong> Configure Teams channels and webhook connections</li>
+                            <li><strong>Email Fallback:</strong> SMTP configuration for email delivery</li>
+                            <li><strong>Error Handling:</strong> Configure retry logic and failure notifications</li>
+                        </ul>
+                        
+                        <h4>Administrative Configuration Tasks</h4>
+                        <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #856404; margin: 15px 0;">
+                            <ol style="margin: 0;">
+                                <li><strong>OneDrive Setup:</strong> Ensure Excel files are properly synchronized and accessible</li>
+                                <li><strong>Table Permissions:</strong> Configure read/write access for Power Automate service account</li>
+                                <li><strong>Flow Monitoring:</strong> Set up alerts for failed Power Automate flows</li>
+                                <li><strong>Template Customization:</strong> Modify Excel table schemas for new notification types</li>
+                                <li><strong>Testing Procedures:</strong> Validate notification delivery through all channels</li>
+                            </ol>
+                        </div>
+                        
+                        <h4>Power Automate Notification Templates</h4>
+                        <ul>
+                            <li><strong>Daily Reminders:</strong> Vendor status submission prompts</li>
+                            <li><strong>Manager Summaries:</strong> Team attendance overview reports</li>
+                            <li><strong>Mismatch Alerts:</strong> Attendance reconciliation discrepancies</li>
+                            <li><strong>Completion Celebrations:</strong> Team achievement notifications</li>
+                            <li><strong>System Alerts:</strong> Critical administrative notifications</li>
+                            <li><strong>Monthly Reports:</strong> Comprehensive attendance analytics</li>
+                        </ul>
+                        
+                        <h4>Notification Monitoring & Troubleshooting</h4>
+                        <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; border-left: 4px solid #0c5460; margin: 15px 0;">
+                            <ul style="margin: 0;">
+                                <li><strong>Flow Health Monitoring:</strong> Track Power Automate flow execution success rates</li>
+                                <li><strong>Queue Management:</strong> Monitor Excel table row counts and cleanup</li>
+                                <li><strong>Delivery Tracking:</strong> Verify notification delivery through Teams and email</li>
+                                <li><strong>Error Handling:</strong> Configure automatic retry policies and failure escalation</li>
+                                <li><strong>Performance Optimization:</strong> Adjust flow frequency based on usage patterns</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Backup & Recovery -->
+                    <div class="feature-card" id="backup">
+                        <h3><i class="fas fa-database"></i>Backup & Recovery</h3>
+                        <p>Ensure data safety with comprehensive backup strategies.</p>
+                        
+                        <h4>Backup Types</h4>
+                        <ul>
+                            <li><strong>Automated Daily:</strong> Scheduled nightly backups</li>
+                            <li><strong>Manual Backup:</strong> On-demand full backup</li>
+                            <li><strong>Incremental:</strong> Changes-only backup</li>
+                            <li><strong>Archive:</strong> Long-term storage backup</li>
+                        </ul>
+                        
+                        <h4>Backup Process</h4>
+                        <ol class="step-list">
+                            <li>Access Backup Management</li>
+                            <li>Select backup type</li>
+                            <li>Choose data to include</li>
+                            <li>Set destination (local/cloud)</li>
+                            <li>Initiate backup</li>
+                            <li>Verify backup completion</li>
+                            <li>Test restore capability</li>
+                        </ol>
+                        
+                        <h4>Recovery Procedures</h4>
+                        <ul>
+                            <li>Point-in-time recovery</li>
+                            <li>Selective data restoration</li>
+                            <li>Full system recovery</li>
+                            <li>Disaster recovery plan</li>
+                        </ul>
+                        
+                        <div class="tip-box">
+                            <strong><i class="fas fa-lightbulb me-2"></i>Best Practice:</strong> 
+                            Test backup restoration monthly to ensure recovery procedures work correctly.
+                        </div>
+                    </div>
+                    
+                    <!-- Security -->
+                    <div class="feature-card" id="security">
+                        <h3><i class="fas fa-shield-alt"></i>Security Management</h3>
+                        <p>Maintain system security and access controls.</p>
+                        
+                        <h4>Security Features</h4>
+                        <ul>
+                            <li><strong>Access Control:</strong> Role-based permissions</li>
+                            <li><strong>Password Policies:</strong> Complexity and rotation</li>
+                            <li><strong>Session Management:</strong> Timeout and concurrent login</li>
+                            <li><strong>IP Restrictions:</strong> Whitelist/blacklist IPs</li>
+                            <li><strong>Two-Factor Auth:</strong> Additional security layer</li>
+                            <li><strong>SSL/TLS:</strong> Encrypted communications</li>
+                        </ul>
+                        
+                        <h4>Security Monitoring</h4>
+                        <ul>
+                            <li>Failed login attempts tracking</li>
+                            <li>Suspicious activity detection</li>
+                            <li>Access pattern analysis</li>
+                            <li>Data export monitoring</li>
+                            <li>Permission change alerts</li>
+                        </ul>
+                        
+                        <h4>Security Checklist</h4>
+                        <ul>
+                            <li>✓ Change default passwords</li>
+                            <li>✓ Enable password complexity</li>
+                            <li>✓ Configure session timeouts</li>
+                            <li>✓ Set up audit logging</li>
+                            <li>✓ Enable HTTPS only</li>
+                            <li>✓ Regular security updates</li>
+                            <li>✓ Backup encryption</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- FAQs Section -->
+                    <div class="faq-section" id="faq">
+                        <h2 class="mb-4"><i class="fas fa-question-circle me-2"></i>Administrator FAQs</h2>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How do I reset a user's password?</h5>
+                            <p>A: Go to User Management, find the user, click "Actions" → "Reset Password". The user will be prompted to set a new password on next login.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: Can I recover deleted data?</h5>
+                            <p>A: Deleted data is archived for 90 days by default. Use the Data Recovery tool or restore from backup if needed.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How do I handle mass leave during emergencies?</h5>
+                            <p>A: Use Bulk Operations → Emergency Leave to mark all affected vendors. This creates proper audit trails and notifications.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: What's the maximum file size for bulk import?</h5>
+                            <p>A: The system supports files up to 10MB. For larger imports, split into multiple files or use the API.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How do I configure email notifications?</h5>
+                            <p>A: Go to System Settings → Notification Configuration → Email Settings. Enter SMTP details and test the connection.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: Can I customize the dashboard for different departments?</h5>
+                            <p>A: Yes, use Dashboard Configuration to create department-specific views with relevant widgets and metrics.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: How often should I perform system maintenance?</h5>
+                            <p>A: Monthly maintenance is recommended: clear old logs, optimize database, update security patches, and verify backups.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h5>Q: What happens when a manager leaves?</h5>
+                            <p>A: Reassign their team to another manager before deactivating. Use Teams & Groups → Bulk Reassign for efficiency.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Admin Workflow Diagram -->
+                    <div class="feature-card" id="admin-workflows">
+                        <h3><i class="fas fa-project-diagram"></i>Administrator Workflows</h3>
+                        <p>High-level workflows illustrating common admin operations.</p>
+
+                        <div class="flow-diagram" style="background:#fff;border:2px solid #e0e0e0;border-radius:12px;padding:20px;">
+                            <h4 style="text-align:center;color:#dc3545;margin-bottom:15px;">User Provisioning Flow</h4>
+                            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;">
+                                <span class="flow-step" style="display:inline-block;background:#dc3545;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Open User Management</span>
+                                <span style="color:#dc3545;font-weight:bold;">→</span>
+                                <span class="flow-step" style="display:inline-block;background:#fd7e14;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Add New User</span>
+                                <span style="color:#dc3545;font-weight:bold;">→</span>
+                                <span class="flow-step" style="display:inline-block;background:#6c757d;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Assign Role</span>
+                                <span style="color:#dc3545;font-weight:bold;">→</span>
+                                <span class="flow-step" style="display:inline-block;background:#28a745;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Set Manager/Team</span>
+                                <span style="color:#dc3545;font-weight:bold;">→</span>
+                                <span class="flow-step" style="display:inline-block;background:#17a2b8;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Notify & Activate</span>
+                            </div>
+                        </div>
+
+                        <div class="flow-diagram" style="background:#fff;border:2px solid #e0e0e0;border-radius:12px;padding:20px;">
+                            <h4 style="text-align:center;color:#dc3545;margin-bottom:15px;">Bulk Import Process</h4>
+                            <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;">
+                                <span class="flow-step" style="display:inline-block;background:#6f42c1;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Download Template</span>
+                                <span style="color:#dc3545;font-weight:bold;">→</span>
+                                <span class="flow-step" style="display:inline-block;background:#20c997;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Prepare Data</span>
+                                <span style="color:#dc3545;font-weight:bold;">→</span>
+                                <span class="flow-step" style="display:inline-block;background:#667eea;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Upload & Validate</span>
+                                <span style="color:#dc3545;font-weight:bold;">→</span>
+                                <span class="flow-step" style="display:inline-block;background:#ffc107;color:#212529;padding:10px 16px;border-radius:25px;font-weight:600;">Resolve Errors</span>
+                                <span style="color:#dc3545;font-weight:bold;">→</span>
+                                <span class="flow-step" style="display:inline-block;background:#28a745;color:#fff;padding:10px 16px;border-radius:25px;font-weight:600;">Confirm & Import</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Support Section -->
+                    <div class="feature-card" id="support">
+                        <h3><i class="fas fa-headset"></i>Administrator Support</h3>
+                        <p>Premium support for system administrators.</p>
+                        
+                        <h4>Support Channels</h4>
+                        <ul>
+                            <li><strong>Priority Helpdesk:</strong> 24/7 admin support</li>
+                            <li><strong>Technical Team:</strong> Direct developer access</li>
+                            <li><strong>Emergency Hotline:</strong> Critical issue resolution</li>
+                            <li><strong>Remote Assistance:</strong> Screen sharing support</li>
+                        </ul>
+                        
+                        <h4>Contact Information</h4>
+                        <ul>
+                            <li><strong>Admin Support Email:</strong> admin-support@attendo.com</li>
+                            <li><strong>Priority Hotline:</strong> +91-1234-567899</li>
+                            <li><strong>Emergency Line:</strong> +91-9999-888777 (24/7)</li>
+                            <li><strong>Technical Team:</strong> tech-support@attendo.com</li>
+                        </ul>
+                        
+                        <h4>Common Issues & Solutions</h4>
+                        <ul>
+                            <li><strong>Database Performance:</strong> Run optimization scripts monthly</li>
+                            <li><strong>Import Failures:</strong> Check data format and size limits</li>
+                            <li><strong>Email Not Sending:</strong> Verify SMTP settings and credentials</li>
+                            <li><strong>Login Issues:</strong> Check user status and password expiry</li>
+                            <li><strong>Report Generation Slow:</strong> Archive old data, index database</li>
+                        </ul>
+                        
+                        <h4>Escalation Matrix</h4>
+                        <table class="permission-table">
+                            <thead>
+                                <tr>
+                                    <th>Issue Severity</th>
+                                    <th>Response Time</th>
+                                    <th>Contact</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Critical (System Down)</td>
+                                    <td>30 minutes</td>
+                                    <td>Emergency Hotline</td>
+                                </tr>
+                                <tr>
+                                    <td>High (Major Feature)</td>
+                                    <td>2 hours</td>
+                                    <td>Priority Support</td>
+                                </tr>
+                                <tr>
+                                    <td>Medium (Minor Issue)</td>
+                                    <td>24 hours</td>
+                                    <td>Regular Support</td>
+                                </tr>
+                                <tr>
+                                    <td>Low (Enhancement)</td>
+                                    <td>48 hours</td>
+                                    <td>Email Support</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="warning-box">
+                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Emergency Protocol:</strong> 
+                            For system-wide outages, immediately contact emergency hotline and initiate disaster recovery procedures.
+                        </div>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div class="text-center mt-5 pt-4 border-top">
+                        <p class="text-muted">
+                            <i class="fas fa-copyright me-1"></i>2025 ATTENDO - Administrator Documentation<br>
+                            Complete System Control & Management | All Rights Reserved
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    
+                    // Update active state
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    this.classList.add('active');
+                }
+            });
+        });
+        
+        // Highlight current section on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('.feature-card, .faq-section');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (pageYOffset >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+        
+        // Quick action buttons - removed popup alerts
+    </script>
+</body>
+</html>

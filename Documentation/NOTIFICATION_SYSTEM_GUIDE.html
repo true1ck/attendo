@@ -638,7 +638,6 @@
                     <li><a href="#notification-7">🚨 Admin System Alerts</a></li>
                     <li><a href="#notification-8">🏖️ Holiday Reminder Notifications</a></li>
                     <li><a href="#notification-9">⏰ Late Submission Alerts</a></li>
-                    <li><a href="#notification-10">💰 Billing Correction Notifications</a></li>
                     <li><a href="#power-automate-section">🚀 Power Automate Architecture</a></li>
                 </ul>
             </div>
@@ -1111,61 +1110,10 @@
             </div>
         </div>
 
-        <!-- Notification 10: Billing Corrections -->
-        <div id="notification-10" class="notification-card">
-            <div class="notification-header">
-                <span class="notification-icon">💰</span>
-                <div class="notification-title">
-                    <h2>Billing Correction Notifications</h2>
-                    <div class="notification-subtitle">10_billing_correction_notifications.xlsx</div>
-                </div>
-            </div>
-
-            <div class="info-grid">
-                <div class="info-item">
-                    <h4>📋 Purpose</h4>
-                    <p>Notify stakeholders about billing adjustments, corrections, and financial reconciliations</p>
-                </div>
-                <div class="info-item">
-                    <h4>👥 Recipients</h4>
-                    <div class="recipients-badge manager">Managers</div>
-                    <div class="recipients-badge admin">Admins</div>
-                </div>
-                <div class="info-item">
-                    <h4>📱 Delivery Method</h4>
-                    <div class="delivery-methods">
-                        <span class="delivery-method teams">🟣 Microsoft Teams</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="trigger-list">
-                <h4>⏰ Trigger Conditions</h4>
-                <ul>
-                    <li><strong>When billing corrections processed</strong> (monthly/quarterly)</li>
-                    <li><strong>When hours adjusted</strong> for overtime, leave, corrections</li>
-                    <li><strong>When discrepancies found</strong> in billing calculations</li>
-                    <li><strong>Financial impact</strong> above threshold levels</li>
-                    <li><strong>Audit trail</strong> and justification required</li>
-                </ul>
-            </div>
-
-            <div class="config-options">
-                <h5>⚙️ Configurable Options</h5>
-                <ul class="config-list">
-                    <li>Correction types (HOURS/OVERTIME/LEAVE)</li>
-                    <li>Financial details inclusion</li>
-                    <li>Original values comparison</li>
-                    <li>Audit trail inclusion</li>
-                    <li>Include original values</li>
-                    <li>Require approval setting</li>
-                </ul>
-            </div>
-        </div>
 
         <!-- Summary Table -->
         <div class="summary-table">
-            <h2>🎯 Notification Timing Summary</h2>
+            <h2>🎯 Notification Timing Summary (Updated Sept 2025)</h2>
             <div class="table-container">
                 <table>
                     <thead>
@@ -1241,15 +1189,12 @@
                             <td>Managers, Admins</td>
                             <td>High</td>
                         </tr>
-                        <tr>
-                            <td>Billing Corrections</td>
-                            <td>When processed</td>
-                            <td>Monthly/Quarterly</td>
-                            <td>Managers, Finance</td>
-                            <td>High</td>
-                        </tr>
                     </tbody>
                 </table>
+            </div>
+            <div style="background: #e8f5e8; padding: 20px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #28a745;">
+                <h4 style="color: #1b5e20; margin-bottom: 10px; display: flex; align-items: center;"><i class="fas fa-info-circle" style="margin-right: 8px;"></i>✅ September 2025 Update</h4>
+                <p style="margin: 0; color: #2e7d32; font-size: 0.95rem; line-height: 1.6;">All 9 notification types now use the clean 5-column Excel format: <strong>EmployeeID | ContactEmail | Message | NotificationType | Priority</strong>. Billing correction notifications have been removed as they are not part of the core notification system. All files are optimized for Power Automate processing with consistent structure and smart business logic filtering.</p>
             </div>
         </div>
 
@@ -1362,12 +1307,17 @@
                 <h3 style="color: #2c3e50; margin-bottom: 20px;">📊 Excel Table Structure & OneDrive Integration</h3>
                 
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #dee2e6; margin: 15px 0;">
-                    <h4 style="color: #495057; margin-bottom: 15px;">📋 Standard Table Schema</h4>
+                    <h4 style="color: #495057; margin-bottom: 15px;">📋 Clean 5-Column Table Schema (Updated 2025)</h4>
                     <div style="font-family: 'Courier New', monospace; background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 6px; overflow-x: auto;">
-                        <div style="color: #4fd1c7;">// Typical Excel Notification Table Structure</div>
-                        <div>| <span style="color: #f56565;">Recipient</span> | <span style="color: #68d391;">Message</span> | <span style="color: #4299e1;">Priority</span> | <span style="color: #ed8936;">Timestamp</span> | <span style="color: #9f7aea;">Status</span> |</div>
-                        <div>| manager@company.com | "Team Summary: 8/10 completed" | Medium | 2025-01-10 14:30 | Pending |</div>
-                        <div>| vendor@company.com  | "Please submit today's status"   | High   | 2025-01-10 14:35 | Pending |</div>
+                        <div style="color: #4fd1c7;">// ATTENDO Clean Excel Notification Table Structure</div>
+                        <div>| <span style="color: #f56565;">EmployeeID</span> | <span style="color: #68d391;">ContactEmail</span> | <span style="color: #4299e1;">Message</span> | <span style="color: #ed8936;">NotificationType</span> | <span style="color: #9f7aea;">Priority</span> |</div>
+                        <div>| EMP001 | john.vendor@company.com | "📋 Hi John, submit status for Sept 11, 2025..." | DAILY_REMINDER | Medium |</div>
+                        <div>| M001   | alice.manager@company.com | "📊 Team Summary: 3/5 completed (60% rate)..." | MANAGER_SUMMARY | High |</div>
+                        <div>| EMP003 | mike.vendor@company.com | "⚠️ Mismatch Alert: IN_OFFICE vs REMOTE..." | MISMATCH_ALERT | High |</div>
+                    </div>
+                    <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #28a745;">
+                        <h5 style="color: #1b5e20; margin-bottom: 10px; display: flex; align-items: center;"><i class="fas fa-check-circle" style="margin-right: 8px;"></i>✅ Updated September 2025 - Clean Format</h5>
+                        <p style="margin: 0; color: #2e7d32; font-size: 0.9rem;">Simplified to exactly 5 columns for optimal Power Automate processing. All unnecessary data removed, consistent structure across all 9 notification types.</p>
                     </div>
                 </div>
 
@@ -1422,11 +1372,99 @@
                 <h3 style="color: #0c5460; margin-bottom: 15px; display: flex; align-items: center;"><i class="fas fa-rocket" style="margin-right: 10px;"></i>Implementation Approach</h3>
                 <p style="font-size: 1rem; line-height: 1.7; margin: 0; color: #495057;">Our approach keeps all notification data synchronized in OneDrive Excel files, enabling Power Automate flows to pick up changes through recurrent polling and deliver targeted notifications to relevant users. This creates a robust, serverless notification system that scales automatically and requires minimal maintenance while providing enterprise-grade reliability and delivery guarantees.</p>
             </div>
+            
+            <!-- Clean Implementation Details Section -->
+            <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; border-radius: 15px; margin: 20px 0; position: relative; overflow: hidden;">
+                <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%;"></div>
+                <div style="position: absolute; bottom: -50px; left: -50px; width: 150px; height: 150px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+                
+                <div style="position: relative; z-index: 1;">
+                    <h3 style="color: white; margin-bottom: 20px; display: flex; align-items: center;"><i class="fas fa-cogs" style="margin-right: 15px; font-size: 1.5rem;"></i>🎆 Clean Implementation - September 2025 Update</h3>
+                    
+                    <div style="background: rgba(255,255,255,0.15); padding: 25px; border-radius: 12px; margin: 20px 0;">
+                        <h4 style="color: white; margin-bottom: 15px; display: flex; align-items: center;"><i class="fas fa-table" style="margin-right: 10px;"></i>Perfect 5-Column Excel Format</h4>
+                        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 15px;">
+                            <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem;">EmployeeID</div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem;">ContactEmail</div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem;">Message</div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem;">NotificationType</div>
+                            <div style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.9rem;">Priority</div>
+                        </div>
+                        <p style="color: rgba(255,255,255,0.95); margin: 0; font-size: 0.95rem; line-height: 1.6;">Every Excel file now follows this exact structure for seamless Power Automate integration. No extra columns, no unnecessary data - just what you need for automation.</p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 25px;">
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);">
+                            <h5 style="color: white; margin-bottom: 10px; display: flex; align-items: center;"><i class="fas fa-check-circle" style="margin-right: 8px;"></i>9 Files Updated</h5>
+                            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 0.9rem;">All notification Excel files converted to clean format and verified working</p>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);">
+                            <h5 style="color: white; margin-bottom: 10px; display: flex; align-items: center;"><i class="fas fa-robot" style="margin-right: 8px;"></i>Auto-Generated</h5>
+                            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 0.9rem;">Smart logic ensures only relevant notifications are created based on actual business conditions</p>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);">
+                            <h5 style="color: white; margin-bottom: 10px; display: flex; align-items: center;"><i class="fas fa-sync-alt" style="margin-right: 8px;"></i>Real-time Sync</h5>
+                            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 0.9rem;">Database changes instantly reflected in Excel files for Power Automate pickup</p>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2);">
+                            <h5 style="color: white; margin-bottom: 10px; display: flex; align-items: center;"><i class="fas fa-excel-file" style="margin-right: 8px;"></i>Excel Compatible</h5>
+                            <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 0.9rem;">Files properly formatted and can be opened directly in Excel for manual review</p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.15); padding: 20px; border-radius: 10px; margin-top: 25px;">
+                        <h4 style="color: white; margin-bottom: 15px;">📋 Notification Types Implemented</h4>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">🔔 Daily Reminders</div>
+                                <div>DAILY_REMINDER</div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">📊 Manager Summaries</div>
+                                <div>MANAGER_SUMMARY</div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">✅ All Complete</div>
+                                <div>ALL_COMPLETE</div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">⚠️ Mismatch Alerts</div>
+                                <div>MISMATCH_ALERT</div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">📝 Manager Feedback</div>
+                                <div>MANAGER_FEEDBACK</div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">📈 Monthly Reports</div>
+                                <div>MONTHLY_REPORT</div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">🚨 System Alerts</div>
+                                <div>SYSTEM_ALERT</div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">🏖️ Holiday Reminders</div>
+                                <div>HOLIDAY_REMINDER</div>
+                            </div>
+                            <div style="font-size: 0.9rem; color: rgba(255,255,255,0.95);">
+                                <div style="font-weight: bold; margin-bottom: 5px;">⏰ Late Submissions</div>
+                                <div>LATE_SUBMISSION</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.2); padding: 20px; border-radius: 10px; margin-top: 20px; border: 2px solid rgba(255,255,255,0.3);">
+                        <h4 style="color: white; margin-bottom: 10px; display: flex; align-items: center;"><i class="fas fa-lightbulb" style="margin-right: 10px;"></i>Power Automate Integration Ready</h4>
+                        <p style="color: rgba(255,255,255,0.95); margin: 0; font-size: 1rem; line-height: 1.6;">Your Power Automate flows can now process these clean Excel files every 5-15 minutes, automatically delivering targeted notifications to the right people at the right time through Microsoft Teams, Email, or SMS channels. The consistent 5-column format ensures reliable data processing and seamless automation.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="footer">
-            <h3>🚀 ATTENDO Notification System</h3>
-            <p>Zero missed notifications with always accurate recipient lists through real-time synchronization!</p>
+            <h3>🚀 ATTENDO Notification System - Clean Format (Sept 2025)</h3>
+            <p>Zero missed notifications with always accurate recipient lists through real-time synchronization! Now featuring clean 5-column Excel format optimized for seamless Power Automate integration.</p>
         </div>
     </div>
 

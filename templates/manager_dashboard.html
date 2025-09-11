@@ -193,12 +193,6 @@
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     
-                                    {% if not status %}
-                                        <button class="btn btn-sm btn-outline-warning ms-1" onclick="sendReminder('{{ vendor.vendor_id }}')"
-                                                title="Send Reminder">
-                                            <i class="fas fa-bell"></i>
-                                        </button>
-                                    {% endif %}
                                     
                     {% if has_mismatch %}
                                         <button class="btn btn-sm btn-outline-danger ms-1" onclick="viewMismatches('{{ vendor.vendor_id }}')"
@@ -560,12 +554,6 @@ function viewDetails(vendorId) {
             closeVendorSummaryModal();
             alert('Network error occurred while fetching vendor details');
         });
-}
-
-function sendReminder(vendorId) {
-    if (confirm('Send reminder to vendor ' + vendorId + '?')) {
-        alert('Demo: Reminder sent to vendor ' + vendorId + '\n\nIn production, this would:\n• Send email/SMS notification\n• Log the reminder action\n• Update dashboard status');
-    }
 }
 
 

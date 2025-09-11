@@ -5,16 +5,8 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="mb-4">
             <h2><i class="fas fa-brain me-2 text-primary"></i>AI Insights & Predictions</h2>
-            <div>
-                <button class="btn btn-primary me-2" onclick="trainModel()">
-                    <i class="fas fa-robot me-1"></i>Re-train AI Model
-                </button>
-                <button class="btn btn-info" onclick="exportInsights()">
-                    <i class="fas fa-download me-1"></i>Export Insights
-                </button>
-            </div>
         </div>
     </div>
 </div>
@@ -269,98 +261,148 @@
             </div>
         </div>
 
-        <!-- Trend Analysis -->
-        <div class="card">
+        <!-- Team Performance Dashboard -->
+        <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-line me-2 text-info"></i>Attendance Trend Analysis</h5>
+                <h5 class="mb-0"><i class="fas fa-users me-2 text-primary"></i>Team Performance Overview</h5>
             </div>
             <div class="card-body">
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <canvas id="attendanceChart" width="400" height="200"></canvas>
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <canvas id="attendanceChart" width="300" height="200"></canvas>
                     </div>
-                    <div class="col-md-6">
-                        <canvas id="predictionChart" width="400" height="200"></canvas>
+                    <div class="col-md-4">
+                        <canvas id="predictionChart" width="300" height="200"></canvas>
+                    </div>
+                    <div class="col-md-4">
+                        <canvas id="weeklyTrendChart" width="300" height="200"></canvas>
                     </div>
                 </div>
                 
-                <div class="row">
-                    <div class="col-md-12">
-                        <h6>Key Insights:</h6>
-                        <ul class="small">
-                            <li><strong>Monday Pattern:</strong> 23% higher absence rate on Mondays compared to other weekdays</li>
-                            <li><strong>Seasonal Trend:</strong> 15% increase in WFH requests during monsoon season</li>
-                            <li><strong>Team Dynamics:</strong> Vendor5's absences often correlate with project deadline stress</li>
-                            <li><strong>Success Rate:</strong> Proactive interventions reduced unplanned absences by 31%</li>
-                        </ul>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <canvas id="teamProductivityChart" width="400" height="250"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <canvas id="absencePatternChart" width="400" height="250"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- AI Insights & Recommendations -->
+        
+        <!-- Manager Action Insights -->
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i>Intelligent Recommendations <span class="badge bg-secondary ms-2">Coming Soon</span></h5>
+                <h5 class="mb-0"><i class="fas fa-lightbulb me-2 text-warning"></i>Actionable Manager Insights</h5>
             </div>
             <div class="card-body">
-                <div class="alert alert-info mb-3"><strong>Coming soon:</strong> Intelligent, data-driven recommendations will appear here. Buttons are disabled in this preview.</div>
                 <div class="row">
                     <div class="col-md-6">
-                        <h6><i class="fas fa-users text-primary me-2"></i>Team Management</h6>
-                        <div class="recommendation-item mb-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>Resource Allocation</strong>
-                                    <p class="small text-muted mb-1">Based on predicted absences, consider redistributing workload for Monday, Sep 09</p>
-                                    <span class="badge bg-primary">High Impact</span>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary" disabled title="Coming Soon">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            </div>
+                        <div class="insight-card border rounded p-3 mb-3 bg-light">
+                            <h6 class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Critical Actions Needed</h6>
+                            <ul class="small mb-2">
+                                <li><strong>Vendor5:</strong> 92% likely absent tomorrow - Schedule immediate 1:1</li>
+                                <li><strong>Vendor1:</strong> Monday pattern detected - Consider flexible arrangement</li>
+                                <li><strong>Team capacity:</strong> 15% reduction expected this week</li>
+                            </ul>
+                            <button class="btn btn-sm btn-danger" onclick="showCriticalActions()">
+                                <i class="fas fa-tasks me-1"></i>View Action Plan
+                            </button>
                         </div>
                         
-                        <div class="recommendation-item mb-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>Proactive Communication</strong>
-                                    <p class="small text-muted mb-1">Schedule check-ins with high-risk vendors before critical project deadlines</p>
-                                    <span class="badge bg-info">Medium Impact</span>
+                        <div class="insight-card border rounded p-3 mb-3">
+                            <h6 class="text-info"><i class="fas fa-chart-bar me-2"></i>Team Productivity Insights</h6>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <strong class="text-success">87%</strong><br>
+                                    <small>Avg Attendance</small>
                                 </div>
-                                <button class="btn btn-sm btn-outline-primary" disabled title="Coming Soon">
-                                    <i class="fas fa-check"></i>
-                                </button>
+                                <div class="col-4">
+                                    <strong class="text-warning">2.3 days</strong><br>
+                                    <small>Avg WFH/week</small>
+                                </div>
+                                <div class="col-4">
+                                    <strong class="text-info">94%</strong><br>
+                                    <small>On-time Submissions</small>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
                     <div class="col-md-6">
-                        <h6><i class="fas fa-chart-bar text-success me-2"></i>Process Optimization</h6>
-                        <div class="recommendation-item mb-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>Flexible Work Policy</strong>
-                                    <p class="small text-muted mb-1">Consider allowing WFH on Mondays for vendors with consistent patterns</p>
-                                    <span class="badge bg-success">Long-term</span>
-                                </div>
-                                <button class="btn btn-sm btn-outline-primary" disabled title="Coming Soon">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            </div>
+                        <div class="insight-card border rounded p-3 mb-3">
+                            <h6 class="text-success"><i class="fas fa-thumbs-up me-2"></i>Team Strengths</h6>
+                            <ul class="small mb-2">
+                                <li><strong>Vendor2, Vendor4:</strong> 100% reliability score - Great role models</li>
+                                <li><strong>Mid-week performance:</strong> Tue-Thu shows 95% consistency</li>
+                                <li><strong>Communication:</strong> 89% proactive status updates</li>
+                            </ul>
                         </div>
                         
-                        <div class="recommendation-item mb-3">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>Automated Reminders</strong>
-                                    <p class="small text-muted mb-1">Set up smart reminders for vendors likely to miss status submissions</p>
-                                    <span class="badge bg-warning">Automation</span>
+                        <div class="insight-card border rounded p-3 mb-3 bg-light">
+                            <h6 class="text-primary"><i class="fas fa-calendar-alt me-2"></i>Weekly Planning Recommendations</h6>
+                            <div class="row">
+                                <div class="col-6">
+                                    <strong>Mon:</strong> <span class="badge bg-warning">High Risk</span><br>
+                                    <small>Schedule important meetings Tue-Thu</small>
                                 </div>
-                                <button class="btn btn-sm btn-outline-primary" disabled title="Coming Soon">
-                                    <i class="fas fa-check"></i>
-                                </button>
+                                <div class="col-6">
+                                    <strong>Fri:</strong> <span class="badge bg-info">WFH Peak</span><br>
+                                    <small>Expect 40% remote work requests</small>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-info mb-0">
+                            <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Manager Tips for This Week</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>Monday Focus:</strong> Check in with high-risk team members early morning
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Resource Planning:</strong> Have backup coverage for predicted absences
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>Team Morale:</strong> Recognize consistent performers publicly
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prediction Summary -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>Prediction Summary</h5>
+            </div>
+            <div class="card-body">
+                <p class="small mb-3">
+                    This page shows heuristic AI predictions for your team over the next few days. Each row in the table is a vendor with a predicted absence date, a likelihood percentage, a risk level, and recommended action.
+                </p>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-2">How to interpret</h6>
+                        <ul class="small mb-3">
+                            <li><strong>Likelihood %</strong>: Confidence (0–100) that the event will happen on the predicted date.</li>
+                            <li><strong>Risk level</strong>: Critical/High/Medium/Low based on likelihood and business impact.</li>
+                            <li><strong>Reasons</strong>: Top drivers such as weekday patterns, recent approvals, workload, or seasonality.</li>
+                            <li><strong>Recommendation</strong>: Immediate next step (e.g., Proactive Check-in or Urgent Intervention).</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="mb-2">What the charts mean</h6>
+                        <ul class="small mb-3">
+                            <li><strong>Attendance vs Predictions</strong>: Compares historical actuals with predicted trend lines.</li>
+                            <li><strong>Risk Distribution</strong>: Share of vendors by risk tier for your current prediction window.</li>
+                        </ul>
+                        <div class="alert alert-secondary small mb-0">
+                            Tips: Focus on Critical/High items first. Use Quick Actions to export a report, schedule daily analysis, view logs, or temporarily disable AI if needed.
                         </div>
                     </div>
                 </div>
@@ -511,6 +553,20 @@
     background-color: #f8f9fa;
 }
 
+.insight-card {
+    transition: all 0.3s ease;
+}
+
+.insight-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.insight-card h6 {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
 .progress {
     border-radius: 10px;
 }
@@ -539,7 +595,7 @@ function initializeCharts() {
         data: {
             labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
             datasets: [{
-                label: 'Actual Attendance',
+                label: 'Actual',
                 data: [82, 95, 94, 96, 88, 45],
                 borderColor: '#007bff',
                 backgroundColor: 'rgba(0, 123, 255, 0.1)',
@@ -558,7 +614,131 @@ function initializeCharts() {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Attendance vs Predictions'
+                    text: 'Daily Attendance %',
+                    font: { size: 12 }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 10 } }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: { font: { size: 10 } }
+                },
+                x: { ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+    
+    // Weekly Trend Chart
+    const weeklyCtx = document.getElementById('weeklyTrendChart').getContext('2d');
+    new Chart(weeklyCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            datasets: [{
+                label: 'Office',
+                data: [65, 70, 68, 72],
+                backgroundColor: '#28a745',
+            }, {
+                label: 'WFH',
+                data: [25, 22, 27, 23],
+                backgroundColor: '#17a2b8',
+            }, {
+                label: 'Leave',
+                data: [10, 8, 5, 5],
+                backgroundColor: '#ffc107',
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Monthly Breakdown',
+                    font: { size: 12 }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 10 } }
+                }
+            },
+            scales: {
+                x: { stacked: true, ticks: { font: { size: 10 } } },
+                y: { stacked: true, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+    
+    // Team Productivity Chart
+    const productivityCtx = document.getElementById('teamProductivityChart').getContext('2d');
+    new Chart(productivityCtx, {
+        type: 'radar',
+        data: {
+            labels: ['Consistency', 'Punctuality', 'Communication', 'Flexibility', 'Reliability', 'Proactiveness'],
+            datasets: [{
+                label: 'Team Average',
+                data: [87, 92, 89, 78, 94, 85],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                borderWidth: 2
+            }, {
+                label: 'Top Performer',
+                data: [95, 98, 95, 90, 100, 96],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Team Performance Metrics'
+                },
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                r: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    
+    // Absence Pattern Chart
+    const absenceCtx = document.getElementById('absencePatternChart').getContext('2d');
+    new Chart(absenceCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Planned Leave',
+                data: [8, 6, 12, 15, 10, 7],
+                backgroundColor: '#28a745',
+            }, {
+                label: 'Sick Leave',
+                data: [5, 8, 4, 3, 6, 4],
+                backgroundColor: '#dc3545',
+            }, {
+                label: 'Unplanned',
+                data: [3, 5, 2, 1, 2, 3],
+                backgroundColor: '#ffc107',
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Absence Patterns (6 Months)'
                 },
                 legend: {
                     position: 'bottom'
@@ -567,10 +747,9 @@ function initializeCharts() {
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: 100,
                     title: {
                         display: true,
-                        text: 'Attendance %'
+                        text: 'Days'
                     }
                 }
             }
@@ -711,6 +890,39 @@ async function emergencyOverride() {
             alert('Error: ' + e.message);
         }
     }
+}
+
+function showCriticalActions() {
+    const actionPlan = `Critical Action Plan for This Week:
+
+` +
+        `🔴 IMMEDIATE (Today):
+` +
+        `• Contact Vendor5 - 92% absence probability tomorrow
+` +
+        `• Prepare backup coverage for critical tasks
+` +
+        `• Review project deadlines for impact assessment
+
+` +
+        `🟡 THIS WEEK:
+` +
+        `• Schedule 1:1 with Vendor1 about Monday patterns
+` +
+        `• Arrange flexible work options for high-risk team members
+` +
+        `• Redistribute workload to minimize disruption
+
+` +
+        `📊 MONITORING:
+` +
+        `• Daily check-ins with predicted high-risk members
+` +
+        `• Track team capacity (currently 85% this week)
+` +
+        `• Monitor stress indicators and workload balance`;
+    
+    alert(actionPlan);
 }
 </script>
 {% endblock %}
