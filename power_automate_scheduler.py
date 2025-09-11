@@ -1,6 +1,130 @@
 #!/usr/bin/env python3
 """
 Power Automate Scheduler
+Runs every 10 minutes to process notification queue for Power Automate.
+"""
+
+import time
+import schedule
+import logging
+from pathlib import Path
+from datetime import datetime
+import sys
+import os
+
+# Add parent directory to path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from scripts.unified_notification_processor import UnifiedNotificationProcessor
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+class PowerAutomateScheduler:
+    """
+    Scheduler that runs notification processing every 10 minutes.
+    """
+    
+    def __init__(self, network_folder='G:/Test', output_folder='network_folder_simplified'):
+        self.processor = UnifiedNotificationProcessor(network_folder, output_folder)
+        self.run_count = 0
+        self.start_time = datetime.now()
+        
+        # Log file for scheduler
+        self.log_file = Path(output_folder) / 'scheduler.log'
+        
+    def process_notifications_job(self):
+        """Job to process notifications."""
+        self.run_count += 1
+        logger.info(f"🔄 Run #{self.run_count} - Processing notifications...")
+        
+        try:
+            # Process notifications
+            count = self.processor.process_notifications()
+            
+            # Log success
+            self.log_run(True, count)
+            logger.info(f"✅ Successfully processed {count} notifications")
+            
+            return count
+            
+        except Exception as e:
+            # Log error
+            self.log_run(False, 0, str(e))
+            logger.error(f"❌ Error processing notifications: {e}")
+            return 0
+    
+    def log_run(self, success, count, error=None):
+        """Log scheduler run to file."""
+        with open(self.log_file, 'a') as f:
+            timestamp = datetime.now().isoformat()
+            if success:
+                f.write(f"{timestamp} | Run #{self.run_count} | SUCCESS | {count} notifications\n")
+            else:
+                f.write(f"{timestamp} | Run #{self.run_count} | ERROR | {error}\n")
+    
+    def cleanup_sent_notifications(self):
+        """Cleanup job to remove sent notifications."""
+        logger.info("🧹 Cleaning up sent notifications...")
+        try:
+            removed = self.processor.remove_sent_notifications()
+            logger.info(f"✅ Removed {removed} sent notifications")
+        except Exception as e:
+            logger.error(f"❌ Error during cleanup: {e}")
+    
+    def status_report(self):
+        """Print status report."""
+        runtime = (datetime.now() - self.start_time).total_seconds() / 60
+        logger.info(f"""
+        📊 Scheduler Status Report:
+        - Running for: {runtime:.1f} minutes
+        - Total runs: {self.run_count}
+        - Next run: In 10 minutes
+        - Queue file: {self.processor.queue_file}
+        """)
+    
+    def run_scheduler(self):
+        """Main scheduler loop."""
+        logger.info("🚀 Starting Power Automate Scheduler")
+        logger.info(f"📁 Network folder: {self.processor.network_folder}")
+        logger.info(f"📁 Output folder: {self.processor.output_folder}")
+        logger.info("⏰ Schedule: Every 10 minutes")
+        
+        # Initial run
+        self.process_notifications_job()
+        
+        # Schedule jobs
+        schedule.every(10).minutes.do(self.process_notifications_job)
+        schedule.every(5).minutes.do(self.cleanup_sent_notifications)
+        schedule.every(30).minutes.do(self.status_report)
+        
+        # Run scheduler
+        while True:
+            try:
+                schedule.run_pending()
+                time.sleep(60)  # Check every minute
+            except KeyboardInterrupt:
+                logger.info("⏹️ Scheduler stopped by user")
+                break
+            except Exception as e:
+                logger.error(f"❌ Scheduler error: {e}")
+                time.sleep(60)  # Wait before retry
+
+def run_once():
+    """Run the processor once (for testing)."""
+    processor = UnifiedNotificationProcessor()
+    count = processor.process_notifications()
+    
+    print(f"\n✅ Processed {count} notifications")
+    print(f"📁 Output file: {processor.queue_file}")
+    
+    return count
+
+
+"""
+Power Automate Scheduler
 Helper script that runs every 10 minutes to update sent_noti_now.xlsx
 Can be called directly by Power Automate flow or as a scheduled task.
 
@@ -218,7 +342,7 @@ def get_scheduler_status():
     """Public function to get scheduler status"""
     return scheduler.get_status_summary()
 
-if __name__ == "__main__":
+def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='Power Automate Scheduler')
@@ -281,3 +405,6 @@ if __name__ == "__main__":
             print(f"   {key.replace('_', ' ').title()}: {value}")
         
         sys.exit(0)
+
+if __name__ == "__main__":
+    main()

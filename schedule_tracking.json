@@ -1,0 +1,49 @@
+{
+  "2025-09-12": {
+    "Daily Status Reminders": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    },
+    "Manager Summary": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    },
+    "All-Complete": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    },
+    "Mismatch Alerts": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    },
+    "Manager Feedback": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    },
+    "Monthly Reports": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    },
+    "System Alerts": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    },
+    "Holiday Reminders": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    },
+    "Late Submission": {
+      "count": 0,
+      "last_sent": null,
+      "sent_times": []
+    }
+  }
+}

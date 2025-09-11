@@ -347,6 +347,9 @@
           <!-- Full Day Section for in_office_full / wfh_full / leave_full / absent -->
           <div id="fullDayTimingSection" class="mb-4" style="display:none;"></div>
 
+          <!-- Hidden total hours area (removed from UI but keeping calculation) -->
+          <div id="totalHoursArea" class="mb-2" style="display:none;"><span class="totalHoursDisplay">0.0</span></div>
+
           <div class="row mb-4">
             <div class="col-12">
               <label for="location" class="form-label">Location</label>
@@ -369,215 +372,6 @@
   </div>
 </div>
 <!-- End Enhanced Status Submission Modal -->
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title"><i class="fas fa-clock me-2"></i>Submit Daily Status</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ url_for('vendor_submit_status') }}" method="POST" id="statusForm" onsubmit="return validateStatusForm()">
-                <div class="modal-body">
-                    <!-- Basic Information -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label for="status_date" class="form-label">Date</label>
-                            <input type="date" class="form-control" id="status_date" name="status_date" 
-                                   value="{{ today.strftime('%Y-%m-%d') }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="status" class="form-label">Work Status</label>
-                            <select class="form-select" id="status" name="status" required onchange="handleStatusChange()">
-                                <option value="">Select Status</option>
-                                <option value="in_office_full">In Office - Full Day</option>
-                                <option value="wfh_full">Work From Home - Full Day</option>
-                                <option value="leave_full">On Leave - Full Day</option>
-                                <option value="mixed_half">Half Day (Mixed Schedule)</option>
-                                <option value="absent">Absent</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Half-Day Schedule Section -->
-                    <div id="halfDaySection" style="display: none;" class="mb-4">
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Half-Day Schedule</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="alert alert-info mb-3">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    <strong>Complete Day Required:</strong> Please specify what you'll be doing in both morning and afternoon periods.
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="half_am_type" class="form-label">
-                                            <i class="fas fa-sun me-1 text-warning"></i>AM (Morning) - 9:00 AM to 1:00 PM
-                                        </label>
-                                        <select class="form-select" id="half_am_type" name="half_am_type" required onchange="validateAndUpdateHalfDay()">
-                                            <option value="">Select AM activity</option>
-                                            <option value="in_office">In Office</option>
-                                            <option value="wfh">Work From Home</option>
-                                            <option value="leave">On Leave</option>
-                                            <option value="absent">Absent/Not Working</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="half_pm_type" class="form-label">
-                                            <i class="fas fa-moon me-1 text-primary"></i>PM (Afternoon) - 2:00 PM to 6:00 PM
-                                        </label>
-                                        <select class="form-select" id="half_pm_type" name="half_pm_type" required onchange="validateAndUpdateHalfDay()">
-                                            <option value="">Select PM activity</option>
-                                            <option value="in_office">In Office</option>
-                                            <option value="wfh">Work From Home</option>
-                                            <option value="leave">On Leave</option>
-                                            <option value="absent">Absent/Not Working</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div id="halfDayValidation" class="alert alert-warning mt-3" style="display: none;">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    <span id="halfDayValidationMessage"></span>
-                                </div>
-                                <div id="halfDaySummary" class="alert alert-success mt-3" style="display: none;">
-                                    <i class="fas fa-check-circle me-2"></i>
-                                    <strong>Day Schedule:</strong> <span id="halfDaySummaryText"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Location -->
-                    <div class="row mb-4">
-                        <div class="col-12">
-                            <label for="location" class="form-label">Location</label>
-                            <input type="text" class="form-control" id="location" name="location" 
-                                   placeholder="e.g., BL-A-5F, Home, Client Site, Conference Room">
-                        </div>
-                    </div>
-
-                    <!-- Time Tracking Section -->
-                    <div id="timeTrackingSection" style="display: none;">
-                        <div class="card mb-4">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0"><i class="fas fa-stopwatch me-2"></i>Time Tracking</h6>
-                            </div>
-                            <div class="card-body">
-                                <!-- Full Day Timing -->
-                                <div id="fullDayTiming" style="display: none;">
-                                    <div class="alert alert-info mb-3" id="timingInstructions">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        <span id="timingInstructionsText">Specify your work hours for the day.</span>
-                                    </div>
-                                    <div class="row mb-3">
-                                        <div class="col-md-4">
-                                            <label for="in_time" class="form-label" id="in_time_label">Start Time</label>
-                                            <input type="time" class="form-control" id="in_time" name="in_time" onchange="calculateTotalHours()">
-                                            <small class="form-text text-muted" id="in_time_help">When did you start?</small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="out_time" class="form-label" id="out_time_label">End Time</label>
-                                            <input type="time" class="form-control" id="out_time" name="out_time" onchange="calculateTotalHours()">
-                                            <small class="form-text text-muted" id="out_time_help">When did you finish?</small>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label for="break_duration" class="form-label">Break Duration (minutes)</label>
-                                            <input type="number" class="form-control" id="break_duration" name="break_duration" 
-                                                   min="0" max="480" value="60" onchange="calculateTotalHours()">
-                                            <small class="form-text text-muted">Total break time</small>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Half Day Timing -->
-                                <div id="halfDayTiming" style="display: none;">
-                                    <div class="alert alert-info mb-3">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        <strong>Half Day Schedule:</strong> Provide timing for the working periods of your day.
-                                    </div>
-                                    
-<!-- Office Half -->
-<div id="officeHalf" class="mb-3" style="display: none;">
-    <h6 class="text-primary mb-2"><i class="fas fa-building me-1"></i>Office Time</h6>
-    <div class="row">
-        <!-- AM Office -->
-        <div class="col-md-6 am-office" style="display:none;">
-            <label for="office_in_time_am" class="form-label">AM Check In (Office)</label>
-            <input type="time" class="form-control" id="office_in_time_am" name="office_in_time_am">
-        </div>
-        <div class="col-md-6 am-office" style="display:none;">
-            <label for="office_out_time_am" class="form-label">AM Check Out (Office)</label>
-            <input type="time" class="form-control" id="office_out_time_am" name="office_out_time_am">
-        </div>
-        <!-- PM Office -->
-        <div class="col-md-6 pm-office" style="display:none;">
-            <label for="office_in_time_pm" class="form-label">PM Check In (Office)</label>
-            <input type="time" class="form-control" id="office_in_time_pm" name="office_in_time_pm">
-        </div>
-        <div class="col-md-6 pm-office" style="display:none;">
-            <label for="office_out_time_pm" class="form-label">PM Check Out (Office)</label>
-            <input type="time" class="form-control" id="office_out_time_pm" name="office_out_time_pm">
-        </div>
-    </div>
-</div>
-
-<!-- WFH Half -->
-<div id="wfhHalf" class="mb-3" style="display: none;">
-    <h6 class="text-info mb-2"><i class="fas fa-home me-1"></i>Work From Home Time</h6>
-    <div class="row">
-        <!-- AM WFH -->
-        <div class="col-md-6 am-wfh" style="display:none;">
-            <label for="wfh_in_time_am" class="form-label">AM Start (WFH)</label>
-            <input type="time" class="form-control" id="wfh_in_time_am" name="wfh_in_time_am">
-        </div>
-        <div class="col-md-6 am-wfh" style="display:none;">
-            <label for="wfh_out_time_am" class="form-label">AM End (WFH)</label>
-            <input type="time" class="form-control" id="wfh_out_time_am" name="wfh_out_time_am">
-        </div>
-        <!-- PM WFH -->
-        <div class="col-md-6 pm-wfh" style="display:none;">
-            <label for="wfh_in_time_pm" class="form-label">PM Start (WFH)</label>
-            <input type="time" class="form-control" id="wfh_in_time_pm" name="wfh_in_time_pm">
-        </div>
-        <div class="col-md-6 pm-wfh" style="display:none;">
-            <label for="wfh_out_time_pm" class="form-label">PM End (WFH)</label>
-            <input type="time" class="form-control" id="wfh_out_time_pm" name="wfh_out_time_pm">
-        </div>
-    </div>
-</div>
-
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label for="break_duration_half" class="form-label">Total Break Duration (minutes)</label>
-                                            <input type="number" class="form-control" id="break_duration_half" name="break_duration" 
-                                                   min="0" max="240" value="30" onchange="calculateTotalHours()">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="alert alert-success mt-3">
-                                    <small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span> hours</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Comments -->
-                    <div class="mb-3">
-                        <label for="comments" class="form-label">Comments (Optional)</label>
-                        <textarea class="form-control" id="comments" name="comments" rows="3" 
-                                  placeholder="Any additional comments, meeting details, or special notes"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane me-1"></i>Submit Status
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 {% if pending_mismatches %}
 <!-- Mismatch Resolution Modal -->
@@ -895,9 +689,7 @@ document.addEventListener('DOMContentLoaded', function () {
           <input type="number" class="form-control" id="break_duration" name="break_duration" min="0" max="480" value="${statusType==='leave_full'||statusType==='absent'?0:60}" onchange="calculateTotalHours()">
         </div>
       </div>
-      <div class="alert alert-success"><small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span></small></div>
     `;
-    // add time listeners for total hours
     setTimeout(() => { attachTimeCalculation(['in_time','out_time','break_duration']); }, 0);
   }
 
@@ -933,9 +725,8 @@ document.addEventListener('DOMContentLoaded', function () {
       let html = '';
       html += halfBlock(am, 'AM', 'am');
       html += halfBlock(pm, 'PM', 'pm');
-      html += `<div class="row mb-3"><div class="col-md-4"><label for="break_duration_half" class="form-label">Break Duration (min)</label>
-        <input type="number" class="form-control" id="break_duration_half" name="break_duration" min="0" max="240" value="30" onchange="calculateTotalHours()"></div></div>`;
-      html += `<div class="alert alert-success mt-2"><small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span></small></div>`;
+      html += `<div class=\"row mb-3\"><div class=\"col-md-4\"><label for=\"break_duration_half\" class=\"form-label\">Break Duration (min)</label>
+        <input type=\"number\" class=\"form-control\" id=\"break_duration_half\" name=\"break_duration\" min=\"0\" max=\"240\" value=\"30\" onchange=\"calculateTotalHours()\"></div></div>`;
       halfDayTimingSection.innerHTML = html;
       // Listeners for live hours
       const ids = [];
@@ -983,8 +774,14 @@ function calculateTotalHours() {
   mins -= parseInt(break_min) || 0;
   mins = Math.max(0, mins);
   let hours = (mins/60).toFixed(1);
-  let th = document.getElementById('totalHoursDisplay');
-  if (th) th.textContent = hours;
+  
+  // Update all display elements with class totalHoursDisplay
+  const displays = document.querySelectorAll('.totalHoursDisplay');
+  displays.forEach(el => {
+    if (el) el.textContent = hours;
+  });
+  
+  // Always ensure hidden field exists and update it
   let totalHoursField = document.querySelector('input[name="total_hours"]');
   if (!totalHoursField) {
     totalHoursField = document.createElement('input');
@@ -993,6 +790,9 @@ function calculateTotalHours() {
     document.getElementById('statusForm').appendChild(totalHoursField);
   }
   totalHoursField.value = hours;
+  
+  // Return the calculated hours for verification
+  return hours;
 }
 
 function getMinutesBetweenTimes(start, end) {
@@ -1006,7 +806,35 @@ function getMinutesBetweenTimes(start, end) {
 }
 
 function validateStatusForm() {
-  // Add minimal required validation (required field checks already in HTML)
+  // Force calculate total hours before submission
+  calculateTotalHours();
+  
+  // Ensure total_hours hidden field exists and has a value
+  let totalHoursField = document.querySelector('input[name="total_hours"]');
+  if (!totalHoursField) {
+    totalHoursField = document.createElement('input');
+    totalHoursField.type = 'hidden';
+    totalHoursField.name = 'total_hours';
+    document.getElementById('statusForm').appendChild(totalHoursField);
+  }
+  
+  // Get the calculated value from display
+  const displayValue = document.querySelector('.totalHoursDisplay')?.textContent || '0.0';
+  totalHoursField.value = displayValue;
+  
+  // Validate half-day selections if needed
+  const status = document.getElementById('status').value;
+  if (status === 'mixed_half') {
+    const amType = document.getElementById('half_am_type').value;
+    const pmType = document.getElementById('half_pm_type').value;
+    
+    if (!amType || !pmType) {
+      alert('Please select both AM and PM activities for half-day schedule.');
+      return false;
+    }
+  }
+  
+  console.log('Submitting with total_hours:', totalHoursField.value);
   return true;
 }
 

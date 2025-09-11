@@ -105,6 +105,15 @@ excel_sync_status = {
     'errors': []
 }
 
+# Import notification scheduler service
+try:
+    from notification_scheduler_service import notification_scheduler_service
+    notification_scheduler_available = True
+except ImportError as e:
+    print(f"⚠️ Notification scheduler service not available: {e}")
+    notification_scheduler_available = False
+    notification_scheduler_service = None
+
 @login_manager.user_loader
 def load_user(user_id):
     from models import User
@@ -2391,6 +2400,17 @@ def vendor_submit_status():
         office_out_time = request.form.get('office_out_time')
         wfh_in_time = request.form.get('wfh_in_time')
         wfh_out_time = request.form.get('wfh_out_time')
+        
+        # Half-day specific time fields
+        office_in_time_am = request.form.get('office_in_time_am')
+        office_out_time_am = request.form.get('office_out_time_am')
+        wfh_in_time_am = request.form.get('wfh_in_time_am')
+        wfh_out_time_am = request.form.get('wfh_out_time_am')
+        office_in_time_pm = request.form.get('office_in_time_pm')
+        office_out_time_pm = request.form.get('office_out_time_pm')
+        wfh_in_time_pm = request.form.get('wfh_in_time_pm')
+        wfh_out_time_pm = request.form.get('wfh_out_time_pm')
+        
         break_duration = int(request.form.get('break_duration', 0)) if request.form.get('break_duration') else 0
         total_hours = float(request.form.get('total_hours', 0)) if request.form.get('total_hours') else None
         
@@ -2415,6 +2435,74 @@ def vendor_submit_status():
         office_out_time_obj = parse_time(office_out_time)
         wfh_in_time_obj = parse_time(wfh_in_time)
         wfh_out_time_obj = parse_time(wfh_out_time)
+        
+        # Process half-day specific times based on status
+        if status_value == 'mixed_half':
+            # Consolidate half-day times into appropriate fields
+            # AM times
+            if half_am_type == 'in_office' and office_in_time_am and office_out_time_am:
+                office_in_time_obj = parse_time(office_in_time_am)
+                office_out_time_obj = parse_time(office_out_time_am) if not office_in_time_pm else None
+            elif half_am_type == 'wfh' and wfh_in_time_am and wfh_out_time_am:
+                wfh_in_time_obj = parse_time(wfh_in_time_am)
+                wfh_out_time_obj = parse_time(wfh_out_time_am) if not wfh_in_time_pm else None
+            
+            # PM times
+            if half_pm_type == 'in_office' and office_in_time_pm and office_out_time_pm:
+                if not office_in_time_obj:
+                    office_in_time_obj = parse_time(office_in_time_pm)
+                office_out_time_obj = parse_time(office_out_time_pm)
+            elif half_pm_type == 'wfh' and wfh_in_time_pm and wfh_out_time_pm:
+                if not wfh_in_time_obj:
+                    wfh_in_time_obj = parse_time(wfh_in_time_pm)
+                wfh_out_time_obj = parse_time(wfh_out_time_pm)
+            
+            # Calculate total hours if not provided
+            if not total_hours or total_hours == 0:
+                total_mins = 0
+                
+                # Helper function to calculate minutes between times
+                def calc_minutes(start_time, end_time):
+                    if start_time and end_time:
+                        start_mins = start_time.hour * 60 + start_time.minute
+                        end_mins = end_time.hour * 60 + end_time.minute
+                        if end_mins < start_mins:
+                            end_mins += 24 * 60
+                        return end_mins - start_mins
+                    return 0
+                
+                # Calculate AM hours
+                if half_am_type == 'in_office' and office_in_time_am and office_out_time_am:
+                    total_mins += calc_minutes(parse_time(office_in_time_am), parse_time(office_out_time_am))
+                elif half_am_type == 'wfh' and wfh_in_time_am and wfh_out_time_am:
+                    total_mins += calc_minutes(parse_time(wfh_in_time_am), parse_time(wfh_out_time_am))
+                
+                # Calculate PM hours
+                if half_pm_type == 'in_office' and office_in_time_pm and office_out_time_pm:
+                    total_mins += calc_minutes(parse_time(office_in_time_pm), parse_time(office_out_time_pm))
+                elif half_pm_type == 'wfh' and wfh_in_time_pm and wfh_out_time_pm:
+                    total_mins += calc_minutes(parse_time(wfh_in_time_pm), parse_time(wfh_out_time_pm))
+                
+                # Subtract break time and convert to hours
+                total_mins -= break_duration
+                total_hours = max(0, total_mins / 60.0)
+                print(f"Calculated total_hours for half-day: {total_hours}")
+        else:
+            # For full-day statuses, calculate total hours if not provided
+            if (not total_hours or total_hours == 0) and in_time_obj and out_time_obj:
+                def calc_minutes(start_time, end_time):
+                    if start_time and end_time:
+                        start_mins = start_time.hour * 60 + start_time.minute
+                        end_mins = end_time.hour * 60 + end_time.minute
+                        if end_mins < start_mins:
+                            end_mins += 24 * 60
+                        return end_mins - start_mins
+                    return 0
+                
+                total_mins = calc_minutes(in_time_obj, out_time_obj)
+                total_mins -= break_duration
+                total_hours = max(0, total_mins / 60.0)
+                print(f"Calculated total_hours for full-day: {total_hours}")
         
         # Convert string to enum
         status_map = {
@@ -3616,6 +3704,105 @@ def api_list_notification_files():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# ============================================
+# NOTIFICATION SCHEDULER ROUTES
+# ============================================
+
+@app.route('/admin/notification-scheduler')
+@login_required
+def admin_notification_scheduler():
+    """Admin page for notification scheduler control"""
+    if current_user.role != UserRole.ADMIN:
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    # Get current status
+    status = None
+    if notification_scheduler_available and notification_scheduler_service:
+        status = notification_scheduler_service.get_status()
+    
+    return render_template('admin_notification_scheduler.html',
+                         available=notification_scheduler_available,
+                         status=status)
+
+@app.route('/api/notification-scheduler/start', methods=['POST'])
+@login_required
+def api_notification_scheduler_start():
+    """Start the notification scheduler"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if not notification_scheduler_available or not notification_scheduler_service:
+        return jsonify({'error': 'Notification scheduler not available'}), 500
+    
+    result = notification_scheduler_service.start()
+    return jsonify(result)
+
+@app.route('/api/notification-scheduler/stop', methods=['POST'])
+@login_required
+def api_notification_scheduler_stop():
+    """Stop the notification scheduler"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if not notification_scheduler_available or not notification_scheduler_service:
+        return jsonify({'error': 'Notification scheduler not available'}), 500
+    
+    result = notification_scheduler_service.stop()
+    return jsonify(result)
+
+@app.route('/api/notification-scheduler/pause', methods=['POST'])
+@login_required
+def api_notification_scheduler_pause():
+    """Pause the notification scheduler"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if not notification_scheduler_available or not notification_scheduler_service:
+        return jsonify({'error': 'Notification scheduler not available'}), 500
+    
+    result = notification_scheduler_service.pause()
+    return jsonify(result)
+
+@app.route('/api/notification-scheduler/resume', methods=['POST'])
+@login_required
+def api_notification_scheduler_resume():
+    """Resume the notification scheduler"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if not notification_scheduler_available or not notification_scheduler_service:
+        return jsonify({'error': 'Notification scheduler not available'}), 500
+    
+    result = notification_scheduler_service.resume()
+    return jsonify(result)
+
+@app.route('/api/notification-scheduler/force-sync', methods=['POST'])
+@login_required
+def api_notification_scheduler_force_sync():
+    """Force an immediate notification sync"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if not notification_scheduler_available or not notification_scheduler_service:
+        return jsonify({'error': 'Notification scheduler not available'}), 500
+    
+    result = notification_scheduler_service.force_sync()
+    return jsonify(result)
+
+@app.route('/api/notification-scheduler/status', methods=['GET'])
+@login_required
+def api_notification_scheduler_status():
+    """Get notification scheduler status"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    if not notification_scheduler_available or not notification_scheduler_service:
+        return jsonify({'available': False, 'error': 'Notification scheduler not available'}), 200
+    
+    status = notification_scheduler_service.get_status()
+    return jsonify({'available': True, 'status': status})
+
 if __name__ == '__main__':
     print("\n" + "="*70)
     print("ATTENDO - Starting Application...")
@@ -3626,9 +3813,24 @@ if __name__ == '__main__':
         create_tables()
         print("Database initialized. Default Admin user ensured (Admin / admin123).")
     
-    # Start notification scheduler
+    # Start notification scheduler (old system)
     start_notification_scheduler()
-    print("Notification scheduler started!")
+    print("Notification scheduler (old) started!")
+    
+    # Start enhanced notification scheduler service
+    if notification_scheduler_available and notification_scheduler_service:
+        try:
+            notification_scheduler_service.init_app(app)
+            result = notification_scheduler_service.start()
+            if result.get('success'):
+                print("✅ Enhanced notification scheduler started successfully!")
+                print("   - Checks every 10 minutes for scheduled notifications")
+                print("   - Auto-removes sent notifications")
+                print("   - Syncs to network folder for Power Automate")
+            else:
+                print(f"⚠️ Enhanced notification scheduler failed to start: {result.get('message')}")
+        except Exception as e:
+            print(f"⚠️ Enhanced notification scheduler error: {e}")
     
     # Load Excel sync network folder from system config
     try:
