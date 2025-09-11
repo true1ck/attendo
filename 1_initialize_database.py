@@ -38,6 +38,8 @@ try:
         MismatchRecord, NotificationLog, AuditLog, SystemConfiguration,
         LeaveRecord, WFHRecord, UserRole, AttendanceStatus, ApprovalStatus
     )
+    # Import SystemIssue model for technical system health monitoring
+    from system_issues import SystemIssue
     
     print("✅ Successfully imported Flask app and models")
     
@@ -207,7 +209,8 @@ def verify_database():
             required_tables = [
                 'users', 'vendors', 'managers', 'daily_statuses', 
                 'swipe_records', 'holidays', 'mismatch_records',
-                'notification_logs', 'audit_logs', 'system_configurations'
+                'notification_logs', 'audit_logs', 'system_configurations',
+                'system_issues'
             ]
             
             missing_tables = [table for table in required_tables if table not in tables]

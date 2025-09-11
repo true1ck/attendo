@@ -299,61 +299,37 @@ def admin_dashboard():
         Holiday.holiday_date >= date.today()
     ).order_by(Holiday.holiday_date.asc()).limit(5).all()
     
-    # Calculate actual SYSTEM/TECHNICAL issues (not business workflow items)
-    system_issues = 0
-    system_issues_breakdown = []
-    
-    # 1. Check Excel sync errors (TECHNICAL ISSUE)
-    if excel_sync_status.get('errors') and len(excel_sync_status['errors']) > 0:
-        error_count = len(excel_sync_status['errors'])
-        system_issues += 1  # Count as 1 issue type, not per error
-        latest_error = excel_sync_status['errors'][-1]  # Get latest error
-        system_issues_breakdown.append(f"Excel sync failures detected - {error_count} recent error{'s' if error_count > 1 else ''}: {latest_error[:100]}...")
-    
-    # 2. Check if Excel sync service is configured but not running (TECHNICAL ISSUE)
-    if app.config.get('EXCEL_NETWORK_FOLDER') and not excel_sync_running:
-        system_issues += 1
-        system_issues_breakdown.append("Excel sync service is stopped (should be running for notification automation)")
-    
-    # 3. Check for API/Service failures (only add real failures)
+    # Get persistent system issues from database
     try:
-        # Test critical database operations
-        test_count = db.session.query(User).count()
-        if test_count < 0:  # This should never happen, but if it does, it's an issue
-            system_issues += 1
-            system_issues_breakdown.append("Database query returned invalid results")
-    except Exception as e:
-        # Only add if there's an actual database connectivity problem
-        system_issues += 1
-        system_issues_breakdown.append(f"Database connectivity issue: {str(e)[:100]}")
-    
-    # 4. Check for critical configuration missing
-    critical_missing_config = []
-    if not app.config.get('SECRET_KEY') or app.config['SECRET_KEY'] == 'dev-secret-change-in-production':
-        critical_missing_config.append('SECRET_KEY not properly configured')
-    
-    if critical_missing_config:
-        system_issues += 1
-        system_issues_breakdown.append(f"Critical configuration issues: {', '.join(critical_missing_config)}")
-    
-    # 5. Check for data integrity issues (only if significant)
-    try:
-        orphaned_vendors = User.query.filter(
-            User.role == UserRole.VENDOR,
-            ~User.id.in_(db.session.query(Vendor.user_id).filter(Vendor.user_id.isnot(None)))
-        ).count()
+        from system_issues import SystemIssueManager, report_excel_sync_error, report_database_error, report_service_down
         
-        orphaned_managers = User.query.filter(
-            User.role == UserRole.MANAGER,
-            ~User.id.in_(db.session.query(Manager.user_id).filter(Manager.user_id.isnot(None)))
-        ).count()
+        # Check for new issues and report them
         
-        total_orphaned = orphaned_vendors + orphaned_managers
-        if total_orphaned > 5:  # Only report if significant number of orphaned accounts
-            system_issues += 1
-            system_issues_breakdown.append(f"Data integrity warning: {total_orphaned} user accounts without proper profiles (may affect system functionality)")
-    except Exception:
-        pass  # Skip if query fails - don't report as an issue
+        # 1. Check Excel sync errors
+        if excel_sync_status.get('errors') and len(excel_sync_status['errors']) > 0:
+            latest_error = excel_sync_status['errors'][-1]
+            report_excel_sync_error(latest_error)
+        
+        # 2. Check if Excel sync service should be running but isn't
+        if app.config.get('EXCEL_NETWORK_FOLDER') and not excel_sync_running:
+            report_service_down("Excel Sync Service")
+        
+        # 3. Test database connectivity
+        try:
+            test_count = db.session.query(User).count()
+            if test_count < 0:  # Invalid result
+                report_database_error("Database query returned invalid results")
+        except Exception as e:
+            report_database_error(str(e))
+        
+        # Get current active issues
+        system_issues = SystemIssueManager.get_active_issues_count()
+        active_issues = SystemIssueManager.get_active_issues()
+        
+    except ImportError:
+        # Fallback if system_issues module not available
+        system_issues = 0
+        active_issues = []
     
     # Get business workflow metrics (separate from system issues)
     pending_mismatches = MismatchRecord.query.filter_by(manager_approval=ApprovalStatus.PENDING).count()
@@ -364,7 +340,7 @@ def admin_dashboard():
         'total_managers': total_managers,
         'todays_submissions': total_statuses_today,
         'system_issues': system_issues,
-        'system_issues_breakdown': system_issues_breakdown,
+        'active_issues': [issue.to_dict() for issue in active_issues] if 'active_issues' in locals() else [],
         'pending_mismatches': pending_mismatches  # Business metric, not system issue
     }
     
@@ -3291,6 +3267,53 @@ def api_clear_notifications():
     
     except Exception as e:
         excel_log_message(f"❌ API clear notifications error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# System Issues API endpoints
+@app.route('/api/system-issues')
+@login_required
+def api_get_system_issues():
+    """Get all active system issues"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        from system_issues import SystemIssueManager
+        active_issues = SystemIssueManager.get_active_issues()
+        return jsonify({
+            'success': True,
+            'issues': [issue.to_dict() for issue in active_issues],
+            'count': len(active_issues)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/system-issues/<int:issue_id>/resolve', methods=['POST'])
+@login_required
+def api_resolve_system_issue(issue_id):
+    """Mark a system issue as resolved"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        resolution_notes = data.get('resolution_notes', '')
+        
+        from system_issues import SystemIssueManager
+        success = SystemIssueManager.resolve_issue(issue_id, current_user.id, resolution_notes)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Issue marked as resolved'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Issue not found or already resolved'
+            }), 404
+            
+    except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/excel-sync/list-files')

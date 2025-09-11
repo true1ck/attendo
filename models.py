@@ -334,3 +334,10 @@ class EmailNotificationLog(db.Model):
     
     def __repr__(self):
         return f'<EmailNotificationLog {self.manager_id} - {self.notification_type} - {self.status}>'
+
+# Import SystemIssue model from system_issues.py
+try:
+    from system_issues import SystemIssue, SystemIssueManager, IssueType, IssueSeverity
+    from system_issues import report_api_failure, report_database_error, report_excel_sync_error, report_service_down
+except ImportError:
+    pass  # SystemIssue will be defined elsewhere or not available

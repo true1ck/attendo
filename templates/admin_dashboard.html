@@ -754,46 +754,207 @@ async function refreshExcelNotifications() {
 
 function showSystemIssues() {
     {% if system_stats.system_issues and system_stats.system_issues > 0 %}
-    const issuesBreakdown = {{ system_stats.system_issues_breakdown | tojson }};
-    
-    let message = '🔧 Technical System Issues Detected:\n\n';
-    issuesBreakdown.forEach((issue, index) => {
-        message += `${index + 1}. ${issue}\n\n`;
-    });
-    
-    message += '🛠️ Recommended Actions:\n';
-    
-    // Specific actions based on issue types
-    if (issuesBreakdown.some(issue => issue.includes('Excel sync failures'))) {
-        message += '• Open Excel Sync Admin panel to view error details and restart sync\n';
-        message += '• Check network drive connectivity and file permissions\n';
-    }
-    if (issuesBreakdown.some(issue => issue.includes('Excel sync service is stopped'))) {
-        message += '• Navigate to Excel Sync Admin and click "Start Service"\n';
-        message += '• Verify network folder path is correctly configured\n';
-    }
-    if (issuesBreakdown.some(issue => issue.includes('Database connectivity'))) {
-        message += '• Check database server status and connection settings\n';
-        message += '• Restart the application if database was temporarily unavailable\n';
-    }
-    if (issuesBreakdown.some(issue => issue.includes('Critical configuration'))) {
-        message += '• Review application configuration and environment variables\n';
-        message += '• Update production settings for security\n';
-    }
-    if (issuesBreakdown.some(issue => issue.includes('Data integrity'))) {
-        message += '• Review user accounts in System Settings\n';
-        message += '• Clean up or fix orphaned user profiles\n';
-    }
-    
-    // Quick action buttons
-    message += '\n🚀 Quick Actions:\n';
-    message += '• Click "Excel Sync Admin" button above for sync issues\n';
-    message += '• Use "System Settings" for user management\n';
-    
-    message += '\nℹ️ These are actual technical problems requiring admin intervention.\nNormal business operations (approvals, submissions) are tracked separately.';
-    
-    alert(message);
+    // Show detailed system issues modal
+    showSystemIssuesModal();
     {% endif %}
+}
+
+function showSystemIssuesModal() {
+    // Create modal HTML
+    const modalHTML = `
+        <div class="modal fade" id="systemIssuesModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Technical System Issues ({{ system_stats.system_issues }})
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="systemIssuesContent">
+                            <div class="text-center">
+                                <div class="spinner-border" role="status"></div>
+                                <p class="mt-2">Loading system issues...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('systemIssuesModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to DOM
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('systemIssuesModal'));
+    modal.show();
+    
+    // Load issues data
+    loadSystemIssuesData();
+}
+
+function loadSystemIssuesData() {
+    fetch('/api/system-issues', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const content = document.getElementById('systemIssuesContent');
+        
+        if (data.success && data.issues && data.issues.length > 0) {
+            let html = '';
+            
+            data.issues.forEach((issue, index) => {
+                const severityColor = getSeverityColor(issue.severity);
+                const severityIcon = getSeverityIcon(issue.severity);
+                
+                html += `
+                    <div class="card mb-3 border-${severityColor}">
+                        <div class="card-header bg-${severityColor} text-white d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">
+                                    ${severityIcon} ${issue.title}
+                                    <span class="badge badge-light text-dark ms-2">ID: ${issue.id}</span>
+                                </h6>
+                            </div>
+                            <div>
+                                <small>Severity: ${issue.severity.toUpperCase()}</small>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2"><strong>Description:</strong> ${issue.description}</p>
+                            
+                            ${issue.api_endpoint ? `<p class="mb-2"><strong>API Endpoint:</strong> <code>${issue.api_endpoint}</code></p>` : ''}
+                            
+                            ${issue.error_details ? `
+                                <div class="mb-2">
+                                    <strong>Error Details:</strong>
+                                    <pre class="bg-light p-2 small" style="max-height: 150px; overflow-y: auto;">${issue.error_details}</pre>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="row text-muted small">
+                                <div class="col-md-6">
+                                    <strong>First Occurred:</strong> ${issue.first_occurred}<br>
+                                    <strong>Last Occurred:</strong> ${issue.last_occurred}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Occurrences:</strong> ${issue.occurrence_count}<br>
+                                    <strong>Issue Type:</strong> ${issue.issue_type.replace('_', ' ').toUpperCase()}
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <button class="btn btn-success btn-sm" onclick="resolveIssue(${issue.id}, '${issue.title}')">
+                                        <i class="fas fa-check"></i> Mark as Resolved
+                                    </button>
+                                </div>
+                                <div>
+                                    ${getQuickActionButtons(issue.issue_type)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+        } else {
+            content.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    <strong>Great!</strong> No active system issues detected.
+                    All technical systems are running normally.
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading system issues:', error);
+        document.getElementById('systemIssuesContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                Error loading system issues: ${error.message}
+            </div>
+        `;
+    });
+}
+
+function getSeverityColor(severity) {
+    switch (severity) {
+        case 'critical': return 'danger';
+        case 'high': return 'warning';
+        case 'medium': return 'info';
+        case 'low': return 'secondary';
+        default: return 'info';
+    }
+}
+
+function getSeverityIcon(severity) {
+    switch (severity) {
+        case 'critical': return '<i class="fas fa-fire"></i>';
+        case 'high': return '<i class="fas fa-exclamation-triangle"></i>';
+        case 'medium': return '<i class="fas fa-info-circle"></i>';
+        case 'low': return '<i class="fas fa-circle"></i>';
+        default: return '<i class="fas fa-question-circle"></i>';
+    }
+}
+
+function getQuickActionButtons(issueType) {
+    switch (issueType) {
+        case 'excel_sync_error':
+        case 'service_down':
+            return '<button class="btn btn-outline-primary btn-sm" onclick="window.location.href=\'/admin/excel-sync\'"><i class="fas fa-cog"></i> Excel Sync Admin</button>';
+        case 'database_error':
+            return '<button class="btn btn-outline-secondary btn-sm" onclick="window.location.reload()"><i class="fas fa-redo"></i> Refresh Page</button>';
+        default:
+            return '';
+    }
+}
+
+function resolveIssue(issueId, issueTitle) {
+    const notes = prompt(`Resolving: ${issueTitle}\n\nOptional resolution notes (describe what you did to fix it):`);
+    
+    if (notes === null) return; // User cancelled
+    
+    fetch(`/api/system-issues/${issueId}/resolve`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            resolution_notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ Issue marked as resolved successfully!');
+            // Reload the issues and refresh the page
+            loadSystemIssuesData();
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            alert('❌ Error resolving issue: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error resolving issue:', error);
+        alert('❌ Error resolving issue: ' + error.message);
+    });
 }
 
 // Enable Bootstrap tooltips
