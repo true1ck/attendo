@@ -283,6 +283,92 @@
 
 <!-- Enhanced Status Submission Modal -->
 <div class="modal fade" id="submitStatusModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title"><i class="fas fa-clock me-2"></i>Submit Daily Status</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="{{ url_for('vendor_submit_status') }}" method="POST" id="statusForm" onsubmit="return validateStatusForm()">
+        <div class="modal-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <label for="status_date" class="form-label">Date</label>
+              <input type="date" class="form-control" id="status_date" name="status_date" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="col-md-6">
+              <label for="status" class="form-label">Work Status</label>
+              <select class="form-select" id="status" name="status" required>
+                <option value="">Select Status</option>
+                <option value="in_office_full">In Office - Full Day</option>
+                <option value="wfh_full">Work From Home - Full Day</option>
+                <option value="leave_full">On Leave - Full Day</option>
+                <option value="mixed_half">Half Day (Mixed Schedule)</option>
+                <option value="absent">Absent</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Half Day Section -->
+          <div id="halfDaySection" style="display:none;" class="mb-4">
+            <div class="card">
+              <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Half-Day Schedule (specify both halves)</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-6">
+                    <label for="half_am_type" class="form-label">AM (9:00 AM - 1:00 PM)</label>
+                    <select class="form-select" id="half_am_type" name="half_am_type">
+                      <option value="">Select</option>
+                      <option value="in_office">In Office</option>
+                      <option value="wfh">Work From Home</option>
+                      <option value="leave">On Leave</option>
+                      <option value="absent">Absent</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label for="half_pm_type" class="form-label">PM (2:00 PM - 6:00 PM)</label>
+                    <select class="form-select" id="half_pm_type" name="half_pm_type">
+                      <option value="">Select</option>
+                      <option value="in_office">In Office</option>
+                      <option value="wfh">Work From Home</option>
+                      <option value="leave">On Leave</option>
+                      <option value="absent">Absent</option>
+                    </select>
+                  </div>
+                </div>
+                <div id="dshalf-warn" class="mt-2 text-warning fw-bold" style="display:none;"></div>
+                <div id="halfDayTimingSection"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Full Day Section for in_office_full / wfh_full / leave_full / absent -->
+          <div id="fullDayTimingSection" class="mb-4" style="display:none;"></div>
+
+          <div class="row mb-4">
+            <div class="col-12">
+              <label for="location" class="form-label">Location</label>
+              <input type="text" class="form-control" id="location" name="location" placeholder="e.g., BL-A-5F, Home, Client Site, Conference Room">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="comments" class="form-label">Comments (Optional)</label>
+            <textarea class="form-control" id="comments" name="comments" rows="3" placeholder="Any additional comments, meeting details, or special notes"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane me-1"></i>Submit Status
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- End Enhanced Status Submission Modal -->
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
@@ -723,6 +809,209 @@
 </div>
 
 <script>
+
+///////////////////////////////////////////
+// Submit Daily Status - Form Logic (UI) //
+///////////////////////////////////////////
+
+const statusOptions = {
+    in_office_full: {
+        labelIn: 'Check In Time',
+        labelOut: 'Check Out Time',
+        helpIn: 'Enter office check-in time',
+        helpOut: 'Enter office check-out time',
+    },
+    wfh_full: {
+        labelIn: 'WFH Start Time',
+        labelOut: 'WFH End Time',
+        helpIn: 'Enter work from home start time',
+        helpOut: 'Enter work from home end time',
+    },
+    leave_full: {
+        labelIn: 'Partial Work Start (Optional)',
+        labelOut: 'Partial Work End (Optional)',
+        helpIn: '',
+        helpOut: '',
+    },
+    absent: {
+        labelIn: 'Period Start (Optional)',
+        labelOut: 'Period End (Optional)',
+        helpIn: '',
+        helpOut: '',
+    },
+};
+
+document.addEventListener('DOMContentLoaded', function () {
+  const statusSelect = document.getElementById('status');
+  const form = document.getElementById('statusForm');
+  const halfDaySection = document.getElementById('halfDaySection');
+  const fullDayTimingSection = document.getElementById('fullDayTimingSection');
+  const half_am_type = document.getElementById('half_am_type');
+  const half_pm_type = document.getElementById('half_pm_type');
+  const halfDayTimingSection = document.getElementById('halfDayTimingSection');
+
+  // Status switcher
+  statusSelect.addEventListener('change', function () {
+    const status = statusSelect.value;
+    // Hide all timing sections initially
+    halfDaySection.style.display = 'none';
+    fullDayTimingSection.style.display = 'none';
+    halfDayTimingSection.innerHTML = '';
+    fullDayTimingSection.innerHTML = '';
+    document.getElementById('location').value = '';
+    if (status === 'mixed_half') {
+      halfDaySection.style.display = '';
+      renderHalfDayFields();
+    } else if (status === 'in_office_full' || status === 'wfh_full' || status === 'leave_full' || status === 'absent') {
+      renderFullDayFields(status);
+      fullDayTimingSection.style.display = '';
+      if(status === 'in_office_full') document.getElementById('location').value = 'BL-A-5F';
+      if(status === 'wfh_full') document.getElementById('location').value = 'Home';
+      if(status === 'leave_full') document.getElementById('location').value = 'On Leave';
+      if(status === 'absent') document.getElementById('location').value = 'Absent';
+    }
+  });
+
+  // Render fields for full day options
+  function renderFullDayFields(statusType) {
+    const labels = statusOptions[statusType];
+    fullDayTimingSection.innerHTML = `
+      <div class="alert alert-info mb-2"><small>
+        ${statusType === 'leave_full' || statusType === 'absent' ? 'Optionally track any partial presence. Leave blank if not by default.' : 'Fill your work schedule for the entire day.'}
+      </small></div>
+      <div class="row mb-3">
+        <div class="col-md-4">
+          <label for="in_time" class="form-label">${labels.labelIn}</label>
+          <input type="time" class="form-control" id="in_time" name="in_time">
+          ${labels.helpIn ? `<div class="form-text">${labels.helpIn}</div>` : ''}
+        </div>
+        <div class="col-md-4">
+          <label for="out_time" class="form-label">${labels.labelOut}</label>
+          <input type="time" class="form-control" id="out_time" name="out_time">
+          ${labels.helpOut ? `<div class="form-text">${labels.helpOut}</div>` : ''}
+        </div>
+        <div class="col-md-4">
+          <label for="break_duration" class="form-label">Break Duration (min)</label>
+          <input type="number" class="form-control" id="break_duration" name="break_duration" min="0" max="480" value="${statusType==='leave_full'||statusType==='absent'?0:60}" onchange="calculateTotalHours()">
+        </div>
+      </div>
+      <div class="alert alert-success"><small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span></small></div>
+    `;
+    // add time listeners for total hours
+    setTimeout(() => { attachTimeCalculation(['in_time','out_time','break_duration']); }, 0);
+  }
+
+  // Render fields for half day options
+  function renderHalfDayFields() {
+    function halfBlock(type, label, idx) {
+      let html = '';
+      if (type === 'in_office') {
+        html = `
+          <div class="row mb-3">
+            <div class="col-md-4"><label class="form-label">${label} Check In (Office)</label><input type="time" class="form-control" id="office_in_time_${idx}" name="office_in_time_${idx}"></div>
+            <div class="col-md-4"><label class="form-label">${label} Check Out (Office)</label><input type="time" class="form-control" id="office_out_time_${idx}" name="office_out_time_${idx}"></div>
+            <div class="col-md-4"></div>
+          </div>`;
+      } else if (type === 'wfh') {
+        html = `
+          <div class="row mb-3">
+            <div class="col-md-4"><label class="form-label">${label} Start (WFH)</label><input type="time" class="form-control" id="wfh_in_time_${idx}" name="wfh_in_time_${idx}"></div>
+            <div class="col-md-4"><label class="form-label">${label} End (WFH)</label><input type="time" class="form-control" id="wfh_out_time_${idx}" name="wfh_out_time_${idx}"></div>
+            <div class="col-md-4"></div>
+          </div>`;
+      } else {
+        // Leave or Absent, show nothing
+        html = '';
+      }
+      return html;
+    }
+    // Compose two halves
+    let am = half_am_type.value;
+    let pm = half_pm_type.value;
+    // Fill on each change
+    function redraw() {
+      let html = '';
+      html += halfBlock(am, 'AM', 'am');
+      html += halfBlock(pm, 'PM', 'pm');
+      html += `<div class="row mb-3"><div class="col-md-4"><label for="break_duration_half" class="form-label">Break Duration (min)</label>
+        <input type="number" class="form-control" id="break_duration_half" name="break_duration" min="0" max="240" value="30" onchange="calculateTotalHours()"></div></div>`;
+      html += `<div class="alert alert-success mt-2"><small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span></small></div>`;
+      halfDayTimingSection.innerHTML = html;
+      // Listeners for live hours
+      const ids = [];
+      if (am === 'in_office') ids.push('office_in_time_am', 'office_out_time_am');
+      if (am === 'wfh') ids.push('wfh_in_time_am', 'wfh_out_time_am');
+      if (pm === 'in_office') ids.push('office_in_time_pm', 'office_out_time_pm');
+      if (pm === 'wfh') ids.push('wfh_in_time_pm', 'wfh_out_time_pm');
+      ids.push('break_duration_half');
+      setTimeout(() => { attachTimeCalculation(ids); }, 0);
+    }
+    half_am_type.onchange = half_pm_type.onchange = function () {
+      am = half_am_type.value;
+      pm = half_pm_type.value;
+      redraw();
+    };
+    redraw();
+  }
+
+  function attachTimeCalculation(ids) {
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.onchange = calculateTotalHours;
+    });
+  }
+
+  // Initial render (if form is not cleared)
+  if(statusSelect.value) statusSelect.dispatchEvent(new Event('change'));
+});
+
+function calculateTotalHours() {
+  // Try to find field context
+  let in_am = document.getElementById('office_in_time_am'), out_am = document.getElementById('office_out_time_am');
+  let in_am_w = document.getElementById('wfh_in_time_am'), out_am_w = document.getElementById('wfh_out_time_am');
+  let in_pm = document.getElementById('office_in_time_pm'), out_pm = document.getElementById('office_out_time_pm');
+  let in_pm_w = document.getElementById('wfh_in_time_pm'), out_pm_w = document.getElementById('wfh_out_time_pm');
+  let break_min = document.getElementById('break_duration_half')?.value || document.getElementById('break_duration')?.value || 0;
+  let in_time = document.getElementById('in_time'), out_time = document.getElementById('out_time');
+
+  let mins = 0;
+  if (in_am && out_am && in_am.value && out_am.value) mins += getMinutesBetweenTimes(in_am.value, out_am.value);
+  if (in_am_w && out_am_w && in_am_w.value && out_am_w.value) mins += getMinutesBetweenTimes(in_am_w.value, out_am_w.value);
+  if (in_pm && out_pm && in_pm.value && out_pm.value) mins += getMinutesBetweenTimes(in_pm.value, out_pm.value);
+  if (in_pm_w && out_pm_w && in_pm_w.value && out_pm_w.value) mins += getMinutesBetweenTimes(in_pm_w.value, out_pm_w.value);
+  if (in_time && out_time && in_time.value && out_time.value) mins += getMinutesBetweenTimes(in_time.value, out_time.value);
+  mins -= parseInt(break_min) || 0;
+  mins = Math.max(0, mins);
+  let hours = (mins/60).toFixed(1);
+  let th = document.getElementById('totalHoursDisplay');
+  if (th) th.textContent = hours;
+  let totalHoursField = document.querySelector('input[name="total_hours"]');
+  if (!totalHoursField) {
+    totalHoursField = document.createElement('input');
+    totalHoursField.type = 'hidden';
+    totalHoursField.name = 'total_hours';
+    document.getElementById('statusForm').appendChild(totalHoursField);
+  }
+  totalHoursField.value = hours;
+}
+
+function getMinutesBetweenTimes(start, end) {
+  // Assumes HH:MM
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  let m1 = sh * 60 + sm;
+  let m2 = eh * 60 + em;
+  if (m2 < m1) m2 += 24*60;
+  return m2 - m1;
+}
+
+function validateStatusForm() {
+  // Add minimal required validation (required field checks already in HTML)
+  return true;
+}
+
+// --- Rest of existing scripts for dashboard follow below ---
+
 function editStatus(statusId) {
     // Fetch status data and populate edit modal
     fetch('/vendor/edit-status/' + statusId)
