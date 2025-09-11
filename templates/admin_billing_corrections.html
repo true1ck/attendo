@@ -32,24 +32,67 @@
     <div class="card">
       <div class="card-header"><i class="fas fa-history me-2"></i>Recent Corrections</div>
       <div class="card-body">
+        {% if corrections %}
         <div class="table-responsive">
           <table class="table table-sm table-striped">
-            <thead><tr><th>Time</th><th>Vendor</th><th>Date</th><th>Hours</th><th>Reason</th></tr></thead>
+            <thead><tr><th>Time</th><th>Vendor</th><th>Date</th><th>Hours Update</th><th>Reason</th></tr></thead>
             <tbody>
               {% for c in corrections %}
-              {% set data = c.new_values and c.new_values | safe %}
-              <tr>
-                <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M:%S') if c.created_at else '-' }}</td>
-                <td>{{ (data and (data|loadjson).vendor_id) if false else (c.new_values or '') }}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-              </tr>
+              {% if c.new_values %}
+                {% set data = c.new_values | fromjson %}
+                <tr>
+                  <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M:%S') if c.created_at else '-' }}</td>
+                  <td>{{ data.vendor_id or '-' }}</td>
+                  <td>{{ data.date or '-' }}</td>
+                  <td>
+                    {% if data.corrected_hours %}
+                      {% if c.old_values %}
+                        {% set old_data = c.old_values | fromjson %}
+                        {% if old_data.previous_hours %}
+                          <div class="d-flex align-items-center">
+                            <span class="badge bg-secondary me-2">{{ old_data.previous_hours }} hrs</span>
+                            <i class="fas fa-arrow-right text-muted me-2"></i>
+                            <span class="badge bg-success">{{ data.corrected_hours }} hrs</span>
+                          </div>
+                          <small class="text-muted">
+                            {% if old_data.source == 'swipe_record' %}
+                              (from swipe data)
+                            {% else %}
+                              (from daily status)
+                            {% endif %}
+                          </small>
+                        {% else %}
+                          <span class="badge bg-success">{{ data.corrected_hours }} hrs</span>
+                          <small class="text-muted d-block">(new entry)</small>
+                        {% endif %}
+                      {% else %}
+                        <span class="badge bg-success">{{ data.corrected_hours }} hrs</span>
+                        <small class="text-muted d-block">(new entry)</small>
+                      {% endif %}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>{{ data.reason or '-' }}</td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td>{{ c.created_at.strftime('%Y-%m-%d %H:%M:%S') if c.created_at else '-' }}</td>
+                  <td colspan="4" class="text-muted">Invalid correction data</td>
+                </tr>
+              {% endif %}
               {% endfor %}
             </tbody>
           </table>
         </div>
-        <p class="text-muted">Note: Corrections are logged in Audit Logs with action BILLING_CORRECTION.</p>
+        {% else %}
+        <div class="text-center py-4">
+          <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+          <p class="text-muted">No billing corrections have been recorded yet.</p>
+          <p><small>Use the form on the left to record your first correction.</small></p>
+        </div>
+        {% endif %}
+        <p class="text-muted mt-3">Note: Corrections are logged in Audit Logs with action BILLING_CORRECTION.</p>
       </div>
     </div>
   </div>

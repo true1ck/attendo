@@ -418,12 +418,6 @@
             </div>
             <div class="card-body">
                 <div class="form-group mb-3">
-                    <label class="form-label small">Prediction Sensitivity</label>
-                    <input type="range" class="form-range" id="sensitivity" min="50" max="95" value="87" oninput="updateSensitivity(this.value)">
-                    <small class="text-muted">Current: <span id="sensitivityValue">87%</span></small>
-                </div>
-                
-                <div class="form-group mb-3">
                     <label class="form-label small">Prediction Window</label>
                     <select class="form-control form-control-sm" id="predictionWindow" onchange="updatePredictionWindow()">
                         <option value="3">3 days</option>
@@ -506,9 +500,6 @@
                     </button>
                     <button class="btn btn-warning" onclick="viewModelLogs()">
                         <i class="fas fa-history me-2"></i>Model Training Logs
-                    </button>
-                    <button class="btn btn-danger" onclick="emergencyOverride()">
-                        <i class="fas fa-exclamation-circle me-2"></i>Emergency Override
                     </button>
                 </div>
             </div>
@@ -823,23 +814,17 @@ function implementRecommendation(type) {
     alert(`Implementing: ${recommendations[type]}\\n\\nAction items created and assigned to relevant managers.`);
 }
 
-function updateSensitivity(value) {
-    document.getElementById('sensitivityValue').textContent = value + '%';
-}
-
 function updatePredictionWindow() {
     const window = document.getElementById('predictionWindow').value;
     alert(`Prediction window updated to ${window} days. Recalculating predictions...`);
 }
 
 function applyAISettings() {
-    alert('AI Settings Applied Successfully!\\n\\nNew configuration active:\\n- Updated prediction sensitivity\\n- Modified intervention rules\\n- Real-time processing enabled');
+    alert('AI Settings Applied Successfully!\\n\\nNew configuration active:\\n- Modified intervention rules\\n- Real-time processing enabled');
 }
 
 function resetAISettings() {
     if (confirm('Reset AI settings to default values?')) {
-        document.getElementById('sensitivity').value = 87;
-        document.getElementById('sensitivityValue').textContent = '87%';
         document.getElementById('predictionWindow').value = 7;
         document.getElementById('autoIntervention').checked = true;
         document.getElementById('realTimeUpdates').checked = true;
@@ -876,19 +861,6 @@ async function viewModelLogs() {
         alert('Recent AI Logs\n\n' + (lines.join('\n') || 'No logs available'));
     } catch (e) {
         alert('Error: ' + e.message);
-    }
-}
-
-async function emergencyOverride() {
-    if (confirm('Emergency Override will disable AI predictions temporarily. Continue?')) {
-        try {
-            const res = await fetch('/api/ai/override', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enable: false }) });
-            const data = await res.json();
-            if (!res.ok || data.status !== 'success') throw new Error(data.message || 'Failed to override');
-            alert('AI predictions temporarily disabled. System switched to manual mode.');
-        } catch (e) {
-            alert('Error: ' + e.message);
-        }
     }
 }
 

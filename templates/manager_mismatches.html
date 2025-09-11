@@ -68,9 +68,6 @@
                     <button class="btn btn-primary me-2" onclick="generateMismatchReport()">
                         <i class="fas fa-file-export me-1"></i>Export Report
                     </button>
-                    <button class="btn btn-outline-secondary" onclick="detectNewMismatches()">
-                        <i class="fas fa-search me-1"></i>Detect New Mismatches
-                    </button>
                 </div>
             </div>
         </div>
@@ -301,25 +298,5 @@ function generateMismatchReport() {
     window.open(`/api/export/mismatch-report?status=${status}&vendor=${vendor}&format=excel`, '_blank');
 }
 
-function detectNewMismatches() {
-    if (confirm('Detect new mismatches from recent swipe data? This may take a moment.')) {
-        fetch('/api/detect-mismatches', {
-            method: 'POST'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert(`Found ${data.new_mismatches} new mismatches!`);
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Network error occurred');
-        });
-    }
-}
 </script>
 {% endblock %}

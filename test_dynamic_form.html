@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Form Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Dynamic Form Behavior Test</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <label for="status" class="form-label">Work Status</label>
+                <select class="form-select" id="status" name="status" required onchange="handleStatusChange()">
+                    <option value="">Select Status</option>
+                    <option value="in_office_full">In Office - Full Day</option>
+                    <option value="in_office_half">Half Day (Mixed)</option>
+                    <option value="wfh_full">Work From Home - Full Day</option>
+                    <option value="wfh_half">Work From Home - Half Day</option>
+                    <option value="leave_full">On Leave - Full Day</option>
+                    <option value="leave_half">On Leave - Half Day</option>
+                    <option value="absent">Absent</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Location -->
+        <div class="row mb-4 mt-3">
+            <div class="col-12">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" class="form-control" id="location" name="location" 
+                       placeholder="e.g., BL-A-5F, Home, Client Site, Conference Room">
+            </div>
+        </div>
+
+        <!-- Half-day combination selection -->
+        <div id="halfDayComboSection" style="display: none;" class="mb-4">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Half-Day Schedule</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Important:</strong> For half-day status, please specify what you'll be doing in both AM (morning) and PM (afternoon) periods.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="half_am_type" class="form-label">AM (Morning) - 9:00 AM to 1:00 PM</label>
+                            <select class="form-select" id="half_am_type" name="half_am_type" onchange="validateHalfDaySelection()">
+                                <option value="">Select AM activity</option>
+                                <option value="in_office">In Office</option>
+                                <option value="wfh">Work From Home</option>
+                                <option value="leave">On Leave</option>
+                                <option value="absent">Absent/Not Working</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="half_pm_type" class="form-label">PM (Afternoon) - 2:00 PM to 6:00 PM</label>
+                            <select class="form-select" id="half_pm_type" name="half_pm_type" onchange="validateHalfDaySelection()">
+                                <option value="">Select PM activity</option>
+                                <option value="in_office">In Office</option>
+                                <option value="wfh">Work From Home</option>
+                                <option value="leave">On Leave</option>
+                                <option value="absent">Absent/Not Working</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="halfDayValidation" class="alert alert-danger mt-3" style="display: none;">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="halfDayValidationMessage"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Tracking Section -->
+        <div id="timeTrackingSection" style="display: none;">
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fas fa-stopwatch me-2"></i>Time Tracking</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Full Day Timing -->
+                    <div id="fullDayTiming" class="row mb-3" style="display: none;">
+                        <div class="col-md-4">
+                            <label for="in_time" class="form-label">Check In Time</label>
+                            <input type="time" class="form-control" id="in_time" name="in_time">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="out_time" class="form-label">Check Out Time</label>
+                            <input type="time" class="form-control" id="out_time" name="out_time">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="break_duration" class="form-label">Break Duration (minutes)</label>
+                            <input type="number" class="form-control" id="break_duration" name="break_duration" 
+                                   min="0" max="480" value="60">
+                        </div>
+                    </div>
+
+                    <!-- Half Day Timing -->
+                    <div id="halfDayTiming" style="display: none;">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Half Day Schedule:</strong> Please provide timing for both parts of your day.
+                        </div>
+                        
+                        <!-- Office Half -->
+                        <div id="officeHalf" class="mb-3" style="display: none;">
+                            <h6 class="text-primary mb-2"><i class="fas fa-building me-1"></i>Office Time</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="office_in_time" class="form-label">Office Check In</label>
+                                    <input type="time" class="form-control" id="office_in_time" name="office_in_time">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="office_out_time" class="form-label">Office Check Out</label>
+                                    <input type="time" class="form-control" id="office_out_time" name="office_out_time">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- WFH Half -->
+                        <div id="wfhHalf" class="mb-3" style="display: none;">
+                            <h6 class="text-info mb-2"><i class="fas fa-home me-1"></i>Work From Home Time</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="wfh_in_time" class="form-label">WFH Start Time</label>
+                                    <input type="time" class="form-control" id="wfh_in_time" name="wfh_in_time">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="wfh_out_time" class="form-label">WFH End Time</label>
+                                    <input type="time" class="form-control" id="wfh_out_time" name="wfh_out_time">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="break_duration_half" class="form-label">Total Break Duration (minutes)</label>
+                                <input type="number" class="form-control" id="break_duration_half" name="break_duration" 
+                                       min="0" max="240" value="30">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="alert alert-success mb-0 w-100">
+                                    <small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span> hours</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug Info -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">Debug Information</h6>
+            </div>
+            <div class="card-body">
+                <pre id="debugInfo">Status: Not selected yet
+Sections visible: None</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Helper functions for section visibility
+        function hideSection(element) {
+            if (element) {
+                element.style.display = 'none';
+                console.log('Hiding section:', element.id);
+                updateDebugInfo();
+            }
+        }
+
+        function showSection(element) {
+            if (element) {
+                element.style.display = 'block';
+                console.log('Showing section:', element.id);
+                updateDebugInfo();
+            }
+        }
+
+        function updateDebugInfo() {
+            const status = document.getElementById('status').value;
+            const visibleSections = [];
+            
+            const sections = [
+                'halfDayComboSection',
+                'timeTrackingSection', 
+                'fullDayTiming',
+                'halfDayTiming',
+                'officeHalf',
+                'wfhHalf'
+            ];
+
+            sections.forEach(sectionId => {
+                const element = document.getElementById(sectionId);
+                if (element && element.style.display === 'block') {
+                    visibleSections.push(sectionId);
+                }
+            });
+
+            const debugInfo = `Status: ${status || 'Not selected'}
+Sections visible: ${visibleSections.length > 0 ? visibleSections.join(', ') : 'None'}
+Location: ${document.getElementById('location').value || 'Empty'}
+AM Type: ${document.getElementById('half_am_type').value || 'Not selected'}
+PM Type: ${document.getElementById('half_pm_type').value || 'Not selected'}`;
+
+            document.getElementById('debugInfo').textContent = debugInfo;
+        }
+
+        function clearAllTimeFields() {
+            const timeFields = ['in_time', 'out_time', 'office_in_time', 'office_out_time', 'wfh_in_time', 'wfh_out_time'];
+            timeFields.forEach(field => {
+                const element = document.getElementById(field);
+                if (element) element.value = '';
+            });
+            document.getElementById('break_duration').value = '60';
+            document.getElementById('break_duration_half').value = '30';
+            document.getElementById('totalHoursDisplay').textContent = '0.0';
+            updateDebugInfo();
+        }
+
+        function clearHalfDaySelection() {
+            document.getElementById('half_am_type').value = '';
+            document.getElementById('half_pm_type').value = '';
+            document.getElementById('halfDayValidation').style.display = 'none';
+            updateDebugInfo();
+        }
+
+        function handleStatusChange() {
+            const status = document.getElementById('status').value;
+            const timeTrackingSection = document.getElementById('timeTrackingSection');
+            const fullDayTiming = document.getElementById('fullDayTiming');
+            const halfDayTiming = document.getElementById('halfDayTiming');
+            const halfDayComboSection = document.getElementById('halfDayComboSection');
+            const officeHalf = document.getElementById('officeHalf');
+            const wfhHalf = document.getElementById('wfhHalf');
+            
+            console.log('Status changed to:', status);
+            
+            // Hide all sections first
+            hideSection(timeTrackingSection);
+            hideSection(fullDayTiming);
+            hideSection(halfDayTiming);
+            hideSection(halfDayComboSection);
+            hideSection(officeHalf);
+            hideSection(wfhHalf);
+            
+            // Clear all fields
+            clearAllTimeFields();
+            clearHalfDaySelection();
+            
+            if (status === 'in_office_full' || status === 'wfh_full') {
+                console.log('Showing full day timing for:', status);
+                showSection(timeTrackingSection);
+                showSection(fullDayTiming);
+                
+                // Auto-fill location
+                const locationField = document.getElementById('location');
+                if (status === 'wfh_full') {
+                    locationField.value = 'Home';
+                } else if (status === 'in_office_full') {
+                    locationField.value = 'BL-A-5F';
+                }
+                
+            } else if (status === 'in_office_half' || status === 'wfh_half' || status === 'leave_half') {
+                console.log('Showing half-day combo section for:', status);
+                showSection(halfDayComboSection);
+                
+                // Pre-populate based on selection
+                if (status === 'wfh_half') {
+                    document.getElementById('half_am_type').value = 'wfh';
+                    document.getElementById('half_pm_type').value = '';
+                } else if (status === 'leave_half') {
+                    document.getElementById('half_am_type').value = 'leave';
+                    document.getElementById('half_pm_type').value = '';
+                } else if (status === 'in_office_half') {
+                    document.getElementById('half_am_type').value = 'in_office';
+                    document.getElementById('half_pm_type').value = 'wfh';
+                }
+                
+                setTimeout(() => {
+                    validateHalfDaySelection();
+                }, 100);
+                
+            } else if (status === 'leave_full' || status === 'absent') {
+                document.getElementById('location').value = '';
+            }
+            
+            updateDebugInfo();
+        }
+
+        function validateHalfDaySelection() {
+            const amType = document.getElementById('half_am_type').value;
+            const pmType = document.getElementById('half_pm_type').value;
+            const validation = document.getElementById('halfDayValidation');
+            const validationMessage = document.getElementById('halfDayValidationMessage');
+            
+            console.log('Validating half day selection:', amType, pmType);
+            
+            // Hide validation by default
+            validation.style.display = 'none';
+            
+            if (!amType || !pmType) {
+                updateDebugInfo();
+                return false;
+            }
+            
+            // Check for invalid combinations
+            let isValid = true;
+            let message = '';
+            
+            if (amType === 'absent' && pmType === 'absent') {
+                isValid = false;
+                message = 'Both AM and PM cannot be marked as absent.';
+            } else if (amType === 'leave' && pmType === 'leave') {
+                isValid = false;
+                message = 'Both AM and PM cannot be marked as leave.';
+            } else if (amType === 'wfh' && pmType === 'wfh') {
+                isValid = false;
+                message = 'Both AM and PM cannot be marked as WFH.';
+            } else if (amType === 'in_office' && pmType === 'in_office') {
+                isValid = false;
+                message = 'Both AM and PM cannot be marked as in office.';
+            }
+            
+            if (!isValid) {
+                validationMessage.textContent = message;
+                validation.style.display = 'block';
+                updateDebugInfo();
+                return false;
+            }
+            
+            // Update time tracking based on selection
+            updateHalfDayTimeTracking(amType, pmType);
+            updateLocationForHalfDay(amType, pmType);
+            updateDebugInfo();
+            return true;
+        }
+
+        function updateHalfDayTimeTracking(amType, pmType) {
+            const timeTrackingSection = document.getElementById('timeTrackingSection');
+            const halfDayTiming = document.getElementById('halfDayTiming');
+            const officeHalf = document.getElementById('officeHalf');
+            const wfhHalf = document.getElementById('wfhHalf');
+            
+            const needsTimeTracking = (amType === 'in_office' || amType === 'wfh') || (pmType === 'in_office' || pmType === 'wfh');
+            
+            if (needsTimeTracking) {
+                showSection(timeTrackingSection);
+                showSection(halfDayTiming);
+                
+                if (amType === 'in_office' || pmType === 'in_office') {
+                    showSection(officeHalf);
+                } else {
+                    hideSection(officeHalf);
+                }
+                
+                if (amType === 'wfh' || pmType === 'wfh') {
+                    showSection(wfhHalf);
+                } else {
+                    hideSection(wfhHalf);
+                }
+            } else {
+                hideSection(timeTrackingSection);
+            }
+        }
+
+        function updateLocationForHalfDay(amType, pmType) {
+            const locationField = document.getElementById('location');
+            
+            if (amType === 'in_office' && pmType === 'wfh') {
+                locationField.value = 'BL-A-5F / Home';
+            } else if (amType === 'wfh' && pmType === 'in_office') {
+                locationField.value = 'Home / BL-A-5F';
+            } else if (amType === 'in_office' || pmType === 'in_office') {
+                locationField.value = 'BL-A-5F';
+            } else if (amType === 'wfh' || pmType === 'wfh') {
+                locationField.value = 'Home';
+            } else {
+                locationField.value = '';
+            }
+        }
+
+        // Initialize debug info
+        updateDebugInfo();
+    </script>
+</body>
+</html>

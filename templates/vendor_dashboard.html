@@ -2,6 +2,44 @@
 
 {% block title %}Vendor Dashboard - Workforce Management{% endblock %}
 
+{% block extra_head %}
+<style>
+/* Enhanced form dynamics styles */
+.form-section-transition {
+    transition: opacity 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.field-updated {
+    background-color: #d4edda !important;
+    border-color: #28a745 !important;
+    transition: all 0.3s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+.status-hint {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#halfDayComboSection, #timeTrackingSection {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.status-loading-spinner {
+    z-index: 1000;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Flash Messages -->
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -372,18 +410,13 @@
                             <div class="card-body">
                                 <!-- Full Day Timing -->
                                 <div id="fullDayTiming" class="row mb-3" style="display: none;">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="in_time" class="form-label">Check In Time</label>
                                         <input type="time" class="form-control" id="in_time" name="in_time">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label for="out_time" class="form-label">Check Out Time</label>
                                         <input type="time" class="form-control" id="out_time" name="out_time">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label for="break_duration" class="form-label">Break Duration (minutes)</label>
-                                        <input type="number" class="form-control" id="break_duration" name="break_duration" 
-                                               min="0" max="480" value="60" onchange="calculateTotalHours()">
                                     </div>
                                 </div>
 
@@ -424,16 +457,16 @@
                                         </div>
                                     </div>
 
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <label for="break_duration_half" class="form-label">Total Break Duration (minutes)</label>
-                                            <input type="number" class="form-control" id="break_duration_half" name="break_duration" 
-                                                   min="0" max="240" value="30" onchange="calculateTotalHours()">
-                                        </div>
-                                        <div class="col-md-6 d-flex align-items-end">
-                                            <div class="alert alert-success mb-0 w-100">
-                                                <small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span> hours</small>
-                                            </div>
+                                    <!-- Summary row moved below -->
+                                <!-- Time Summary (shared for full and half day) -->
+                                <div id="timeSummaryRow" class="row mt-2" style="display: none;">
+                                    <div class="col-md-6">
+                                        <label for="break_duration" class="form-label">Total Break Duration (minutes)</label>
+                                        <input type="number" class="form-control" id="break_duration" name="break_duration" min="0" max="480" value="60" onchange="calculateTotalHours()">
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <div class="alert alert-success mb-0 w-100">
+                                            <small><strong>Total Hours:</strong> <span id="totalHoursDisplay">0.0</span> hours</small>
                                         </div>
                                     </div>
                                 </div>
@@ -801,19 +834,7 @@ function downloadMonthlyReport() {
     window.open('/api/export/monthly-report?format=excel', '_blank');
 }
 
-// Auto-fill location based on status selection
-document.getElementById('status').addEventListener('change', function() {
-    const locationField = document.getElementById('location');
-    const status = this.value;
-    
-    if (status.includes('wfh')) {
-        locationField.value = 'Home';
-    } else if (status.includes('in_office')) {
-        locationField.value = 'BL-A-5F';
-    } else if (status.includes('leave') || status === 'absent') {
-        locationField.value = '';
-    }
-});
+// Location auto-fill is now handled within handleStatusChange() function
 
 // Auto-fill location in edit form as well
 document.getElementById('edit_status').addEventListener('change', function() {
@@ -829,330 +850,15 @@ document.getElementById('edit_status').addEventListener('change', function() {
     }
 });
 
-// Enhanced Time Tracking Functions
-function handleStatusChange() {
-    const status = document.getElementById('status').value;
-    const timeTrackingSection = document.getElementById('timeTrackingSection');
-    const fullDayTiming = document.getElementById('fullDayTiming');
-    const halfDayTiming = document.getElementById('halfDayTiming');
-    const halfDayComboSection = document.getElementById('halfDayComboSection');
-    const officeHalf = document.getElementById('officeHalf');
-    const wfhHalf = document.getElementById('wfhHalf');
-    
-    // Hide all sections first
-    timeTrackingSection.style.display = 'none';
-    fullDayTiming.style.display = 'none';
-    halfDayTiming.style.display = 'none';
-    halfDayComboSection.style.display = 'none';
-    officeHalf.style.display = 'none';
-    wfhHalf.style.display = 'none';
-    
-    // Clear all fields
-    clearAllTimeFields();
-    clearHalfDaySelection();
-    
-    if (status === 'in_office_full' || status === 'wfh_full') {
-        // Show full day timing
-        timeTrackingSection.style.display = 'block';
-        fullDayTiming.style.display = 'block';
-        setDefaultFullDayTimes(status);
-        
-        // Auto-fill location for full day
-        const locationField = document.getElementById('location');
-        if (status === 'wfh_full') {
-            locationField.value = 'Home';
-        } else if (status === 'in_office_full') {
-            locationField.value = 'BL-A-5F';
-        }
-    } else if (status === 'in_office_half' || status === 'wfh_half' || status === 'leave_half') {
-        // Show half-day combination selection
-        halfDayComboSection.style.display = 'block';
-        
-        // Pre-populate based on selection
-        if (status === 'wfh_half') {
-            document.getElementById('half_am_type').value = 'wfh';
-            document.getElementById('half_pm_type').value = 'wfh';
-        } else if (status === 'leave_half') {
-            document.getElementById('half_am_type').value = 'leave';
-            document.getElementById('half_pm_type').value = 'leave';
-        }
-        
-        validateHalfDaySelection();
-    } else if (status === 'leave_full' || status === 'absent') {
-        // Clear location for leave/absent
-        const locationField = document.getElementById('location');
-        locationField.value = '';
-    }
-}
-
-function clearAllTimeFields() {
-    document.getElementById('in_time').value = '';
-    document.getElementById('out_time').value = '';
-    document.getElementById('office_in_time').value = '';
-    document.getElementById('office_out_time').value = '';
-    document.getElementById('wfh_in_time').value = '';
-    document.getElementById('wfh_out_time').value = '';
-    document.getElementById('break_duration').value = '60';
-    document.getElementById('break_duration_half').value = '30';
-    document.getElementById('totalHoursDisplay').textContent = '0.0';
-}
-
-function clearHalfDaySelection() {
-    document.getElementById('half_am_type').value = '';
-    document.getElementById('half_pm_type').value = '';
-    document.getElementById('halfDayValidation').style.display = 'none';
-}
-
-function validateHalfDaySelection() {
-    const amType = document.getElementById('half_am_type').value;
-    const pmType = document.getElementById('half_pm_type').value;
-    const validation = document.getElementById('halfDayValidation');
-    const validationMessage = document.getElementById('halfDayValidationMessage');
-    
-    // Hide validation by default
-    validation.style.display = 'none';
-    
-    // Only validate if both are selected
-    if (!amType || !pmType) {
-        return false;
-    }
-    
-    // Check for invalid combinations
-    let isValid = true;
-    let message = '';
-    
-    // Both can't be absent
-    if (amType === 'absent' && pmType === 'absent') {
-        isValid = false;
-        message = 'Both AM and PM cannot be marked as absent. Please select "Absent" as your main status instead.';
-    }
-    // Both can't be leave (should use full leave)
-    else if (amType === 'leave' && pmType === 'leave') {
-        isValid = false;
-        message = 'Both AM and PM cannot be marked as leave. Please select "On Leave - Full Day" instead.';
-    }
-    // Both can't be WFH (should use full WFH)
-    else if (amType === 'wfh' && pmType === 'wfh') {
-        isValid = false;
-        message = 'Both AM and PM cannot be marked as WFH. Please select "Work From Home - Full Day" instead.';
-    }
-    // Both can't be in office (should use full office)
-    else if (amType === 'in_office' && pmType === 'in_office') {
-        isValid = false;
-        message = 'Both AM and PM cannot be marked as in office. Please select "In Office - Full Day" instead.';
-    }
-    
-    if (!isValid) {
-        validationMessage.textContent = message;
-        validation.style.display = 'block';
-        return false;
-    }
-    
-    // Update time tracking based on selection
-    updateHalfDayTimeTracking(amType, pmType);
-    
-    // Update location based on selection
-    updateLocationForHalfDay(amType, pmType);
-    
-    return true;
-}
-
-function updateHalfDayTimeTracking(amType, pmType) {
-    const timeTrackingSection = document.getElementById('timeTrackingSection');
-    const halfDayTiming = document.getElementById('halfDayTiming');
-    const officeHalf = document.getElementById('officeHalf');
-    const wfhHalf = document.getElementById('wfhHalf');
-    
-    // Show time tracking if either AM or PM requires work
-    const needsTimeTracking = (amType === 'in_office' || amType === 'wfh') || (pmType === 'in_office' || pmType === 'wfh');
-    
-    if (needsTimeTracking) {
-        timeTrackingSection.style.display = 'block';
-        halfDayTiming.style.display = 'block';
-        
-        // Show relevant sections based on selection
-        officeHalf.style.display = (amType === 'in_office' || pmType === 'in_office') ? 'block' : 'none';
-        wfhHalf.style.display = (amType === 'wfh' || pmType === 'wfh') ? 'block' : 'none';
-        
-        // Set default times based on selection
-        setHalfDayDefaultTimes(amType, pmType);
-    } else {
-        timeTrackingSection.style.display = 'none';
-    }
-}
-
-function setHalfDayDefaultTimes(amType, pmType) {
-    // Clear existing values
-    clearAllTimeFields();
-    
-    // Set office times if needed
-    if (amType === 'in_office' || pmType === 'in_office') {
-        if (amType === 'in_office') {
-            document.getElementById('office_in_time').value = '09:00';
-            document.getElementById('office_out_time').value = '13:00';
-        } else if (pmType === 'in_office') {
-            document.getElementById('office_in_time').value = '14:00';
-            document.getElementById('office_out_time').value = '18:00';
-        }
-    }
-    
-    // Set WFH times if needed
-    if (amType === 'wfh' || pmType === 'wfh') {
-        if (amType === 'wfh') {
-            document.getElementById('wfh_in_time').value = '09:00';
-            document.getElementById('wfh_out_time').value = '13:00';
-        } else if (pmType === 'wfh') {
-            document.getElementById('wfh_in_time').value = '14:00';
-            document.getElementById('wfh_out_time').value = '18:00';
-        }
-    }
-    
-    calculateTotalHours();
-}
-
-function updateLocationForHalfDay(amType, pmType) {
-    const locationField = document.getElementById('location');
-    
-    if (amType === 'in_office' && pmType === 'wfh') {
-        locationField.value = 'BL-A-5F / Home';
-    } else if (amType === 'wfh' && pmType === 'in_office') {
-        locationField.value = 'Home / BL-A-5F';
-    } else if (amType === 'in_office' || pmType === 'in_office') {
-        locationField.value = 'BL-A-5F';
-    } else if (amType === 'wfh' || pmType === 'wfh') {
-        locationField.value = 'Home';
-    } else {
-        locationField.value = '';
-    }
-}
-
-function setDefaultFullDayTimes(status) {
-    const currentTime = new Date();
-    const currentHour = currentTime.getHours();
-    
-    // Set default times based on current time or standard office hours
-    if (currentHour < 9) {
-        document.getElementById('in_time').value = '09:00';
-        document.getElementById('out_time').value = '18:00';
-    } else {
-        const inTime = currentHour < 12 ? `${currentHour.toString().padStart(2, '0')}:00` : '09:00';
-        const outTime = currentHour < 18 ? '18:00' : `${(currentHour + 1).toString().padStart(2, '0')}:00`;
-        document.getElementById('in_time').value = inTime;
-        document.getElementById('out_time').value = outTime;
-    }
-    
-    calculateTotalHours();
-}
-
-function setDefaultHalfDayTimes(status) {
-    if (status === 'in_office_half') {
-        // Morning office, afternoon WFH
-        document.getElementById('office_in_time').value = '09:00';
-        document.getElementById('office_out_time').value = '13:00';
-        document.getElementById('wfh_in_time').value = '14:00';
-        document.getElementById('wfh_out_time').value = '18:00';
-    } else if (status === 'wfh_half') {
-        // Morning WFH, afternoon office
-        document.getElementById('wfh_in_time').value = '09:00';
-        document.getElementById('wfh_out_time').value = '13:00';
-        document.getElementById('office_in_time').value = '14:00';
-        document.getElementById('office_out_time').value = '18:00';
-    }
-    
-    calculateTotalHours();
-}
-
-function calculateTotalHours() {
-    const status = document.getElementById('status').value;
-    let totalMinutes = 0;
-    
-    if (status.includes('full')) {
-        const inTime = document.getElementById('in_time').value;
-        const outTime = document.getElementById('out_time').value;
-        const breakDuration = parseInt(document.getElementById('break_duration').value) || 0;
-        
-        if (inTime && outTime) {
-            totalMinutes = getMinutesBetweenTimes(inTime, outTime) - breakDuration;
-        }
-    } else if (status.includes('half')) {
-        const officeIn = document.getElementById('office_in_time').value;
-        const officeOut = document.getElementById('office_out_time').value;
-        const wfhIn = document.getElementById('wfh_in_time').value;
-        const wfhOut = document.getElementById('wfh_out_time').value;
-        const breakDuration = parseInt(document.getElementById('break_duration_half').value) || 0;
-        
-        if (officeIn && officeOut) {
-            totalMinutes += getMinutesBetweenTimes(officeIn, officeOut);
-        }
-        if (wfhIn && wfhOut) {
-            totalMinutes += getMinutesBetweenTimes(wfhIn, wfhOut);
-        }
-        totalMinutes -= breakDuration;
-    }
-    
-    const totalHours = Math.max(0, totalMinutes / 60);
-    document.getElementById('totalHoursDisplay').textContent = totalHours.toFixed(1);
-    
-    // Set hidden field for form submission
-    let totalHoursField = document.querySelector('input[name="total_hours"]');
-    if (!totalHoursField) {
-        totalHoursField = document.createElement('input');
-        totalHoursField.type = 'hidden';
-        totalHoursField.name = 'total_hours';
-        document.getElementById('statusForm').appendChild(totalHoursField);
-    }
-    totalHoursField.value = totalHours.toFixed(2);
-}
-
-function getMinutesBetweenTimes(startTime, endTime) {
-    const [startHour, startMin] = startTime.split(':').map(Number);
-    const [endHour, endMin] = endTime.split(':').map(Number);
-    
-    const startMinutes = startHour * 60 + startMin;
-    let endMinutes = endHour * 60 + endMin;
-    
-    // Handle next day scenarios
-    if (endMinutes < startMinutes) {
-        endMinutes += 24 * 60;
-    }
-    
-    return endMinutes - startMinutes;
-}
-
-// Form validation before submission
-function validateStatusForm() {
-    const status = document.getElementById('status').value;
-    
-    // Check if half-day status is selected
-    if (status === 'in_office_half' || status === 'wfh_half' || status === 'leave_half') {
-        const amType = document.getElementById('half_am_type').value;
-        const pmType = document.getElementById('half_pm_type').value;
-        
-        // Ensure both AM and PM are selected
-        if (!amType || !pmType) {
-            showAlert('error', 'Please select both AM and PM activities for half-day status.');
-            return false;
-        }
-        
-        // Validate the combination
-        if (!validateHalfDaySelection()) {
-            return false;
-        }
-    }
-    
-    return true;
-}
-
-// Add event listeners for time field changes
+// Time tracking logic moved to static/js/status-form.js
 document.addEventListener('DOMContentLoaded', function() {
-    const timeFields = ['in_time', 'out_time', 'office_in_time', 'office_out_time', 'wfh_in_time', 'wfh_out_time'];
-    timeFields.forEach(field => {
-        const element = document.getElementById(field);
-        if (element) {
-            element.addEventListener('change', calculateTotalHours);
-        }
-    });
+    if (typeof initStatusForm === 'function') {
+        initStatusForm();
+    }
 });
 </script>
+
+<!-- Status Form Logic -->
+<script src="{{ url_for('static', filename='js/status-form.js') }}"></script>
 
 {% endblock %}

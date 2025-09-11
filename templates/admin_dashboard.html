@@ -372,30 +372,6 @@
                             <i class="fas fa-plus me-1"></i>Manage Holidays
                         </button>
                     </div>
-                    <div class="col-md-6">
-                        <h6><i class="fas fa-bell me-2"></i>Notification Settings</h6>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="dailyReminders" checked>
-                            <label class="form-check-label" for="dailyReminders">
-                                Daily Reminders (9:30 AM)
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="managerAlerts" checked>
-                            <label class="form-check-label" for="managerAlerts">
-                                Manager Alerts
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="mismatchAlerts" checked>
-                            <label class="form-check-label" for="mismatchAlerts">
-                                Mismatch Alerts
-                            </label>
-                        </div>
-                        <button class="btn btn-sm btn-outline-success mt-2" onclick="saveNotificationSettings()">
-                            <i class="fas fa-save me-1"></i>Save Settings
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -601,14 +577,6 @@ function manageHolidays() {
     window.location.href = '/admin/holidays';
 }
 
-function saveNotificationSettings() {
-    const form = new FormData();
-    form.append('dailyReminders', document.getElementById('dailyReminders').checked ? 'true' : 'false');
-    form.append('managerAlerts', document.getElementById('managerAlerts').checked ? 'true' : 'false');
-    form.append('mismatchAlerts', document.getElementById('mismatchAlerts').checked ? 'true' : 'false');
-    fetch('/admin/system-settings', { method: 'POST', body: form })
-      .then(r => r.json()).then(d => { if (d.success) alert('Notification settings saved!'); else alert('Failed to save'); });
-}
 
 function importSwipeData() {
     window.location.href = '/import/';
