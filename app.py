@@ -3153,9 +3153,19 @@ def sync_excel_files():
         files_copied = 0
         for file_path in excel_files:
             try:
-                dest_path = network_path / file_path.name
+                # Skip the full manager summary notifications file
+                if file_path.name == "02_manager_summary_notifications.xlsx":
+                    excel_log_message(f"⏭️ Skipped: {file_path.name} (excluded from network sync)")
+                    continue
+                
+                # For simplified manager summary, copy it as the main file name
+                if file_path.name == "02_manager_summary_simplified.xlsx":
+                    dest_path = network_path / "02_manager_summary_simplified.xlsx"
+                else:
+                    dest_path = network_path / file_path.name
+                
                 shutil.copy2(file_path, dest_path)
-                excel_log_message(f"✅ Copied: {file_path.name}")
+                excel_log_message(f"✅ Copied: {file_path.name} -> {dest_path.name}")
                 files_copied += 1
             except Exception as e:
                 error_msg = f"❌ Failed to copy {file_path.name}: {str(e)}"

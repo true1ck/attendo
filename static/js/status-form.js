@@ -11,7 +11,7 @@
 
   function clearTimes() {
     ['in_time','out_time','office_in_time','office_out_time','wfh_in_time','wfh_out_time'].forEach(id => setVal(id, ''));
-    const br = $('break_duration'); if (br) br.value = '60';
+    const br = $('break_duration'); if (br) br.value = '';
     const total = $('totalHoursDisplay'); if (total) total.textContent = '0.0';
   }
 
