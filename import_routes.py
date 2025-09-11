@@ -498,34 +498,51 @@ def download_templates():
     template_type = request.args.get('type', 'swipe')
     
     if template_type == 'swipe':
-        # Create sample swipe data template
+        # Create sample swipe data template matching requirements document format
         sample_data = {
-            'Employee ID': ['EMP001', 'EMP002'],
-            'Attendance Date': ['2025-09-07', '2025-09-07'],
-            'Weekday': ['Saturday', 'Saturday'],
-            'Login': ['09:00:00', '09:15:00'],
-            'Logout': ['18:00:00', '18:30:00'],
-            'Total Working Hours': ['08:00', '08:15'],
-            'Attendance Status': ['AP', 'AP']
+            'S.No': [1, 2, 3],
+            'Employee Name': ['Otsox', 'Vendor1', 'Vendor2'],
+            'Employee ID': ['ABC', 'V001', 'V002'],
+            'Attendance Date': ['01/07/2025', '02/07/2025', '03/07/2025'],
+            'Weekday': ['Tuesday', 'Wednesday', 'Thursday'],
+            'Shift Code': ['G', 'G', 'G'],
+            'Login': ['-', '10:32', '09:15'],
+            'Logout': ['-', '17:25', '18:30'],
+            'Extra Work Hours': ['-', '00:25', '00:30'],
+            'Total Working Hours': ['-', '06:53', '08:45'],
+            'Attendance Status': ['AA', 'AP', 'AP'],
+            'Floor Unit': ['BL-A-5F', 'BL-A-5F', 'BL-B-3F'],
+            'Business Unit': ['WCS', 'WCS', 'WCS'],
+            'Department': ['WCS/MSE7', 'WCS/MSE7', 'WCS/MSE8'],
+            'Sub-Department': ['WS1', 'WS1', 'WS2']
         }
         filename = 'swipe_data_template.xlsx'
     
     elif template_type == 'leave':
         sample_data = {
-            'OT ID': ['EMP001', 'EMP002'],
-            'Start Date': ['2025-09-07', '2025-09-08'],
-            'End Date': ['2025-09-07', '2025-09-09'],
-            'Attendance or Absence Type': ['Earned Leave', 'Sick Leave'],
-            'Day': [1.0, 2.0]
+            'OT ID': ['ABC', 'V001', 'V002'],
+            'Personnel number': ['dsad', 'pers001', 'pers002'],
+            'Start Date': ['9/4/2025', '9/7/2025', '9/10/2025'],
+            'End Date': ['9/4/2025', '9/7/2025', '9/12/2025'],
+            'Attendance or Absence Type': ['Earned Leave(EL)', 'Casual leave(CL)', 'Sick leave(SL)'],
+            'Start Time': ['12:00:00 AM', '12:00:00 AM', '12:00:00 AM'],
+            'End time': ['12:00:00 AM', '12:00:00 AM', '12:00:00 AM'],
+            'Hrs': [8.00, 8.00, 24.00],
+            'Record is for Full Day': ['Yes', 'Yes', 'Yes'],
+            'Day': [1, 1, 3],
+            'Cal day': [1, 1, 3],
+            'Payroll hrs': [8, 8, 24]
         }
         filename = 'leave_data_template.xlsx'
     
     elif template_type == 'wfh':
         sample_data = {
-            'RD Name': ['John Doe', 'Jane Smith'],
-            'Start Date': ['2025-09-07', '2025-09-08'],
-            'End Date': ['2025-09-07', '2025-09-10'],
-            'Duration': [1, 3]
+            'RD Name': ['abc', 'John Vendor', 'Jane Vendor'],
+            'Department': ['MTB_WCS_MSE7_MS25', 'MTB_WCS_MSE7_MS1', 'MTB_WCS_MSE7_MS2'],
+            'RD Category': ['Vendor', 'Vendor', 'Vendor'],
+            'Start Date': ['7/16/2025', '8/5/2025', '8/10/2025'],
+            'End Date': ['7/16/2025', '8/5/2025', '8/12/2025'],
+            'Duration': [1, 1, 3]
         }
         filename = 'wfh_data_template.xlsx'
     

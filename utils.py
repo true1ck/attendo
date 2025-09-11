@@ -73,7 +73,10 @@ def generate_monthly_report(manager_id, month_str):
                 
                 current_date += timedelta(days=1)
             
-            # Analyze statuses
+            # Analyze statuses and calculate working hours
+            total_work_hours = 0.0
+            total_extra_hours = 0.0
+            
             for status in statuses:
                 if status.status in [AttendanceStatus.IN_OFFICE_FULL, AttendanceStatus.IN_OFFICE_HALF]:
                     office_days += 1 if status.status == AttendanceStatus.IN_OFFICE_FULL else 0.5
@@ -83,6 +86,12 @@ def generate_monthly_report(manager_id, month_str):
                 elif status.status in [AttendanceStatus.LEAVE_FULL, AttendanceStatus.LEAVE_HALF]:
                     leave_days += 1 if status.status == AttendanceStatus.LEAVE_FULL else 0.5
                     leave_dates.append(status.status_date.strftime('%Y-%m-%d'))
+                
+                # Add working hours if available
+                if status.total_hours:
+                    total_work_hours += status.total_hours
+                if status.extra_hours:
+                    total_extra_hours += status.extra_hours
             
             report_data.append({
                 'Vendor Name': vendor.full_name,
@@ -95,6 +104,8 @@ def generate_monthly_report(manager_id, month_str):
                 'Total Office Days': office_days,
                 'Total WFH Days': wfh_days,
                 'Total Leave Days': leave_days,
+                'Total Working Hours': round(total_work_hours, 2),
+                'Total Extra Hours': round(total_extra_hours, 2),
                 'Leave Dates': ', '.join(leave_dates),
                 'WFH Dates': ', '.join(wfh_dates),
                 'Comments': ''
@@ -108,8 +119,9 @@ def generate_monthly_report(manager_id, month_str):
 
 def import_swipe_data(file_path):
     """Import attendance swipe machine data from Excel or CSV file
-    Expected columns: Employee Code, Employee Name, Attendance, WeekDay, 
-    Shift Code, Login, Logout, Extra Work Hours, Total Working Hours, Department
+    Expected columns based on requirements document:
+    S.No, Employee Name, Employee ID, Attendance Date, Weekday, Shift Code, Login, Logout, 
+    Extra Work Hours, Total Working Hours, Attendance Status, Floor Unit, Business Unit, Department, Sub-Department
     """
     try:
         # Read file based on extension
@@ -127,26 +139,30 @@ def import_swipe_data(file_path):
         
         for idx, row in df.iterrows():
             try:
-                # Skip rows with no employee code
-                if pd.isna(row.get('Employee Code', None)):
+                # Skip rows with no employee ID (updated column name)
+                employee_id = row.get('Employee ID') or row.get('Employee Code')
+                if pd.isna(employee_id):
                     continue
                     
-                # Map vendor by employee code (e.g., OT1)
-                employee_code = str(row['Employee Code']).strip()
-                vendor = Vendor.query.filter_by(vendor_id=employee_code).first()
+                # Map vendor by employee ID
+                employee_id = str(employee_id).strip()
+                vendor = Vendor.query.filter_by(vendor_id=employee_id).first()
                 
                 # If vendor doesn't exist, try to create one
                 if not vendor:
                     # Check if we have employee name
                     employee_name = str(row.get('Employee Name', 'Unknown')).strip()
-                    department = str(row.get('Department', 'Unknown')).strip()
+                    # Try different department column names from requirements format
+                    department = str(row.get('Department', row.get('Sub-Department', 'Unknown'))).strip()
+                    business_unit = str(row.get('Business Unit', 'Unknown')).strip()
+                    floor_unit = str(row.get('Floor Unit', 'BL-A-5F')).strip()
                     
                     # Create user account first
-                    user = User.query.filter_by(username=employee_code).first()
+                    user = User.query.filter_by(username=employee_id).first()
                     if not user:
                         user = User(
-                            username=employee_code,
-                            email=f"{employee_code.lower()}@vendor.com",
+                            username=employee_id,
+                            email=f"{employee_id.lower()}@vendor.com",
                             role=UserRole.VENDOR,
                             is_active=True
                         )
@@ -157,27 +173,37 @@ def import_swipe_data(file_path):
                     # Create vendor profile
                     vendor = Vendor(
                         user_id=user.id,
-                        vendor_id=employee_code,
+                        vendor_id=employee_id,
                         full_name=employee_name,
-                        department=department,
+                        department=f"{business_unit}/{department}" if business_unit != 'Unknown' else department,
                         company='Vendor Company',  # Default company
                         band='B2',  # Default band
-                        location='BL-A-5F'  # Default location
+                        location=floor_unit  # Use Floor Unit from data
                     )
                     models.db.session.add(vendor)
                     models.db.session.flush()
-                    print(f"Created new vendor: {employee_code} - {employee_name}")
+                    print(f"Created new vendor: {employee_id} - {employee_name}")
                 
-                # Parse date from Attendance column (format: DD/MM/YYYY)
-                attendance_str = str(row['Attendance'])
-                # Handle both DD/MM/YYYY and MM/DD/YYYY formats
+                # Parse date from Attendance Date column (format: DD/MM/YYYY or YYYY-MM-DD)
+                # Try different column names for date
+                date_value = row.get('Attendance Date') or row.get('Attendance') or row.get('Date')
+                attendance_str = str(date_value)
+                
+                # Handle multiple date formats
                 try:
-                    attendance_date = pd.to_datetime(attendance_str, format='%d/%m/%Y').date()
+                    # Try YYYY-MM-DD format first
+                    attendance_date = pd.to_datetime(attendance_str, format='%Y-%m-%d').date()
                 except:
                     try:
-                        attendance_date = pd.to_datetime(attendance_str, format='%m/%d/%Y').date()
+                        # Try DD/MM/YYYY format
+                        attendance_date = pd.to_datetime(attendance_str, format='%d/%m/%Y').date()
                     except:
-                        attendance_date = pd.to_datetime(attendance_str).date()
+                        try:
+                            # Try MM/DD/YYYY format
+                            attendance_date = pd.to_datetime(attendance_str, format='%m/%d/%Y').date()
+                        except:
+                            # Let pandas handle it automatically
+                            attendance_date = pd.to_datetime(attendance_str).date()
                 
                 # Check if record already exists
                 existing_record = SwipeRecord.query.filter_by(
@@ -189,11 +215,14 @@ def import_swipe_data(file_path):
                     records_skipped += 1
                     continue
                 
-                # Parse times (handle time format HH:MM)
+                # Parse times and additional fields from requirements format
                 login_time = None
                 logout_time = None
                 total_hours = 0
                 extra_hours = 0
+                shift_code = str(row.get('Shift Code', 'G')).strip()
+                attendance_status = str(row.get('Attendance Status', 'AA')).strip()
+                weekday = str(row.get('Weekday', '')).strip()
                 
                 # Parse Login time
                 if pd.notna(row.get('Login')) and str(row['Login']).strip() not in ['-', '']:
@@ -221,33 +250,79 @@ def import_swipe_data(file_path):
                     except:
                         pass
                 
-                # Parse Total Working Hours (format: HH:MM or decimal)
-                if pd.notna(row.get('Total Working Hours')) and str(row['Total Working Hours']).strip() not in ['-', '']:
+                # Parse Total Working Hours from requirements format (HH:MM format)
+                total_working_hours = row.get('Total Working Hours')
+                if pd.notna(total_working_hours) and str(total_working_hours).strip() not in ['-', '']:
                     try:
-                        hours_str = str(row['Total Working Hours']).strip()
+                        hours_str = str(total_working_hours).strip()
                         if ':' in hours_str:
-                            # Format like "07:21"
-                            time_parts = hours_str.split(':')
-                            total_hours = float(time_parts[0]) + float(time_parts[1]) / 60
-                        elif '.' in hours_str:
-                            # Format like "7.35" (decimal hours)
-                            total_hours = float(hours_str)
+                            # Format like "06:53" or "07:17"
+                            hours, minutes = map(int, hours_str.split(':'))
+                            total_hours = hours + (minutes / 60.0)
                         else:
                             total_hours = float(hours_str)
                     except:
                         total_hours = 0
                 
-                # Parse Extra Work Hours if available
-                if pd.notna(row.get('Extra Work Hours')) and str(row['Extra Work Hours']).strip() not in ['-', '']:
+                # Parse Extra Work Hours from requirements format
+                extra_work_hours = row.get('Extra Work Hours')
+                if pd.notna(extra_work_hours) and str(extra_work_hours).strip() not in ['-', '']:
                     try:
-                        extra_str = str(row['Extra Work Hours']).strip()
+                        extra_str = str(extra_work_hours).strip()
                         if ':' in extra_str:
-                            time_parts = extra_str.split(':')
-                            extra_hours = float(time_parts[0]) + float(time_parts[1]) / 60
+                            # Format like "00:25" or "00:48"
+                            hours, minutes = map(int, extra_str.split(':'))
+                            extra_hours = hours + (minutes / 60.0)
                         else:
                             extra_hours = float(extra_str)
                     except:
                         extra_hours = 0
+                
+                # Calculate total hours if login/logout times are available (fallback)
+                if total_hours == 0 and login_time and logout_time:
+                    # Calculate total hours from login/logout times
+                    login_minutes = login_time.hour * 60 + login_time.minute
+                    logout_minutes = logout_time.hour * 60 + logout_time.minute
+                    total_minutes = logout_minutes - login_minutes
+                    if total_minutes < 0:  # Handle overnight shifts
+                        total_minutes += 24 * 60
+                    total_hours = round(total_minutes / 60.0, 2)
+                    
+                    # Calculate extra hours based on 8-hour standard day
+                    standard_work_hours = 8.0
+                    extra_hours = max(0.0, round(total_hours - standard_work_hours, 2))
+                else:
+                    # Parse Total Working Hours from spreadsheet if no times
+                    if pd.notna(row.get('Total Working Hours')) and str(row['Total Working Hours']).strip() not in ['-', '']:
+                        try:
+                            hours_str = str(row['Total Working Hours']).strip()
+                            if ':' in hours_str:
+                                # Format like "07:21"
+                                time_parts = hours_str.split(':')
+                                total_hours = float(time_parts[0]) + float(time_parts[1]) / 60
+                            elif '.' in hours_str:
+                                # Format like "7.35" (decimal hours)
+                                total_hours = float(hours_str)
+                            else:
+                                total_hours = float(hours_str)
+                        except:
+                            total_hours = 0
+                    
+                    # Parse Extra Work Hours from spreadsheet if available
+                    if pd.notna(row.get('Extra Work Hours')) and str(row['Extra Work Hours']).strip() not in ['-', '']:
+                        try:
+                            extra_str = str(row['Extra Work Hours']).strip()
+                            if ':' in extra_str:
+                                time_parts = extra_str.split(':')
+                                extra_hours = float(time_parts[0]) + float(time_parts[1]) / 60
+                            else:
+                                extra_hours = float(extra_str)
+                        except:
+                            extra_hours = 0
+                    else:
+                        # Calculate extra hours based on 8-hour standard if not provided
+                        standard_work_hours = 8.0
+                        extra_hours = max(0.0, round(total_hours - standard_work_hours, 2))
                 
                 # Determine attendance status from Shift Code
                 shift_code = str(row.get('Shift Code', 'AA')).strip().upper()
@@ -795,25 +870,43 @@ def _analyze_full_day(web_status, swipe_status, swipe_in_time, swipe_out_time, d
     return has_mismatch, mismatch_details
 
 def import_leave_data(file_path):
-    """Import leave data from Excel or CSV file"""
+    """Import leave data from Excel or CSV file
+    Expected columns based on requirements document:
+    OT ID, Personnel number, Start Date, End Date, Attendance or Absence Type, 
+    Start Time, End time, Hrs, Record is for Full Day, Day, Cal day, Payroll hrs
+    """
     try:
         if file_path.lower().endswith('.csv'):
             df = pd.read_csv(file_path)
         else:
             df = pd.read_excel(file_path)
         records_imported = 0
+        records_skipped = 0
         
-        for _, row in df.iterrows():
+        print(f"Leave data columns found: {df.columns.tolist()}")
+        
+        for idx, row in df.iterrows():
             try:
-                # Find vendor by personnel number (OT ID)
-                vendor = Vendor.query.filter_by(vendor_id=str(row['OT ID'])).first()
+                # Find vendor by OT ID (Employee ID)
+                ot_id = str(row.get('OT ID', '')).strip()
+                if not ot_id:
+                    continue
+                    
+                vendor = Vendor.query.filter_by(vendor_id=ot_id).first()
                 if not vendor:
+                    print(f"Vendor not found for OT ID: {ot_id}")
                     continue
                 
                 start_date = pd.to_datetime(row['Start Date']).date()
                 end_date = pd.to_datetime(row['End Date']).date()
-                leave_type = row['Attendance or Absence Type']
-                total_days = float(row['Day'])
+                leave_type = str(row['Attendance or Absence Type']).strip()
+                
+                # Use 'Day' column for total days (this is the actual leave days)
+                total_days = float(row.get('Day', 1.0))
+                
+                # Additional fields from requirements format
+                hrs = float(row.get('Hrs', 0.0)) if pd.notna(row.get('Hrs')) else 0.0
+                is_full_day = str(row.get('Record is for Full Day', 'Yes')).strip().lower() == 'yes'
                 
                 # Check if record already exists
                 existing_record = LeaveRecord.query.filter_by(
@@ -824,6 +917,7 @@ def import_leave_data(file_path):
                 ).first()
                 
                 if existing_record:
+                    records_skipped += 1
                     continue
                 
                 leave_record = LeaveRecord(
@@ -837,37 +931,76 @@ def import_leave_data(file_path):
                 models.db.session.add(leave_record)
                 records_imported += 1
                 
+                if records_imported % 50 == 0:
+                    print(f"Imported {records_imported} leave records...")
+                
             except Exception as e:
-                print(f"Error processing leave row: {str(e)}")
+                print(f"Error processing leave row {idx}: {str(e)}")
                 continue
         
         models.db.session.commit()
+        
+        print(f"\n=== Leave Import Summary ===")
+        print(f"Records imported: {records_imported}")
+        print(f"Records skipped (duplicates): {records_skipped}")
+        
         return records_imported
         
     except Exception as e:
         models.db.session.rollback()
         print(f"Error importing leave data: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return 0
 
 def import_wfh_data(file_path):
-    """Import Work From Home data from Excel or CSV file"""
+    """Import Work From Home data from Excel or CSV file
+    Expected columns based on requirements document:
+    RD Name, Department, RD Category, Start Date, End Date, Duration
+    """
     try:
         if file_path.lower().endswith('.csv'):
             df = pd.read_csv(file_path)
         else:
             df = pd.read_excel(file_path)
         records_imported = 0
+        records_skipped = 0
+        records_not_found = 0
         
-        for _, row in df.iterrows():
+        print(f"WFH data columns found: {df.columns.tolist()}")
+        
+        for idx, row in df.iterrows():
             try:
-                # Find vendor by name (this might need adjustment based on actual data)
-                vendor = Vendor.query.filter_by(full_name=str(row['RD Name'])).first()
+                rd_name = str(row.get('RD Name', '')).strip()
+                department = str(row.get('Department', '')).strip()
+                rd_category = str(row.get('RD Category', '')).strip()
+                
+                if not rd_name:
+                    continue
+                
+                # Try to find vendor by RD Name (full name) first
+                vendor = Vendor.query.filter_by(full_name=rd_name).first()
+                
+                # If not found by name, try by department match
+                if not vendor and department:
+                    vendor = Vendor.query.filter(
+                        Vendor.department.like(f'%{department}%')
+                    ).first()
+                
+                # If still not found, try to find by partial name match
                 if not vendor:
+                    vendor = Vendor.query.filter(
+                        Vendor.full_name.like(f'%{rd_name}%')
+                    ).first()
+                
+                if not vendor:
+                    print(f"Vendor not found for RD Name: '{rd_name}' in Department: '{department}'")
+                    records_not_found += 1
                     continue
                 
                 start_date = pd.to_datetime(row['Start Date']).date()
                 end_date = pd.to_datetime(row['End Date']).date()
-                duration = int(row['Duration'])
+                duration = int(row.get('Duration', 1))
                 
                 # Check if record already exists
                 existing_record = WFHRecord.query.filter_by(
@@ -877,6 +1010,7 @@ def import_wfh_data(file_path):
                 ).first()
                 
                 if existing_record:
+                    records_skipped += 1
                     continue
                 
                 wfh_record = WFHRecord(
@@ -889,16 +1023,27 @@ def import_wfh_data(file_path):
                 models.db.session.add(wfh_record)
                 records_imported += 1
                 
+                if records_imported % 50 == 0:
+                    print(f"Imported {records_imported} WFH records...")
+                
             except Exception as e:
-                print(f"Error processing WFH row: {str(e)}")
+                print(f"Error processing WFH row {idx}: {str(e)}")
                 continue
         
         models.db.session.commit()
+        
+        print(f"\n=== WFH Import Summary ===")
+        print(f"Records imported: {records_imported}")
+        print(f"Records skipped (duplicates): {records_skipped}")
+        print(f"Records not found (no matching vendor): {records_not_found}")
+        
         return records_imported
         
     except Exception as e:
         models.db.session.rollback()
         print(f"Error importing WFH data: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return 0
 
 def get_system_config(key, default_value=None):

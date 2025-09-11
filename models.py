@@ -80,6 +80,8 @@ class Vendor(db.Model):
     daily_statuses = db.relationship('DailyStatus', backref='vendor', lazy='dynamic')
     swipe_records = db.relationship('SwipeRecord', backref='vendor', lazy='dynamic')
     mismatch_records = db.relationship('MismatchRecord', backref='vendor', lazy='dynamic')
+    leave_records = db.relationship('LeaveRecord', backref='vendor', lazy='dynamic')
+    wfh_records = db.relationship('WFHRecord', backref='vendor', lazy='dynamic')
     
     def __repr__(self):
         return f'<Vendor {self.vendor_id} - {self.full_name}>'
@@ -124,6 +126,7 @@ class DailyStatus(db.Model):
     wfh_out_time = db.Column(db.Time, nullable=True)  # For half-day WFH timing
     break_duration = db.Column(db.Integer, default=0)  # Break duration in minutes
     total_hours = db.Column(db.Float, nullable=True)  # Calculated total hours
+    extra_hours = db.Column(db.Float, nullable=True)  # Extra/overtime hours
     
     # Half-day type columns (nullable for backward compatibility)
     half_am_type = db.Column(db.Enum(HalfDayType), nullable=True)  # AM half-day type

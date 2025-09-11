@@ -40,6 +40,11 @@ try:
         MismatchRecord, NotificationLog, AuditLog, SystemConfiguration,
         LeaveRecord, WFHRecord, UserRole, AttendanceStatus, ApprovalStatus
     )
+    # Import SystemIssue model for technical system health monitoring
+    try:
+        from system_issues import SystemIssue
+    except ImportError:
+        SystemIssue = None
     
     print("✅ Successfully imported Flask app and models")
     
@@ -144,34 +149,34 @@ def create_sample_users_and_profiles():
                     )
                     db.session.add(manager)
             
-            # Sample vendors data
+            # Sample vendors data - username matches vendor_id for consistent login
             vendors_data = [
                 {
-                    'username': 'vendor1', 'email': 'john.vendor@company.com',
+                    'username': 'EMP001', 'email': 'john.vendor@company.com',
                     'vendor_id': 'EMP001', 'full_name': 'John Smith',
                     'department': 'Engineering', 'company': 'TechCorp Solutions',
                     'band': 'B2', 'location': 'BL-A-5F', 'manager_id': 'M001'
                 },
                 {
-                    'username': 'vendor2', 'email': 'jane.vendor@company.com',
+                    'username': 'EMP002', 'email': 'jane.vendor@company.com',
                     'vendor_id': 'EMP002', 'full_name': 'Jane Wilson',
                     'department': 'Engineering', 'company': 'TechCorp Solutions',
                     'band': 'B2', 'location': 'BL-A-5F', 'manager_id': 'M001'
                 },
                 {
-                    'username': 'vendor3', 'email': 'mike.vendor@company.com',
+                    'username': 'EMP003', 'email': 'mike.vendor@company.com',
                     'vendor_id': 'EMP003', 'full_name': 'Mike Rodriguez',
                     'department': 'Operations', 'company': 'InfraCorp Ltd',
                     'band': 'B3', 'location': 'BL-B-3F', 'manager_id': 'M002'
                 },
                 {
-                    'username': 'vendor4', 'email': 'sarah.vendor@company.com',
+                    'username': 'EMP004', 'email': 'sarah.vendor@company.com',
                     'vendor_id': 'EMP004', 'full_name': 'Sarah Parker',
                     'department': 'Quality Assurance', 'company': 'QualityCorp Inc',
                     'band': 'B2', 'location': 'BL-C-4F', 'manager_id': 'M003'
                 },
                 {
-                    'username': 'vendor5', 'email': 'david.vendor@company.com',
+                    'username': 'EMP005', 'email': 'david.vendor@company.com',
                     'vendor_id': 'EMP005', 'full_name': 'David Kim',
                     'department': 'Engineering', 'company': 'TechCorp Solutions',
                     'band': 'B3', 'location': 'BL-A-6F', 'manager_id': 'M001'
@@ -273,11 +278,39 @@ def generate_attendance_data():
                     ).first()
                     
                     if not existing_status:
+                        # Calculate total and extra hours for the status
+                        total_work_hours = 0.0
+                        extra_work_hours = 0.0
+                        
+                        if status == AttendanceStatus.IN_OFFICE_FULL:
+                            # Full day office work: 8 hours standard + random overtime
+                            base_hours = 8.0
+                            overtime = random.choice([0, 0.5, 1.0, 1.5, 2.0]) if random.random() < 0.3 else 0
+                            total_work_hours = base_hours + overtime
+                            extra_work_hours = overtime
+                        elif status == AttendanceStatus.IN_OFFICE_HALF:
+                            # Half day office work: 4 hours
+                            total_work_hours = 4.0
+                            extra_work_hours = 0.0
+                        elif status == AttendanceStatus.WFH_FULL:
+                            # Full day WFH: similar to office
+                            base_hours = 8.0
+                            overtime = random.choice([0, 0.5, 1.0]) if random.random() < 0.2 else 0
+                            total_work_hours = base_hours + overtime
+                            extra_work_hours = overtime
+                        elif status == AttendanceStatus.WFH_HALF:
+                            # Half day WFH: 4 hours
+                            total_work_hours = 4.0
+                            extra_work_hours = 0.0
+                        # Leave and absent don't have working hours
+                        
                         daily_status = DailyStatus(
                             vendor_id=vendor.id,
                             status_date=current_date,
                             status=status,
                             location='Office' if 'IN_OFFICE' in status.value else ('Home' if 'WFH' in status.value else 'N/A'),
+                            total_hours=total_work_hours,
+                            extra_hours=extra_work_hours,
                             submitted_at=datetime.combine(
                                 current_date, 
                                 time(random.randint(8, 10), random.randint(0, 59))
@@ -616,7 +649,8 @@ def main():
     print("\n🔑 Login Credentials:")
     print("   👑 Admin:    Admin / admin123")
     print("   👔 Manager:  manager1 / manager123 (also manager2, manager3)")
-    print("   👤 Vendor:   vendor1 / vendor123 (also vendor2-5)")
+    print("   👤 Vendor:   EMP001 / vendor123 (also EMP002-EMP005)")
+    print("   📝 Note:     Vendor usernames match their Employee IDs for consistency")
     
     print("\n🚀 Ready to run:")
     print("   1. Start app: python app.py")

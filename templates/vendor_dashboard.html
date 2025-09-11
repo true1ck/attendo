@@ -122,7 +122,7 @@
                             <tr>
                                 <th>Date</th>
                                 <th>Status</th>
-                                <th>Time</th>
+                                <th>Hours & Schedule</th>
                                 <th>Location</th>
                                 <th>Approval</th>
                                 <th>Actions</th>
@@ -160,7 +160,11 @@
                                 </td>
                                 <td>
                                     {% if status.total_hours %}
-                                        <small class="text-success"><strong>{{ "%.1f"|format(status.total_hours) }}h</strong></small><br>
+                                        <small class="text-success"><strong>{{ "%.1f"|format(status.total_hours) }}h</strong></small>
+                                        {% if status.extra_hours and status.extra_hours > 0 %}
+                                            <small class="text-warning"> (+{{ "%.1f"|format(status.extra_hours) }}h)</small>
+                                        {% endif %}
+                                        <br>
                                     {% endif %}
                                     {% if status.in_time and status.out_time %}
                                         <small>{{ status.in_time.strftime('%H:%M') }} - {{ status.out_time.strftime('%H:%M') }}</small>

@@ -969,7 +969,9 @@ def get_vendor_summary(vendor_id):
             'total_submitted': len(statuses),
             'pending_approval': 0,
             'approved': 0,
-            'rejected': 0
+            'rejected': 0,
+            'total_working_hours': 0.0,
+            'total_extra_hours': 0.0
         }
         
         recent_activities = []
@@ -996,6 +998,12 @@ def get_vendor_summary(vendor_id):
                 stats['approved'] += 1
             elif status.approval_status == ApprovalStatus.REJECTED:
                 stats['rejected'] += 1
+            
+            # Add working hours if available
+            if status.total_hours:
+                stats['total_working_hours'] += status.total_hours
+            if status.extra_hours:
+                stats['total_extra_hours'] += status.extra_hours
             
             # Add to recent activities
             recent_activities.append({
@@ -1031,6 +1039,11 @@ def get_vendor_summary(vendor_id):
         stats['wfh_rate'] = round((stats['total_wfh'] / stats['total_submitted'] * 100), 1) if stats['total_submitted'] > 0 else 0
         stats['working_days'] = working_days
         stats['pending_mismatches'] = pending_mismatches
+        
+        # Calculate working hours averages
+        stats['total_working_hours'] = round(stats['total_working_hours'], 1)
+        stats['total_extra_hours'] = round(stats['total_extra_hours'], 1)
+        stats['average_hours_per_day'] = round(stats['total_working_hours'] / max(1, stats['total_submitted']), 1) if stats['total_submitted'] > 0 else 0
         
         vendor_summary = {
             'vendor': {

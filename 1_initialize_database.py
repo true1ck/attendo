@@ -55,6 +55,20 @@ def create_database_tables():
     
     with app.app_context():
         try:
+            # Check if we need to migrate existing schema
+            inspector = db.inspect(db.engine)
+            existing_tables = inspector.get_table_names()
+            
+            if 'daily_statuses' in existing_tables:
+                # Check if extra_hours column exists
+                columns = inspector.get_columns('daily_statuses')
+                column_names = [col['name'] for col in columns]
+                
+                if 'extra_hours' not in column_names:
+                    print("   Adding extra_hours column to daily_statuses...")
+                    db.engine.execute('ALTER TABLE daily_statuses ADD COLUMN extra_hours FLOAT')
+                    print("   ✅ Added extra_hours column")
+            
             # Drop existing tables if they exist (for clean setup)
             db.drop_all()
             print("   Cleared existing tables (if any)")
@@ -210,6 +224,7 @@ def verify_database():
                 'users', 'vendors', 'managers', 'daily_statuses', 
                 'swipe_records', 'holidays', 'mismatch_records',
                 'notification_logs', 'audit_logs', 'system_configurations',
+                'leave_records', 'wfh_records', 'email_notification_logs',
                 'system_issues'
             ]
             

@@ -63,12 +63,37 @@ def next_business_days(n=7):
 
 def upsert_daily_status(vendor_id, d, status, location=None, approved=True, half_am_type=None, half_pm_type=None):
     ds = DailyStatus.query.filter_by(vendor_id=vendor_id, status_date=d).first()
+    
+    # Calculate working hours based on status
+    total_work_hours = 0.0
+    extra_work_hours = 0.0
+    
+    if status == AttendanceStatus.IN_OFFICE_FULL:
+        total_work_hours = 8.5  # Slightly more than 8 for variation
+        extra_work_hours = 0.5
+    elif status == AttendanceStatus.IN_OFFICE_HALF:
+        total_work_hours = 4.0
+        extra_work_hours = 0.0
+    elif status == AttendanceStatus.WFH_FULL:
+        total_work_hours = 8.0
+        extra_work_hours = 0.0
+    elif status == AttendanceStatus.WFH_HALF:
+        total_work_hours = 4.0
+        extra_work_hours = 0.0
+    elif status == AttendanceStatus.LEAVE_HALF:
+        # Only half day working
+        total_work_hours = 4.0
+        extra_work_hours = 0.0
+    # Leave full and absent have 0 hours
+    
     if not ds:
         ds = DailyStatus(
             vendor_id=vendor_id,
             status_date=d,
             status=status,
             location=location or ("Office" if 'IN_OFFICE' in status.value else "Home" if 'WFH' in status.value else "N/A"),
+            total_hours=total_work_hours,
+            extra_hours=extra_work_hours,
             submitted_at=datetime.combine(d, time(9, 30)),
             approval_status=ApprovalStatus.APPROVED if approved else ApprovalStatus.PENDING,
             half_am_type=half_am_type,
@@ -78,6 +103,8 @@ def upsert_daily_status(vendor_id, d, status, location=None, approved=True, half
     else:
         ds.status = status
         ds.location = location or ("Office" if 'IN_OFFICE' in status.value else "Home" if 'WFH' in status.value else "N/A")
+        ds.total_hours = total_work_hours
+        ds.extra_hours = extra_work_hours
         ds.approval_status = ApprovalStatus.APPROVED if approved else ApprovalStatus.PENDING
         ds.half_am_type = half_am_type
         ds.half_pm_type = half_pm_type
