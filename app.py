@@ -2308,11 +2308,9 @@ def vendor_edit_status(status_id):
         # Convert string to enum
         status_map = {
             'in_office_full': AttendanceStatus.IN_OFFICE_FULL,
-            'in_office_half': AttendanceStatus.IN_OFFICE_HALF,
             'wfh_full': AttendanceStatus.WFH_FULL,
-            'wfh_half': AttendanceStatus.WFH_HALF,
             'leave_full': AttendanceStatus.LEAVE_FULL,
-            'leave_half': AttendanceStatus.LEAVE_HALF,
+            'mixed_half': AttendanceStatus.IN_OFFICE_HALF,  # Use IN_OFFICE_HALF as base for mixed
             'absent': AttendanceStatus.ABSENT
         }
         
@@ -2421,11 +2419,9 @@ def vendor_submit_status():
         # Convert string to enum
         status_map = {
             'in_office_full': AttendanceStatus.IN_OFFICE_FULL,
-            'in_office_half': AttendanceStatus.IN_OFFICE_HALF,
             'wfh_full': AttendanceStatus.WFH_FULL,
-            'wfh_half': AttendanceStatus.WFH_HALF,
             'leave_full': AttendanceStatus.LEAVE_FULL,
-            'leave_half': AttendanceStatus.LEAVE_HALF,
+            'mixed_half': AttendanceStatus.IN_OFFICE_HALF,  # Use IN_OFFICE_HALF as base for mixed
             'absent': AttendanceStatus.ABSENT
         }
         
@@ -2434,8 +2430,8 @@ def vendor_submit_status():
             flash('Invalid status value', 'error')
             return redirect(url_for('vendor_dashboard'))
         
-        # Validate half-day submissions
-        if status in [AttendanceStatus.IN_OFFICE_HALF, AttendanceStatus.WFH_HALF, AttendanceStatus.LEAVE_HALF]:
+        # Handle mixed half-day submissions
+        if status_value == 'mixed_half':
             if not half_am_type or not half_pm_type:
                 flash('Both AM and PM activities must be specified for half-day status', 'error')
                 return redirect(url_for('vendor_dashboard'))
@@ -2446,7 +2442,9 @@ def vendor_submit_status():
                 flash('Invalid half-day activity type', 'error')
                 return redirect(url_for('vendor_dashboard'))
             
-            # Check for invalid combinations
+            # ALL COMBINATIONS ARE NOW ALLOWED - No restrictions
+            
+            # Convert to enums - ALL COMBINATIONS ALLOWED
             from models import HalfDayType
             half_day_map = {
                 'in_office': HalfDayType.IN_OFFICE,
@@ -2458,22 +2456,10 @@ def vendor_submit_status():
             am_enum = half_day_map[half_am_type]
             pm_enum = half_day_map[half_pm_type]
             
-            # Validate combinations
-            if am_enum == pm_enum:
-                if am_enum == HalfDayType.ABSENT:
-                    flash('Both AM and PM cannot be absent. Use "Absent" status instead', 'error')
-                    return redirect(url_for('vendor_dashboard'))
-                elif am_enum == HalfDayType.LEAVE:
-                    flash('Both AM and PM cannot be leave. Use "On Leave - Full Day" instead', 'error')
-                    return redirect(url_for('vendor_dashboard'))
-                elif am_enum == HalfDayType.WFH:
-                    flash('Both AM and PM cannot be WFH. Use "Work From Home - Full Day" instead', 'error')
-                    return redirect(url_for('vendor_dashboard'))
-                elif am_enum == HalfDayType.IN_OFFICE:
-                    flash('Both AM and PM cannot be in office. Use "In Office - Full Day" instead', 'error')
-                    return redirect(url_for('vendor_dashboard'))
+            # Log the combination for audit purposes
+            print(f"✅ Half-day submission: AM={half_am_type}, PM={half_pm_type} for vendor {vendor.vendor_id}")
         else:
-            # Clear half-day types for non-half-day statuses
+            # Clear half-day types for full-day statuses
             am_enum = None
             pm_enum = None
         
@@ -2495,8 +2481,8 @@ def vendor_submit_status():
             existing_status.wfh_out_time = wfh_out_time_obj
             existing_status.break_duration = break_duration
             existing_status.total_hours = total_hours
-            existing_status.half_am_type = am_enum if am_enum else None
-            existing_status.half_pm_type = pm_enum if pm_enum else None
+            existing_status.half_am_type = am_enum
+            existing_status.half_pm_type = pm_enum
             existing_status.submitted_at = datetime.utcnow()
             existing_status.approval_status = ApprovalStatus.PENDING
         else:
@@ -2514,8 +2500,8 @@ def vendor_submit_status():
                 wfh_out_time=wfh_out_time_obj,
                 break_duration=break_duration,
                 total_hours=total_hours,
-                half_am_type=am_enum if am_enum else None,
-                half_pm_type=pm_enum if pm_enum else None
+                half_am_type=am_enum,
+                half_pm_type=pm_enum
             )
             db.session.add(new_status)
         
@@ -3126,7 +3112,7 @@ def clear_notification_data(file_name=None):
         return {'success': False, 'message': str(e), 'cleared': 0}
 
 def sync_excel_files():
-    """Copy all Excel files from local to network drive"""
+    """Copy Excel files from local to network drive and apply Power Automate formatting with vendor data"""
     global excel_sync_status
     
     if not app.config['EXCEL_NETWORK_FOLDER']:
@@ -3150,15 +3136,71 @@ def sync_excel_files():
             excel_log_message("⚠️ No Excel files found in local folder")
             return
         
+        # Import the vendor data population script
+        try:
+            from scripts.populate_excel_from_vendors import get_vendor_data, create_notification_excel
+            populate_with_vendors = True
+            excel_log_message("✅ Will populate network files with vendor data")
+        except ImportError:
+            populate_with_vendors = False
+            excel_log_message("⚠️ Vendor population not available, using basic copy")
+        
         files_copied = 0
+        files_formatted = 0
+        
+        # Get vendor data if available
+        if populate_with_vendors:
+            vendors_data, vendor_emails = get_vendor_data()
+            if not vendors_data:
+                # Use sample data if no vendors in database
+                vendors_data = [
+                    ('VENDOR001', 'Jane Vendor', 'IT', 'Company A', 'MGR001'),
+                    ('VENDOR002', 'Mike Vendor', 'IT', 'Company A', 'MGR001'),
+                    ('VENDOR003', 'Sarah Vendor', 'Finance', 'Company B', 'MGR002'),
+                    ('VENDOR004', 'David Vendor', 'Finance', 'Company B', 'MGR002'),
+                    ('TEST001', 'Test User', 'Testing', 'Company C', 'MGR003')
+                ]
+                vendor_emails = {
+                    'VENDOR001': 'jane.vendor@company.com',
+                    'VENDOR002': 'mike.vendor@company.com',
+                    'VENDOR003': 'sarah.vendor@company.com',
+                    'VENDOR004': 'david.vendor@company.com',
+                    'TEST001': 'test001@company.com'
+                }
+            excel_log_message(f"📊 Found {len(vendors_data)} vendors to populate")
+        
+        # Define notification type mapping
+        notification_type_map = {
+            '01_daily_status_reminders.xlsx': 'Daily Reminder',
+            '02_manager_summary_notifications.xlsx': 'Manager Summary',
+            '03_manager_all_complete_notifications.xlsx': 'Manager Summary',
+            '04_mismatch_notifications.xlsx': 'Mismatch Alert',
+            '05_manager_feedback_notifications.xlsx': 'Manager Summary',
+            '06_monthly_report_notifications.xlsx': 'Manager Summary',
+            '07_admin_system_alerts.xlsx': 'System Alert',
+            '08_holiday_reminder_notifications.xlsx': 'Holiday Reminder',
+            '09_late_submission_alerts.xlsx': 'Late Submission'
+        }
+        
         for file_path in excel_files:
             try:
                 dest_path = network_path / file_path.name
-                shutil.copy2(file_path, dest_path)
-                excel_log_message(f"✅ Copied: {file_path.name}")
+                
+                if populate_with_vendors and file_path.name in notification_type_map:
+                    # Create formatted file with vendor data for network folder
+                    notification_type = notification_type_map[file_path.name]
+                    create_notification_excel(dest_path, notification_type, vendors_data, vendor_emails)
+                    excel_log_message(f"✅ Created {file_path.name} with vendor data for Power Automate")
+                    files_formatted += 1
+                else:
+                    # Just copy the file as-is
+                    shutil.copy2(file_path, dest_path)
+                    excel_log_message(f"📋 Copied: {file_path.name}")
+                
                 files_copied += 1
+                
             except Exception as e:
-                error_msg = f"❌ Failed to copy {file_path.name}: {str(e)}"
+                error_msg = f"❌ Failed to process {file_path.name}: {str(e)}"
                 excel_log_message(error_msg)
                 excel_sync_status['errors'].append(error_msg)
         
@@ -3166,7 +3208,10 @@ def sync_excel_files():
         excel_sync_status['files_synced'] = files_copied
         excel_sync_status['status'] = 'Running'
         
-        excel_log_message(f"📊 Sync completed: {files_copied}/{len(excel_files)} files")
+        if populate_with_vendors and files_formatted > 0:
+            excel_log_message(f"📊 Sync completed: {files_copied}/{len(excel_files)} files, {files_formatted} with vendor data")
+        else:
+            excel_log_message(f"📊 Sync completed: {files_copied}/{len(excel_files)} files")
         
     except Exception as e:
         error_msg = f"❌ Sync failed: {str(e)}"
@@ -3355,6 +3400,111 @@ def api_clear_notifications():
     
     except Exception as e:
         excel_log_message(f"❌ API clear notifications error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/excel-sync/format-power-automate', methods=['POST'])
+@login_required
+def api_format_power_automate():
+    """Format Excel files in network drive for Power Automate compatibility"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        file_name = data.get('file_name')  # Optional specific file
+        create_backup = data.get('backup', False)  # Default to no backup
+        
+        if not app.config['EXCEL_NETWORK_FOLDER']:
+            return jsonify({'error': 'Network folder not configured'}), 400
+        
+        # Import Power Automate formatter
+        try:
+            from scripts.excel_power_automate_formatter import excel_power_automate_formatter
+        except ImportError:
+            return jsonify({'error': 'Power Automate formatter module not available'}), 500
+        
+        network_path = Path(app.config['EXCEL_NETWORK_FOLDER'])
+        
+        if file_name:
+            # Format specific file
+            file_path = network_path / file_name
+            if not file_path.exists():
+                return jsonify({'error': f'File not found: {file_name}'}), 404
+            
+            success = excel_power_automate_formatter.validate_and_format_excel_file(file_path, create_backup)
+            
+            if success:
+                excel_log_message(f"✅ Manually formatted {file_name} for Power Automate")
+                return jsonify({
+                    'success': True,
+                    'message': f'Successfully formatted {file_name} for Power Automate',
+                    'formatted_files': [file_name]
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': f'Failed to format {file_name}'
+                }), 400
+        else:
+            # Format all files in directory
+            result = excel_power_automate_formatter.format_all_files_in_directory(network_path, create_backup)
+            
+            excel_log_message(f"📊 Manual Power Automate formatting: {result['message']}")
+            
+            return jsonify({
+                'success': result['success'],
+                'message': result['message'],
+                'formatted_count': result.get('formatted_count', 0),
+                'total_files': result.get('total_files', 0),
+                'formatted_files': result.get('formatted_files', []),
+                'errors': result.get('errors', [])
+            })
+    
+    except Exception as e:
+        excel_log_message(f"❌ API Power Automate formatting error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/excel-sync/populate-vendor-data', methods=['POST'])
+@login_required
+def api_populate_vendor_data():
+    """Populate Excel files in network folder with vendor data from database"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        network_folder = data.get('network_folder', app.config.get('EXCEL_NETWORK_FOLDER'))
+        
+        if not network_folder:
+            return jsonify({'error': 'Network folder not specified'}), 400
+        
+        # Import vendor population script
+        try:
+            from scripts.populate_excel_from_vendors import main as populate_vendors
+        except ImportError:
+            return jsonify({'error': 'Vendor population module not available'}), 500
+        
+        # Run the population
+        excel_log_message(f"🔄 Populating Excel files with vendor data in: {network_folder}")
+        
+        try:
+            populate_vendors(network_folder_path=network_folder)
+            excel_log_message(f"✅ Successfully populated Excel files with vendor data")
+            
+            return jsonify({
+                'success': True,
+                'message': 'Successfully populated Excel files with vendor data',
+                'network_folder': network_folder
+            })
+        except Exception as populate_error:
+            excel_log_message(f"❌ Failed to populate vendor data: {str(populate_error)}")
+            return jsonify({
+                'success': False,
+                'error': f'Failed to populate vendor data: {str(populate_error)}'
+            }), 500
+    
+    except Exception as e:
+        excel_log_message(f"❌ API vendor population error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 # System Issues API endpoints
