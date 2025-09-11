@@ -20,7 +20,7 @@ class AdvancedNotificationScheduler:
     Advanced scheduler with specific time-based rules for each notification type.
     """
     
-    def __init__(self, network_folder='G:/Test1', output_folder='network_folder_simplified'):
+    def __init__(self, network_folder='G:/Test', output_folder='network_folder_simplified'):
         self.network_folder = Path(network_folder)
         self.output_folder = Path(output_folder)
         self.output_folder.mkdir(exist_ok=True)

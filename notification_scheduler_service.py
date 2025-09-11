@@ -54,6 +54,9 @@ class NotificationSchedulerService:
             # Initialize the scheduler
             self.scheduler = EnhancedNotificationScheduler()
             
+            # Ensure network queue file exists
+            self._ensure_network_file()
+            
             # Start the background thread
             self.running = True
             self.paused = False
@@ -227,6 +230,62 @@ class NotificationSchedulerService:
         self.interval_minutes = minutes
         logger.info(f"Scheduler interval set to {minutes} minutes")
         return {'success': True, 'message': f'Interval set to {minutes} minutes'}
+    
+    def _ensure_network_file(self):
+        """Ensure the network queue file exists"""
+        try:
+            network_file = Path("G:/Test/sent_noti_now.xlsx")
+            network_folder = Path("G:/Test")
+            
+            # Create network folder if it doesn't exist
+            network_folder.mkdir(exist_ok=True, parents=True)
+            
+            # If network file doesn't exist, create it
+            if not network_file.exists():
+                logger.info(f"Creating network queue file at {network_file}")
+                
+                # Create empty DataFrame with required columns
+                import pandas as pd
+                from openpyxl.worksheet.table import Table, TableStyleInfo
+                
+                empty_df = pd.DataFrame(columns=[
+                    'EmployeeID',
+                    'ContactEmail', 
+                    'Message',
+                    'NotificationType',
+                    'Priority',
+                    'NTStatusSent'
+                ])
+                
+                # Save with Excel table format
+                with pd.ExcelWriter(network_file, engine='openpyxl') as writer:
+                    empty_df.to_excel(writer, sheet_name='Notifications', index=False)
+                    
+                    workbook = writer.book
+                    worksheet = writer.sheets['Notifications']
+                    
+                    # Create empty table structure
+                    table_ref = "A1:F1"  # Just headers for empty table
+                    table = Table(displayName="NotificationQueue", ref=table_ref)
+                    style = TableStyleInfo(
+                        name="TableStyleMedium2",
+                        showFirstColumn=False,
+                        showLastColumn=False,
+                        showRowStripes=True,
+                        showColumnStripes=False
+                    )
+                    table.tableStyleInfo = style
+                    worksheet.add_table(table)
+                
+                logger.info(f"✅ Created network queue file: {network_file}")
+                return True
+            else:
+                logger.info(f"Network queue file already exists: {network_file}")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Error ensuring network file: {e}")
+            return False
 
 # Create global instance
 notification_scheduler_service = NotificationSchedulerService()

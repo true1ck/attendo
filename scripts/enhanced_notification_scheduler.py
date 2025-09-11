@@ -25,9 +25,9 @@ logging.basicConfig(
 
 class EnhancedNotificationScheduler:
     def __init__(self):
-        self.network_folder = Path("G:/Test1")
+        self.network_folder = Path("G:/Test")
         self.queue_file = Path("network_folder_simplified/sent_noti_now.xlsx")
-        self.network_queue_file = Path("G:/Test1/sent_noti_now.xlsx")  # Network location for Power Automate
+        self.network_queue_file = Path("G:/Test/sent_noti_now.xlsx")  # Network location for Power Automate
         self.tracking_file = Path("schedule_tracking.json")
         
         # Ensure directories exist
@@ -36,6 +36,9 @@ class EnhancedNotificationScheduler:
         
         # Initialize or load tracking
         self.load_tracking()
+        
+        # Ensure queue files exist on initialization
+        self.initialize_queue_files()
         
         # Notification configurations with exact requirements
         self.notification_configs = {
@@ -120,6 +123,22 @@ class EnhancedNotificationScheduler:
                 self.tracking = json.load(f)
         else:
             self.tracking = {}
+    
+    def initialize_queue_files(self):
+        """Initialize queue files if they don't exist"""
+        try:
+            # Check if network queue file exists
+            if not self.network_queue_file.exists():
+                logging.info("Network queue file not found, creating...")
+                self.create_empty_queue()
+            
+            # Check if local queue file exists
+            if not self.queue_file.exists():
+                logging.info("Local queue file not found, creating...")
+                self.create_empty_queue()
+                
+        except Exception as e:
+            logging.error(f"Error initializing queue files: {e}")
     
     def save_tracking(self):
         """Save tracking data"""
@@ -298,16 +317,86 @@ class EnhancedNotificationScheduler:
         """Sync the queue file to network folder for Power Automate"""
         try:
             import shutil
+            
+            # If local queue file exists, copy it
             if self.queue_file.exists():
-                # Copy the file to network location
                 shutil.copy2(self.queue_file, self.network_queue_file)
                 logging.info(f"📤 Synced queue to network: {self.network_queue_file}")
                 return True
             else:
-                logging.warning("Queue file doesn't exist to sync")
-                return False
+                # If local file doesn't exist, create an empty one in both locations
+                logging.info("Local queue file doesn't exist, creating new empty queue")
+                self.create_empty_queue()
+                return True
         except Exception as e:
             logging.error(f"Error syncing to network folder: {e}")
+            # Try to create empty queue in network if sync fails
+            try:
+                self.ensure_network_queue_exists()
+            except:
+                pass
+            return False
+    
+    def create_empty_queue(self):
+        """Create an empty queue file with proper structure"""
+        try:
+            # Create empty DataFrame with required columns
+            empty_df = pd.DataFrame(columns=[
+                'EmployeeID',
+                'ContactEmail', 
+                'Message',
+                'NotificationType',
+                'Priority',
+                'NTStatusSent'
+            ])
+            
+            # Save to both local and network locations
+            self.create_excel_table(self.queue_file, empty_df)
+            
+            logging.info("✅ Created empty queue files in local and network folders")
+            return True
+        except Exception as e:
+            logging.error(f"Error creating empty queue: {e}")
+            return False
+    
+    def ensure_network_queue_exists(self):
+        """Ensure the network queue file exists, create if not"""
+        try:
+            if not self.network_queue_file.exists():
+                # Create empty DataFrame with required columns
+                empty_df = pd.DataFrame(columns=[
+                    'EmployeeID',
+                    'ContactEmail', 
+                    'Message',
+                    'NotificationType',
+                    'Priority',
+                    'NTStatusSent'
+                ])
+                
+                # Save directly to network location with Excel table format
+                with pd.ExcelWriter(self.network_queue_file, engine='openpyxl') as writer:
+                    empty_df.to_excel(writer, sheet_name='Notifications', index=False)
+                    
+                    workbook = writer.book
+                    worksheet = writer.sheets['Notifications']
+                    
+                    # Create empty table structure
+                    table_ref = "A1:F1"  # Just headers for empty table
+                    table = Table(displayName="NotificationQueue", ref=table_ref)
+                    style = TableStyleInfo(
+                        name="TableStyleMedium2",
+                        showFirstColumn=False,
+                        showLastColumn=False,
+                        showRowStripes=True,
+                        showColumnStripes=False
+                    )
+                    table.tableStyleInfo = style
+                    worksheet.add_table(table)
+                
+                logging.info(f"✅ Created network queue file at: {self.network_queue_file}")
+            return True
+        except Exception as e:
+            logging.error(f"Error ensuring network queue exists: {e}")
             return False
     
     def read_notification_file(self, file_path):
@@ -360,6 +449,9 @@ class EnhancedNotificationScheduler:
         current_time = datetime.now()
         logging.info(f"\n{'='*60}")
         logging.info(f"Processing notifications at {current_time.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # First, ensure network queue file exists
+        self.ensure_network_queue_exists()
         
         # First, remove any sent notifications
         removed = self.remove_sent_notifications()
