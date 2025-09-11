@@ -23,6 +23,7 @@
 </div>
 
 <!-- System Overview Stats -->
+<!-- First row with 4 main metrics -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card text-white" style="background: linear-gradient(135deg, var(--attendo-primary) 0%, var(--attendo-accent) 100%);">
@@ -73,15 +74,72 @@
     </div>
     
     <div class="col-md-3">
-        <div class="card bg-warning text-white">
+        <div class="card {% if system_stats.pending_mismatches and system_stats.pending_mismatches > 0 %}bg-primary{% else %}bg-secondary{% endif %} text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title">System Issues</h6>
-                        <h4 class="mb-0">{{ system_stats.system_issues or 3 }}</h4>
+                        <h6 class="card-title">Pending Approvals</h6>
+                        <h4 class="mb-0">{{ system_stats.pending_mismatches or 0 }}</h4>
+                        <small class="text-light">Business workflow</small>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Second row with system health -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card {% if system_stats.system_issues and system_stats.system_issues > 0 %}bg-danger{% else %}bg-success{% endif %} text-white" 
+             style="cursor: {% if system_stats.system_issues and system_stats.system_issues > 0 %}pointer{% else %}default{% endif %};"
+             {% if system_stats.system_issues and system_stats.system_issues > 0 %}onclick="showSystemIssues()"{% endif %}
+             data-bs-toggle="{% if system_stats.system_issues and system_stats.system_issues > 0 %}tooltip{% endif %}"
+             data-bs-placement="top" 
+             title="{% if system_stats.system_issues and system_stats.system_issues > 0 %}Click to view system issues details{% else %}All systems running normally{% endif %}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">🔧 Technical System Health</h6>
+                        <h4 class="mb-0">{% if system_stats.system_issues and system_stats.system_issues > 0 %}{{ system_stats.system_issues }} Issues{% else %}All Good{% endif %}</h4>
+                        {% if system_stats.system_issues and system_stats.system_issues > 0 %}
+                            <small class="text-light">Click for technical details</small>
+                        {% else %}
+                            <small class="text-light">System running normally</small>
+                        {% endif %}
+                    </div>
+                    <div class="align-self-center">
+                        {% if system_stats.system_issues and system_stats.system_issues > 0 %}
+                            <i class="fas fa-exclamation-triangle fa-3x"></i>
+                        {% else %}
+                            <i class="fas fa-check-shield fa-3x"></i>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card bg-dark text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">📈 Quick Actions</h6>
+                        <div class="btn-group-vertical" role="group">
+                            <button class="btn btn-outline-light btn-sm mb-1" onclick="window.location.href='/admin/excel-sync'">
+                                Excel Sync Admin
+                            </button>
+                            <button class="btn btn-outline-light btn-sm" onclick="refreshExcelNotifications()">
+                                Refresh Notifications
+                            </button>
+                        </div>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-bolt fa-3x"></i>
                     </div>
                 </div>
             </div>
@@ -693,5 +751,57 @@ async function refreshExcelNotifications() {
         btn.innerHTML = originalHTML;
     }
 }
+
+function showSystemIssues() {
+    {% if system_stats.system_issues and system_stats.system_issues > 0 %}
+    const issuesBreakdown = {{ system_stats.system_issues_breakdown | tojson }};
+    
+    let message = '🔧 Technical System Issues Detected:\n\n';
+    issuesBreakdown.forEach((issue, index) => {
+        message += `${index + 1}. ${issue}\n\n`;
+    });
+    
+    message += '🛠️ Recommended Actions:\n';
+    
+    // Specific actions based on issue types
+    if (issuesBreakdown.some(issue => issue.includes('Excel sync failures'))) {
+        message += '• Open Excel Sync Admin panel to view error details and restart sync\n';
+        message += '• Check network drive connectivity and file permissions\n';
+    }
+    if (issuesBreakdown.some(issue => issue.includes('Excel sync service is stopped'))) {
+        message += '• Navigate to Excel Sync Admin and click "Start Service"\n';
+        message += '• Verify network folder path is correctly configured\n';
+    }
+    if (issuesBreakdown.some(issue => issue.includes('Database connectivity'))) {
+        message += '• Check database server status and connection settings\n';
+        message += '• Restart the application if database was temporarily unavailable\n';
+    }
+    if (issuesBreakdown.some(issue => issue.includes('Critical configuration'))) {
+        message += '• Review application configuration and environment variables\n';
+        message += '• Update production settings for security\n';
+    }
+    if (issuesBreakdown.some(issue => issue.includes('Data integrity'))) {
+        message += '• Review user accounts in System Settings\n';
+        message += '• Clean up or fix orphaned user profiles\n';
+    }
+    
+    // Quick action buttons
+    message += '\n🚀 Quick Actions:\n';
+    message += '• Click "Excel Sync Admin" button above for sync issues\n';
+    message += '• Use "System Settings" for user management\n';
+    
+    message += '\nℹ️ These are actual technical problems requiring admin intervention.\nNormal business operations (approvals, submissions) are tracked separately.';
+    
+    alert(message);
+    {% endif %}
+}
+
+// Enable Bootstrap tooltips
+document.addEventListener('DOMContentLoaded', function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
 </script>
 {% endblock %}

@@ -135,6 +135,48 @@
         </div>
     </div>
 
+    <!-- Notification Control Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">🛑 Stop Notifications Control</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="loadNotificationFiles()">
+                        🔄 Refresh Files
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Use these controls to stop individual notifications by clearing their data from the network drive Excel files.
+                        This will preserve the table structure but remove all notification data rows.
+                    </p>
+                    
+                    <div id="notification-files-container">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <span class="ml-2">Loading notification files...</span>
+                        </div>
+                    </div>
+                    
+                    <hr class="mt-4">
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <button type="button" class="btn btn-danger" onclick="clearAllNotifications()">
+                                🚫 Stop All Notifications
+                            </button>
+                            <small class="text-muted ml-2">
+                                This will clear data from all notification files
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Error Log -->
     {% if sync_status.errors %}
     <div class="row">
@@ -240,7 +282,181 @@ function refreshStatus() {
     location.reload();
 }
 
+// Load notification files and display controls
+function loadNotificationFiles() {
+    const container = document.getElementById('notification-files-container');
+    
+    // Show loading state
+    container.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border spinner-border-sm" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <span class="ml-2">Loading notification files...</span>
+        </div>
+    `;
+    
+    fetch('/api/excel-sync/list-files', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.files && data.files.length > 0) {
+            // Display files with controls
+            let html = '<div class="row">';
+            
+            data.files.forEach(file => {
+                const dataRowsText = typeof file.data_rows === 'number' 
+                    ? `${file.data_rows} data rows` 
+                    : 'Error reading file';
+                    
+                const buttonDisabled = file.data_rows === 0 || file.data_rows === 'Error' 
+                    ? 'disabled' 
+                    : '';
+                    
+                const buttonClass = file.data_rows === 0 
+                    ? 'btn-secondary' 
+                    : 'btn-warning';
+                    
+                const statusBadge = file.data_rows === 0 
+                    ? '<span class="badge badge-success">No Data</span>' 
+                    : `<span class="badge badge-info">${dataRowsText}</span>`;
+                
+                html += `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card border">
+                            <div class="card-body">
+                                <h6 class="card-title">${file.display_name}</h6>
+                                <p class="card-text text-muted small mb-2">
+                                    <strong>File:</strong> ${file.name}<br>
+                                    <strong>Modified:</strong> ${file.modified}<br>
+                                    <strong>Status:</strong> ${statusBadge}
+                                </p>
+                                <button class="btn btn-sm ${buttonClass} ${buttonDisabled}" 
+                                        onclick="clearNotificationFile('${file.name}', '${file.display_name}')" 
+                                        ${buttonDisabled}>
+                                    🛑 Stop Notifications
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            container.innerHTML = html;
+        } else {
+            container.innerHTML = `
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${data.message || 'No notification files found or network folder not configured.'}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error loading notification files:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-circle"></i>
+                Error loading notification files: ${error.message || error}
+            </div>
+        `;
+    });
+}
+
+// Clear a specific notification file
+function clearNotificationFile(fileName, displayName) {
+    if (!confirm(`Are you sure you want to stop notifications for "${displayName}"?\n\nThis will clear all data rows from the Excel file while preserving the table structure.`)) {
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Clearing...';
+    button.disabled = true;
+    
+    fetch('/api/excel-sync/clear-notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            file_name: fileName
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ Successfully stopped notifications for "${displayName}"\n\n${data.message}`);
+            // Reload the notification files list
+            loadNotificationFiles();
+        } else {
+            alert(`❌ Error: ${data.error || 'Failed to clear notifications'}`);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error clearing notification file:', error);
+        alert(`❌ Error clearing notifications: ${error.message || error}`);
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Clear all notification files
+function clearAllNotifications() {
+    if (!confirm('⚠️ WARNING: This will stop ALL notifications by clearing data from all Excel files!\n\nAre you absolutely sure you want to proceed?\n\nThis action cannot be undone.')) {
+        return;
+    }
+    
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    // Show loading state
+    button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Clearing All...';
+    button.disabled = true;
+    
+    fetch('/api/excel-sync/clear-notifications', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})  // No file_name means clear all
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✅ Successfully stopped all notifications!\n\n${data.message}\n\nFiles cleared: ${data.files_cleared}`);
+            // Reload the notification files list
+            loadNotificationFiles();
+        } else {
+            alert(`❌ Error: ${data.error || 'Failed to clear all notifications'}`);
+        }
+        
+        button.innerHTML = originalText;
+        button.disabled = false;
+    })
+    .catch(error => {
+        console.error('Error clearing all notifications:', error);
+        alert(`❌ Error clearing all notifications: ${error.message || error}`);
+        button.innerHTML = originalText;
+        button.disabled = false;
+    });
+}
+
+// Load notification files on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotificationFiles();
+});
+
 // Auto-refresh status every 30 seconds
-setInterval(refreshStatus, 30000);
+setInterval(refreshStatus, 30000);</script>
 </script>
 {% endblock %}

@@ -299,12 +299,73 @@ def admin_dashboard():
         Holiday.holiday_date >= date.today()
     ).order_by(Holiday.holiday_date.asc()).limit(5).all()
     
+    # Calculate actual SYSTEM/TECHNICAL issues (not business workflow items)
+    system_issues = 0
+    system_issues_breakdown = []
+    
+    # 1. Check Excel sync errors (TECHNICAL ISSUE)
+    if excel_sync_status.get('errors') and len(excel_sync_status['errors']) > 0:
+        error_count = len(excel_sync_status['errors'])
+        system_issues += 1  # Count as 1 issue type, not per error
+        latest_error = excel_sync_status['errors'][-1]  # Get latest error
+        system_issues_breakdown.append(f"Excel sync failures detected - {error_count} recent error{'s' if error_count > 1 else ''}: {latest_error[:100]}...")
+    
+    # 2. Check if Excel sync service is configured but not running (TECHNICAL ISSUE)
+    if app.config.get('EXCEL_NETWORK_FOLDER') and not excel_sync_running:
+        system_issues += 1
+        system_issues_breakdown.append("Excel sync service is stopped (should be running for notification automation)")
+    
+    # 3. Check for API/Service failures (only add real failures)
+    try:
+        # Test critical database operations
+        test_count = db.session.query(User).count()
+        if test_count < 0:  # This should never happen, but if it does, it's an issue
+            system_issues += 1
+            system_issues_breakdown.append("Database query returned invalid results")
+    except Exception as e:
+        # Only add if there's an actual database connectivity problem
+        system_issues += 1
+        system_issues_breakdown.append(f"Database connectivity issue: {str(e)[:100]}")
+    
+    # 4. Check for critical configuration missing
+    critical_missing_config = []
+    if not app.config.get('SECRET_KEY') or app.config['SECRET_KEY'] == 'dev-secret-change-in-production':
+        critical_missing_config.append('SECRET_KEY not properly configured')
+    
+    if critical_missing_config:
+        system_issues += 1
+        system_issues_breakdown.append(f"Critical configuration issues: {', '.join(critical_missing_config)}")
+    
+    # 5. Check for data integrity issues (only if significant)
+    try:
+        orphaned_vendors = User.query.filter(
+            User.role == UserRole.VENDOR,
+            ~User.id.in_(db.session.query(Vendor.user_id).filter(Vendor.user_id.isnot(None)))
+        ).count()
+        
+        orphaned_managers = User.query.filter(
+            User.role == UserRole.MANAGER,
+            ~User.id.in_(db.session.query(Manager.user_id).filter(Manager.user_id.isnot(None)))
+        ).count()
+        
+        total_orphaned = orphaned_vendors + orphaned_managers
+        if total_orphaned > 5:  # Only report if significant number of orphaned accounts
+            system_issues += 1
+            system_issues_breakdown.append(f"Data integrity warning: {total_orphaned} user accounts without proper profiles (may affect system functionality)")
+    except Exception:
+        pass  # Skip if query fails - don't report as an issue
+    
+    # Get business workflow metrics (separate from system issues)
+    pending_mismatches = MismatchRecord.query.filter_by(manager_approval=ApprovalStatus.PENDING).count()
+    
     # Create system stats object for template
     system_stats = {
         'total_vendors': total_vendors,
         'total_managers': total_managers,
         'todays_submissions': total_statuses_today,
-        'system_issues': 0  # placeholder
+        'system_issues': system_issues,
+        'system_issues_breakdown': system_issues_breakdown,
+        'pending_mismatches': pending_mismatches  # Business metric, not system issue
     }
     
     return render_template('admin_dashboard.html',
@@ -2918,6 +2979,88 @@ def excel_log_message(message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"[EXCEL SYNC {timestamp}] {message}")
 
+def clear_notification_data(file_name=None):
+    """Clear data rows from Excel notification files while preserving headers and structure
+    
+    Args:
+        file_name (str, optional): Specific Excel file to clear. If None, clears all notification files.
+    
+    Returns:
+        dict: Results of the clearing operation
+    """
+    if not app.config['EXCEL_NETWORK_FOLDER']:
+        excel_log_message("⚠️ Network folder not configured")
+        return {'success': False, 'message': 'Network folder not configured', 'cleared': 0}
+    
+    try:
+        network_path = Path(app.config['EXCEL_NETWORK_FOLDER'])
+        
+        if not network_path.exists():
+            excel_log_message(f"⚠️ Network folder not found: {network_path}")
+            return {'success': False, 'message': f'Network folder not found: {network_path}', 'cleared': 0}
+        
+        # Determine which files to process
+        if file_name:
+            files_to_process = [network_path / file_name]
+            if not files_to_process[0].exists():
+                return {'success': False, 'message': f'File not found: {file_name}', 'cleared': 0}
+        else:
+            files_to_process = list(network_path.glob("*.xlsx"))
+        
+        if not files_to_process:
+            excel_log_message("⚠️ No Excel files found in network folder")
+            return {'success': False, 'message': 'No Excel files found', 'cleared': 0}
+        
+        excel_log_message(f"🧹 Clearing notification data from {len(files_to_process)} files")
+        
+        files_cleared = 0
+        cleared_files = []
+        
+        for file_path in files_to_process:
+            try:
+                # Load workbook and first worksheet
+                import openpyxl
+                wb = openpyxl.load_workbook(file_path)
+                ws = wb.active
+                
+                # Get the header row
+                header_row = [cell.value for cell in ws[1]]
+                
+                # Find data rows (skip header)
+                data_rows = ws.max_row - 1
+                
+                if data_rows > 0:
+                    # Delete all rows except header
+                    ws.delete_rows(2, data_rows)
+                    
+                    # Save the file
+                    wb.save(file_path)
+                    excel_log_message(f"✅ Cleared {data_rows} rows from {file_path.name}")
+                    files_cleared += 1
+                    cleared_files.append(file_path.name)
+                else:
+                    excel_log_message(f"ℹ️ No data rows to clear in {file_path.name}")
+                
+            except Exception as e:
+                error_msg = f"❌ Failed to clear {file_path.name}: {str(e)}"
+                excel_log_message(error_msg)
+                excel_sync_status['errors'].append(error_msg)
+        
+        result = {
+            'success': True,
+            'message': f'Successfully cleared {files_cleared} files',
+            'cleared': files_cleared,
+            'files': cleared_files
+        }
+        
+        return result
+        
+    except Exception as e:
+        error_msg = f"❌ Failed to clear notification data: {str(e)}"
+        excel_log_message(error_msg)
+        excel_sync_status['errors'].append(error_msg)
+        return {'success': False, 'message': str(e), 'cleared': 0}
+
 def sync_excel_files():
     """Copy all Excel files from local to network drive"""
     global excel_sync_status
@@ -3118,6 +3261,95 @@ def api_excel_sync_status():
         'network_folder': app.config['EXCEL_NETWORK_FOLDER'],
         'local_folder': app.config['EXCEL_LOCAL_FOLDER']
     })
+
+@app.route('/api/excel-sync/clear-notifications', methods=['POST'])
+@login_required
+def api_clear_notifications():
+    """Clear notification data from Excel files in network drive"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json() or {}
+        file_name = data.get('file_name')  # Optional specific file
+        
+        # Clear notification data
+        result = clear_notification_data(file_name)
+        
+        if result['success']:
+            return jsonify({
+                'success': True,
+                'message': result['message'],
+                'files_cleared': result['cleared'],
+                'files': result['files']
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': result['message']
+            }), 400
+    
+    except Exception as e:
+        excel_log_message(f"❌ API clear notifications error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/excel-sync/list-files')
+@login_required
+def api_list_notification_files():
+    """List all notification Excel files available for clearing"""
+    if current_user.role != UserRole.ADMIN:
+        return jsonify({'error': 'Access denied'}), 403
+    
+    try:
+        if not app.config['EXCEL_NETWORK_FOLDER']:
+            return jsonify({'files': [], 'message': 'Network folder not configured'})
+        
+        network_path = Path(app.config['EXCEL_NETWORK_FOLDER'])
+        
+        if not network_path.exists():
+            return jsonify({'files': [], 'message': 'Network folder not found'})
+        
+        excel_files = list(network_path.glob("*.xlsx"))
+        
+        file_info = []
+        for file_path in excel_files:
+            try:
+                # Get file info
+                stat = file_path.stat()
+                
+                # Try to count data rows
+                import openpyxl
+                wb = openpyxl.load_workbook(file_path, read_only=True)
+                ws = wb.active
+                data_rows = max(0, ws.max_row - 1)  # Exclude header
+                wb.close()
+                
+                file_info.append({
+                    'name': file_path.name,
+                    'size': stat.st_size,
+                    'modified': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S'),
+                    'data_rows': data_rows,
+                    'display_name': file_path.stem.replace('_', ' ').title()
+                })
+                
+            except Exception as e:
+                file_info.append({
+                    'name': file_path.name,
+                    'size': stat.st_size if 'stat' in locals() else 0,
+                    'modified': datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d %H:%M:%S') if 'stat' in locals() else 'Unknown',
+                    'data_rows': 'Error',
+                    'display_name': file_path.stem.replace('_', ' ').title(),
+                    'error': str(e)
+                })
+        
+        return jsonify({
+            'success': True,
+            'files': file_info,
+            'count': len(file_info)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     print("\n" + "="*70)
