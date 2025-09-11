@@ -271,9 +271,21 @@
                                     </div>
                                     {% if audit.new_values %}
                                     <div class="mt-2">
-                                        <small class="text-muted">
-                                            <strong>Changes:</strong> {{ audit.new_values[:100] }}{% if audit.new_values|length > 100 %}...{% endif %}
-                                        </small>
+                                        {% set changes = audit.new_values|fromjson %}
+                                        {% if changes %}
+                                            <small class="text-muted d-block"><strong>Changes:</strong>
+                                                {% set shown = 0 %}
+                                                {% for k, v in changes.items() %}
+                                                    {% if k != 'last_login' and shown < 4 %}
+                                                        <span class="badge bg-light text-dark me-1 mb-1">{{ k.replace('_',' ')|title }}: {{ (v|string)|truncate(40, True) }}</span>
+                                                        {% set shown = shown + 1 %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                                {% if shown == 0 %}<span class="text-muted">-</span>{% endif %}
+                                            </small>
+                                        {% else %}
+                                            <small class="text-muted"><strong>Changes:</strong> {{ audit.new_values[:100] }}{% if audit.new_values|length > 100 %}...{% endif %}</small>
+                                        {% endif %}
                                     </div>
                                     {% endif %}
                                 </div>

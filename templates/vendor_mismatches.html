@@ -1,0 +1,1115 @@
+{% extends "base_fixed.html" %}
+
+{% block title %}Attendance Mismatches - {{ vendor.full_name }}{% endblock %}
+
+{% block extra_head %}
+<style>
+/* Professional UI styling matching dashboard design */
+:root {
+    --primary-blue: #1e40af;
+    --secondary-blue: #3b82f6;
+    --success-green: #16a34a;
+    --warning-amber: #f59e0b;
+    --danger-red: #dc2626;
+    --info-cyan: #06b6d4;
+    --dark-slate: #1e293b;
+    --light-gray: #f1f5f9;
+    --border-gray: #e2e8f0;
+}
+/* Page Header */
+.page-header {
+    background: white;
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border-gray);
+    margin-bottom: 24px;
+}
+
+.page-title {
+    font-size: 1.875rem;
+    font-weight: 600;
+    color: var(--dark-slate);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-subtitle {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin-top: 4px;
+}
+
+/* Stats Cards */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-gray);
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+
+.stat-card.total::before { background: var(--dark-slate); }
+.stat-card.action::before { background: var(--warning-amber); }
+.stat-card.pending::before { background: var(--info-cyan); }
+.stat-card.resolved::before { background: var(--success-green); }
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.stat-card.total .stat-value { color: var(--dark-slate); }
+.stat-card.action .stat-value { color: var(--warning-amber); }
+.stat-card.pending .stat-value { color: var(--info-cyan); }
+.stat-card.resolved .stat-value { color: var(--success-green); }
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.stat-icon {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 2rem;
+    opacity: 0.1;
+}
+
+/* Toolbar */
+.toolbar {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-gray);
+    margin-bottom: 24px;
+}
+
+.nav-tabs {
+    border: none;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.nav-tabs .nav-link {
+    background: transparent;
+    border: 1px solid var(--border-gray);
+    border-radius: 8px;
+    color: #64748b;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-tabs .nav-link:hover {
+    background: var(--light-gray);
+    border-color: var(--secondary-blue);
+    color: var(--primary-blue);
+}
+
+.nav-tabs .nav-link.active {
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: white;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    padding-left: 40px;
+    border-radius: 8px;
+    border: 1px solid var(--border-gray);
+    font-size: 0.875rem;
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+/* Section Headers */
+.section-header {
+    background: var(--primary-blue);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-content {
+    background: white;
+    border: 1px solid var(--border-gray);
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+}
+
+/* Mismatch Cards */
+.mismatch-item {
+    background: white;
+    border: 1px solid var(--border-gray);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.mismatch-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+}
+
+.mismatch-item.action-required {
+    border-left: 4px solid var(--warning-amber);
+}
+
+.mismatch-item.pending-review {
+    border-left: 4px solid var(--info-cyan);
+}
+
+.mismatch-item.approved {
+    border-left: 4px solid var(--success-green);
+    background: #f0fdf4;
+}
+
+.mismatch-item.rejected {
+    border-left: 4px solid var(--danger-red);
+    background: #fef2f2;
+}
+
+.mismatch-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.mismatch-date {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--dark-slate);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mismatch-content {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 24px;
+}
+
+.mismatch-details {
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.detail-row {
+    margin-bottom: 12px;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-badge.web-status {
+    background: var(--secondary-blue);
+    color: white;
+}
+
+.status-badge.swipe-ap {
+    background: var(--success-green);
+    color: white;
+}
+
+.status-badge.swipe-aa {
+    background: var(--danger-red);
+    color: white;
+}
+
+.status-badge.action {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.status-badge.pending {
+    background: #e0f2fe;
+    color: #075985;
+    border: 1px solid #7dd3fc;
+}
+
+.status-badge.approved {
+    background: #dcfce7;
+    color: #14532d;
+    border: 1px solid #86efac;
+}
+
+.status-badge.rejected {
+    background: #fee2e2;
+    color: #7f1d1d;
+    border: 1px solid #fca5a5;
+}
+
+/* Explanation Form */
+.explanation-form {
+    background: var(--light-gray);
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid var(--border-gray);
+}
+
+.form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--dark-slate);
+    margin-bottom: 8px;
+}
+
+.form-control {
+    border: 1px solid var(--border-gray);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    padding: 10px 12px;
+    transition: all 0.2s;
+}
+
+.form-control:focus {
+    border-color: var(--secondary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Action Buttons */
+.btn-submit {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-submit:hover {
+    background: var(--secondary-blue);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.swipe-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.swipe-ap {
+    background-color: #28a745;
+    color: white;
+}
+
+.swipe-aa {
+    background-color: #dc3545;
+    color: white;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.explanation-readonly {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-style: italic;
+    color: #495057;
+}
+
+.timeline-indicator {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 10px;
+}
+
+.timeline-indicator i {
+    margin-right: 5px;
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+}
+
+.form-floating {
+    position: relative;
+}
+
+.btn-submit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+</style>
+<style>
+/* Toolbar enhancements */
+.sticky-toolbar { position: sticky; top: 70px; z-index: 1500; }
+.toolbar .form-control, .toolbar .form-select { border-radius: 10px; }
+.nav-pills .nav-link { border-radius: 20px; }
+.nav-pills .nav-link.active { background: var(--attendo-primary); }
+.input-group-text { background: #fff; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="page-title">
+                    <i class="fas fa-balance-scale"></i>
+                    Attendance Mismatches
+                </h1>
+                <p class="page-subtitle">Resolve discrepancies between your submitted status and swipe records</p>
+            </div>
+            <a href="{{ url_for('vendor_dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+
+    <!-- Statistics Cards -->
+    <div class="stats-container">
+        <div class="stat-card total">
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total Mismatches</div>
+            <i class="fas fa-chart-line stat-icon"></i>
+        </div>
+        <div class="stat-card action">
+            <div class="stat-value">{{ stats.pending_explanation }}</div>
+            <div class="stat-label">Need Your Action</div>
+            <i class="fas fa-exclamation-triangle stat-icon"></i>
+        </div>
+        <div class="stat-card pending">
+            <div class="stat-value">{{ stats.pending_approval }}</div>
+            <div class="stat-label">Pending Review</div>
+            <i class="fas fa-hourglass-half stat-icon"></i>
+        </div>
+        <div class="stat-card resolved">
+            <div class="stat-value">{{ stats.approved }}</div>
+            <div class="stat-label">Resolved</div>
+            <i class="fas fa-check-circle stat-icon"></i>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <ul class="nav nav-tabs mb-0" id="mismatchTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" data-target="all">
+                        <i class="fas fa-list"></i> All
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-target="#section-action">
+                        <i class="fas fa-exclamation-triangle"></i> Action Required ({{ stats.pending_explanation }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-target="#section-pending">
+                        <i class="fas fa-hourglass-half"></i> Pending Review ({{ stats.pending_approval }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-target="#section-approved">
+                        <i class="fas fa-check"></i> Approved ({{ stats.approved }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" data-target="#section-rejected">
+                        <i class="fas fa-times"></i> Rejected ({{ stats.rejected }})
+                    </a>
+                </li>
+            </ul>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input id="searchInput" type="search" class="form-control" placeholder="Search..." style="width: 250px;">
+                </div>
+                <select id="filterRange" class="form-select" style="width: auto;">
+                    <option value="0">All time</option>
+                    <option value="7">Last 7 days</option>
+                    <option value="30">Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                </select>
+                <button id="resetFilters" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number text-secondary">{{ stats.total }}</div>
+            <div class="stat-label">Total Mismatches</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-warning">{{ stats.pending_explanation }}</div>
+            <div class="stat-label">Need Your Action</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-info">{{ stats.pending_approval }}</div>
+            <div class="stat-label">Pending Review</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number text-success">{{ stats.approved }}</div>
+            <div class="stat-label">Resolved</div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Mismatches Requiring Your Explanation -->
+    {% if pending_explanation %}
+    <div id="section-action" class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                Action Required ({{ pending_explanation|length }})
+            </h3>
+            {% for mismatch in pending_explanation %}
+            <div class="mismatch-card pending" 
+                 data-date="{{ mismatch.mismatch_date.isoformat() }}"
+                 data-web="{{ mismatch.web_status.value if mismatch.web_status else 'none' }}"
+                 data-swipe="{{ mismatch.swipe_status or 'unknown' }}"
+                 data-priority="{{ 'high' if (mismatch.web_status and mismatch.swipe_status and ((mismatch.web_status.value in ['wfh_full','wfh_half','leave_full','leave_half'] and mismatch.swipe_status == 'AP'))) else ('medium' if (mismatch.web_status and mismatch.swipe_status and (mismatch.web_status.value in ['in_office_full','in_office_half'] and mismatch.swipe_status == 'AA')) else 'low') }}">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="mismatch-details">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    {{ mismatch.mismatch_date.strftime('%B %d, %Y') }}
+                                </h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="d-block text-white-50 mb-1">Your Status:</small>
+                                        <span class="badge bg-light text-dark">
+                                            {% if mismatch.web_status %}
+                                                {{ mismatch.web_status.value.replace('_', ' ').title() }}
+                                            {% else %}
+                                                Not Submitted
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="d-block text-white-50 mb-1">Swipe Data:</small>
+                                        <span class="swipe-badge {{ 'swipe-ap' if mismatch.swipe_status == 'AP' else 'swipe-aa' }}">
+                                            {{ mismatch.swipe_status }}
+                                            {% if mismatch.swipe_status == 'AP' %}
+                                                (Present)
+                                            {% else %}
+                                                (Absent)
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="status-indicator status-pending">
+                                <i class="fas fa-clock me-2"></i>Explanation Required
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-8">
+                            <div class="explanation-form">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-edit me-2"></i>Please explain this mismatch:
+                                </h6>
+                                <form class="mismatch-form" data-mismatch-id="{{ mismatch.id }}">
+                                    <div class="form-floating mb-3">
+                                        <textarea class="form-control" 
+                                                  id="explanation_{{ mismatch.id }}" 
+                                                  name="explanation" 
+                                                  style="height: 120px" 
+                                                  placeholder="Provide a detailed explanation for this attendance mismatch..."
+                                                  required></textarea>
+                                        <label for="explanation_{{ mismatch.id }}">Your Explanation</label>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            This will be reviewed by your manager: {{ manager.full_name if manager else 'N/A' }}
+                                        </small>
+                                        <button type="submit" class="btn btn-submit">
+                                            <i class="fas fa-paper-plane me-2"></i>Submit Explanation
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Mismatches Pending Manager Approval -->
+    {% if pending_approval %}
+    <div id="section-pending" class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="fas fa-hourglass-half text-info me-2"></i>
+                Pending Manager Review ({{ pending_approval|length }})
+            </h3>
+            {% for mismatch in pending_approval %}
+            <div class="mismatch-card waiting"
+                 data-date="{{ mismatch.mismatch_date.isoformat() }}"
+                 data-web="{{ mismatch.web_status.value if mismatch.web_status else 'none' }}"
+                 data-swipe="{{ mismatch.swipe_status or 'unknown' }}"
+                 data-priority="{{ 'high' if (mismatch.web_status and mismatch.swipe_status and ((mismatch.web_status.value in ['wfh_full','wfh_half','leave_full','leave_half'] and mismatch.swipe_status == 'AP'))) else ('medium' if (mismatch.web_status and mismatch.swipe_status and (mismatch.web_status.value in ['in_office_full','in_office_half'] and mismatch.swipe_status == 'AA')) else 'low') }}">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="mismatch-details">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    {{ mismatch.mismatch_date.strftime('%B %d, %Y') }}
+                                </h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="d-block text-white-50 mb-1">Your Status:</small>
+                                        <span class="badge bg-light text-dark">
+                                            {% if mismatch.web_status %}
+                                                {{ mismatch.web_status.value.replace('_', ' ').title() }}
+                                            {% else %}
+                                                Not Submitted
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="d-block text-white-50 mb-1">Swipe Data:</small>
+                                        <span class="swipe-badge {{ 'swipe-ap' if mismatch.swipe_status == 'AP' else 'swipe-aa' }}">
+                                            {{ mismatch.swipe_status }}
+                                            {% if mismatch.swipe_status == 'AP' %}
+                                                (Present)
+                                            {% else %}
+                                                (Absent)
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="status-indicator status-waiting">
+                                <i class="fas fa-eye me-2"></i>Under Review
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-8">
+                            <h6 class="mb-3">
+                                <i class="fas fa-comment me-2"></i>Your Explanation:
+                            </h6>
+                            <div class="explanation-readonly">
+                                "{{ mismatch.vendor_reason }}"
+                            </div>
+                            <div class="timeline-indicator">
+                                <i class="fas fa-clock"></i>
+                                Submitted: {{ mismatch.vendor_submitted_at.strftime('%B %d, %Y at %I:%M %p') if mismatch.vendor_submitted_at else 'Unknown' }}
+                            </div>
+                            <div class="timeline-indicator mt-2">
+                                <i class="fas fa-user-tie"></i>
+                                Waiting for review by: {{ manager.full_name if manager else 'Manager' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Approved Mismatches -->
+    {% if approved %}
+    <div id="section-approved" class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                Resolved - Approved ({{ approved|length }})
+            </h3>
+            {% for mismatch in approved %}
+            <div class="mismatch-card approved"
+                 data-date="{{ mismatch.mismatch_date.isoformat() }}"
+                 data-web="{{ mismatch.web_status.value if mismatch.web_status else 'none' }}"
+                 data-swipe="{{ mismatch.swipe_status or 'unknown' }}"
+                 data-priority="{{ 'high' if (mismatch.web_status and mismatch.swipe_status and ((mismatch.web_status.value in ['wfh_full','wfh_half','leave_full','leave_half'] and mismatch.swipe_status == 'AP'))) else ('medium' if (mismatch.web_status and mismatch.swipe_status and (mismatch.web_status.value in ['in_office_full','in_office_half'] and mismatch.swipe_status == 'AA')) else 'low') }}">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="mismatch-details">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    {{ mismatch.mismatch_date.strftime('%B %d, %Y') }}
+                                </h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="d-block text-white-50 mb-1">Your Status:</small>
+                                        <span class="badge bg-light text-dark">
+                                            {% if mismatch.web_status %}
+                                                {{ mismatch.web_status.value.replace('_', ' ').title() }}
+                                            {% else %}
+                                                Not Submitted
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="d-block text-white-50 mb-1">Swipe Data:</small>
+                                        <span class="swipe-badge {{ 'swipe-ap' if mismatch.swipe_status == 'AP' else 'swipe-aa' }}">
+                                            {{ mismatch.swipe_status }}
+                                            {% if mismatch.swipe_status == 'AP' %}
+                                                (Present)
+                                            {% else %}
+                                                (Absent)
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="status-indicator status-approved">
+                                <i class="fas fa-check me-2"></i>Approved
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-8">
+                            <h6 class="mb-3">
+                                <i class="fas fa-comment me-2"></i>Your Explanation:
+                            </h6>
+                            <div class="explanation-readonly">
+                                "{{ mismatch.vendor_reason }}"
+                            </div>
+                            {% if mismatch.manager_comments %}
+                            <h6 class="mb-2 mt-3">
+                                <i class="fas fa-user-tie me-2"></i>Manager Comments:
+                            </h6>
+                            <div class="explanation-readonly">
+                                "{{ mismatch.manager_comments }}"
+                            </div>
+                            {% endif %}
+                            <div class="timeline-indicator">
+                                <i class="fas fa-check-circle text-success"></i>
+                                Approved: {{ mismatch.approved_at.strftime('%B %d, %Y at %I:%M %p') if mismatch.approved_at else 'Recently' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rejected Mismatches -->
+    {% if rejected %}
+    <div id="section-rejected" class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="fas fa-times-circle text-danger me-2"></i>
+                Rejected ({{ rejected|length }})
+            </h3>
+            {% for mismatch in rejected %}
+            <div class="mismatch-card rejected"
+                 data-date="{{ mismatch.mismatch_date.isoformat() }}"
+                 data-web="{{ mismatch.web_status.value if mismatch.web_status else 'none' }}"
+                 data-swipe="{{ mismatch.swipe_status or 'unknown' }}"
+                 data-priority="{{ 'high' if (mismatch.web_status and mismatch.swipe_status and ((mismatch.web_status.value in ['wfh_full','wfh_half','leave_full','leave_half'] and mismatch.swipe_status == 'AP'))) else ('medium' if (mismatch.web_status and mismatch.swipe_status and (mismatch.web_status.value in ['in_office_full','in_office_half'] and mismatch.swipe_status == 'AA')) else 'low') }}">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="mismatch-details">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    {{ mismatch.mismatch_date.strftime('%B %d, %Y') }}
+                                </h5>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="d-block text-white-50 mb-1">Your Status:</small>
+                                        <span class="badge bg-light text-dark">
+                                            {% if mismatch.web_status %}
+                                                {{ mismatch.web_status.value.replace('_', ' ').title() }}
+                                            {% else %}
+                                                Not Submitted
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="d-block text-white-50 mb-1">Swipe Data:</small>
+                                        <span class="swipe-badge {{ 'swipe-ap' if mismatch.swipe_status == 'AP' else 'swipe-aa' }}">
+                                            {{ mismatch.swipe_status }}
+                                            {% if mismatch.swipe_status == 'AP' %}
+                                                (Present)
+                                            {% else %}
+                                                (Absent)
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="status-indicator status-rejected">
+                                <i class="fas fa-times me-2"></i>Rejected
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-8">
+                            <h6 class="mb-3">
+                                <i class="fas fa-comment me-2"></i>Your Explanation:
+                            </h6>
+                            <div class="explanation-readonly">
+                                "{{ mismatch.vendor_reason }}"
+                            </div>
+                            {% if mismatch.manager_comments %}
+                            <h6 class="mb-2 mt-3">
+                                <i class="fas fa-user-tie me-2"></i>Manager Feedback:
+                            </h6>
+                            <div class="explanation-readonly">
+                                "{{ mismatch.manager_comments }}"
+                            </div>
+                            {% endif %}
+                            <div class="timeline-indicator">
+                                <i class="fas fa-times-circle text-danger"></i>
+                                Rejected: {{ mismatch.approved_at.strftime('%B %d, %Y at %I:%M %p') if mismatch.approved_at else 'Recently' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if stats.total == 0 %}
+    <div class="row">
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-check-circle text-success"></i>
+                <h3>No Attendance Mismatches</h3>
+                <p>Great job! Your attendance records are all in sync with the swipe data.</p>
+                <a href="{{ url_for('vendor_dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle form submissions
+    document.querySelectorAll('.mismatch-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const mismatchId = this.dataset.mismatchId;
+            const explanation = this.querySelector('textarea').value.trim();
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            
+            if (!explanation) {
+                showAlert('warning', 'Please provide an explanation for the mismatch.');
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+            
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('explanation', explanation);
+            
+            // Submit to backend
+            fetch(`/vendor/mismatch/${mismatchId}/submit`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    showAlert('success', data.message);
+                    // Reload page to show updated status
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showAlert('danger', data.message || 'Failed to submit explanation');
+                    // Reset button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Network error occurred. Please try again.');
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            });
+        });
+    });
+});
+
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // Insert at the top of the container
+    const container = document.querySelector('.container-fluid');
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = alertHtml;
+    container.insertBefore(tempDiv.firstElementChild, container.children[2]); // After stats but before content
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+</script>
+<script>
+// Tabs + Filters logic
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('#mismatchTabs a');
+    const sections = ['#section-action', '#section-pending', '#section-approved', '#section-rejected'];
+    const searchInput = document.getElementById('searchInput');
+    const rangeSelect = document.getElementById('filterRange');
+    const resetBtn = document.getElementById('resetFilters');
+
+    function showOnly(targetSel) {
+        if (targetSel === 'all') {
+            sections.forEach(sel => {
+                const el = document.querySelector(sel);
+                if (el) el.classList.remove('d-none');
+            });
+            return;
+        }
+        sections.forEach(sel => {
+            const el = document.querySelector(sel);
+            if (el) el.classList.toggle('d-none', sel !== targetSel);
+        });
+    }
+
+    tabs.forEach(a => {
+        a.addEventListener('click', function(e) {
+            e.preventDefault();
+            tabs.forEach(x => x.classList.remove('active'));
+            this.classList.add('active');
+            const target = this.getAttribute('data-target');
+            showOnly(target);
+            const el = target === 'all' ? document.querySelector('.container-fluid') : document.querySelector(target);
+            if (el) el.scrollIntoView({behavior: 'smooth', block: 'start'});
+        });
+    });
+
+    function applyFilters() {
+        const q = (searchInput?.value || '').toLowerCase();
+        const days = parseInt(rangeSelect?.value || '0', 10) || 0;
+        const now = new Date();
+        document.querySelectorAll('.mismatch-card').forEach(card => {
+            let visible = true;
+            if (q) {
+                const txt = card.textContent.toLowerCase();
+                if (!txt.includes(q)) visible = false;
+            }
+            if (visible && days) {
+                const dStr = card.dataset.date;
+                if (dStr) {
+                    const d = new Date(dStr);
+                    if (!isNaN(d.getTime())) {
+                        const diff = (now - d) / (1000*60*60*24);
+                        if (diff > days) visible = false;
+                    }
+                }
+            }
+            card.style.display = visible ? '' : 'none';
+        });
+    }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (rangeSelect) rangeSelect.addEventListener('change', applyFilters);
+    if (resetBtn) resetBtn.addEventListener('click', () => {
+        if (searchInput) searchInput.value = '';
+        if (rangeSelect) rangeSelect.value = '0';
+        tabs.forEach(x => x.classList.remove('active'));
+        const allTab = document.querySelector('#mismatchTabs a[data-target="all"]');
+        if (allTab) allTab.classList.add('active');
+        showOnly('all');
+        applyFilters();
+    });
+
+    // Default to "All"
+    const allTab = document.querySelector('#mismatchTabs a[data-target="all"]');
+    if (allTab) allTab.classList.add('active');
+});
+</script>
+{% endblock %}

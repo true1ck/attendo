@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Popup Test - Vendor Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .form-section-transition {
+            transition: opacity 0.3s ease-in-out, transform 0.2s ease-in-out;
+        }
+        
+        .field-updated {
+            background-color: #d4edda !important;
+            border-color: #28a745 !important;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Edit Popup Functionality Test</h1>
+        <p class="text-muted">Test the enhanced edit popup modal functionality</p>
+        
+        <!-- Alert area -->
+        <div id="alertArea"></div>
+        
+        <!-- Test buttons and status table -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Test Edit Functionality</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Location</th>
+                                        <th>Approval</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>2025-09-12</td>
+                                        <td><span class="badge bg-success">In Office - Full</span></td>
+                                        <td>BL-A-5F</td>
+                                        <td><span class="badge bg-warning">Pending</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="testEditStatus('pending', 'in_office_full')">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2025-09-11</td>
+                                        <td><span class="badge bg-info">WFH - Full</span></td>
+                                        <td>Home</td>
+                                        <td><span class="badge bg-danger">Rejected</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning" onclick="testEditStatus('rejected', 'wfh_full')">
+                                                <i class="fas fa-redo me-1"></i>Resubmit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2025-09-10</td>
+                                        <td><span class="badge bg-success">Half Day</span><br><small>AM: Office, PM: WFH</small></td>
+                                        <td>BL-A-5F / Home</td>
+                                        <td><span class="badge bg-success">Approved</span></td>
+                                        <td>
+                                            <span class="text-muted small">
+                                                <i class="fas fa-check-circle text-success me-1"></i>Approved
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>2025-09-09</td>
+                                        <td><span class="badge bg-info">WFH - Half</span></td>
+                                        <td>Home</td>
+                                        <td><span class="badge bg-warning">Pending</span></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="testEditStatus('pending', 'wfh_half')">
+                                                <i class="fas fa-edit me-1"></i>Edit
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Debug console -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">Debug Console</div>
+                    <div class="card-body">
+                        <pre id="debugLog" style="height: 200px; overflow-y: scroll; background: #f8f9fa; padding: 10px; font-size: 12px;"></pre>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-secondary" onclick="clearLog()">Clear Log</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Edit Status Modal (copied from vendor_dashboard.html) -->
+    <div class="modal fade" id="editStatusModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Daily Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editStatusForm" method="POST" onsubmit="return validateEditStatusForm()">
+                    <div class="modal-body">
+                        <!-- Status info alert -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span id="editStatusInfo">You can edit pending or rejected statuses. Updated status will be reset to pending approval.</span>
+                        </div>
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="edit_status_date" class="form-label">Date</label>
+                                <input type="date" class="form-control" id="edit_status_date" name="status_date" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="edit_status" class="form-label">Work Status</label>
+                                <select class="form-select" id="edit_status" name="status" required onchange="handleEditStatusChange()">
+                                    <option value="">Select Status</option>
+                                    <option value="in_office_full">In Office - Full Day</option>
+                                    <option value="in_office_half">Half Day (Mixed)</option>
+                                    <option value="wfh_full">Work From Home - Full Day</option>
+                                    <option value="wfh_half">Work From Home - Half Day</option>
+                                    <option value="leave_full">On Leave - Full Day</option>
+                                    <option value="leave_half">On Leave - Half Day</option>
+                                    <option value="absent">Absent</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Half-day combination selection (for edit modal) -->
+                        <div id="editHalfDayComboSection" style="display: none;" class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-calendar-day me-2"></i>Half-Day Schedule</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>Important:</strong> For half-day status, please specify what you'll be doing in both AM (morning) and PM (afternoon) periods.
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="edit_half_am_type" class="form-label">AM (Morning) - 9:00 AM to 1:00 PM</label>
+                                            <select class="form-select" id="edit_half_am_type" name="half_am_type" onchange="validateEditHalfDaySelection()">
+                                                <option value="">Select AM activity</option>
+                                                <option value="in_office">In Office</option>
+                                                <option value="wfh">Work From Home</option>
+                                                <option value="leave">On Leave</option>
+                                                <option value="absent">Absent/Not Working</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="edit_half_pm_type" class="form-label">PM (Afternoon) - 2:00 PM to 6:00 PM</label>
+                                            <select class="form-select" id="edit_half_pm_type" name="half_pm_type" onchange="validateEditHalfDaySelection()">
+                                                <option value="">Select PM activity</option>
+                                                <option value="in_office">In Office</option>
+                                                <option value="wfh">Work From Home</option>
+                                                <option value="leave">On Leave</option>
+                                                <option value="absent">Absent/Not Working</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div id="editHalfDayValidation" class="alert alert-danger mt-3" style="display: none;">
+                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                        <span id="editHalfDayValidationMessage"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="edit_location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="edit_location" name="location" 
+                                       placeholder="e.g., BL-A-5F, Home, Client Site, Conference Room">
+                            </div>
+                        </div>
+
+                        <!-- Time Tracking Section (for edit modal) -->
+                        <div id="editTimeTrackingSection" style="display: none;">
+                            <div class="card mb-4">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-stopwatch me-2"></i>Time Tracking</h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Full Day Timing -->
+                                    <div id="editFullDayTiming" class="row mb-3" style="display: none;">
+                                        <div class="col-md-6">
+                                            <label for="edit_in_time" class="form-label">Check In Time</label>
+                                            <input type="time" class="form-control" id="edit_in_time" name="in_time">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="edit_out_time" class="form-label">Check Out Time</label>
+                                            <input type="time" class="form-control" id="edit_out_time" name="out_time">
+                                        </div>
+                                    </div>
+
+                                    <!-- Half Day Timing -->
+                                    <div id="editHalfDayTiming" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Half Day Schedule:</strong> Please provide timing for both parts of your day.
+                                        </div>
+                                        
+                                        <!-- Office Half -->
+                                        <div id="editOfficeHalf" class="mb-3" style="display: none;">
+                                            <h6 class="text-primary mb-2"><i class="fas fa-building me-1"></i>Office Time</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <label for="edit_office_in_time" class="form-label">Office Check In</label>
+                                                    <input type="time" class="form-control" id="edit_office_in_time" name="office_in_time">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="edit_office_out_time" class="form-label">Office Check Out</label>
+                                                    <input type="time" class="form-control" id="edit_office_out_time" name="office_out_time">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- WFH Half -->
+                                        <div id="editWfhHalf" class="mb-3" style="display: none;">
+                                            <h6 class="text-info mb-2"><i class="fas fa-home me-1"></i>Work From Home Time</h6>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <label for="edit_wfh_in_time" class="form-label">WFH Start Time</label>
+                                                    <input type="time" class="form-control" id="edit_wfh_in_time" name="wfh_in_time">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="edit_wfh_out_time" class="form-label">WFH End Time</label>
+                                                    <input type="time" class="form-control" id="edit_wfh_out_time" name="wfh_out_time">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Time Summary (shared for full and half day) -->
+                                    <div id="editTimeSummaryRow" class="row mt-2" style="display: none;">
+                                        <div class="col-md-6">
+                                            <label for="edit_break_duration" class="form-label">Total Break Duration (minutes)</label>
+                                            <input type="number" class="form-control" id="edit_break_duration" name="break_duration" min="0" max="480" onchange="calculateEditTotalHours()">
+                                        </div>
+                                        <div class="col-md-6 d-flex align-items-end">
+                                            <div class="alert alert-success mb-0 w-100">
+                                                <small><strong>Total Hours:</strong> <span id="editTotalHoursDisplay">0.0</span> hours</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comments -->
+                        <div class="mb-3">
+                            <label for="edit_comments" class="form-label">Comments (Optional)</label>
+                            <textarea class="form-control" id="edit_comments" name="comments" rows="3" 
+                                      placeholder="Any additional comments, meeting details, or special notes"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-1"></i>Update Status
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const debugLog = document.getElementById('debugLog');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.textContent += `[${timestamp}] ${message}\n`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            debugLog.textContent = '';
+        }
+
+        function showAlert(type, message) {
+            const alertArea = document.getElementById('alertArea');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertArea.appendChild(alert);
+            
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        // Test function to simulate editStatus call
+        function testEditStatus(approvalStatus, statusType) {
+            log(`Testing edit status: ${statusType} (${approvalStatus})`);
+            
+            // Simulate the data that would come from the server
+            const mockData = {
+                id: 123,
+                status_date: '2025-09-12',
+                status: statusType,
+                location: statusType.includes('wfh') ? 'Home' : 'BL-A-5F',
+                comments: 'Test comment for editing',
+                approval_status: approvalStatus
+            };
+            
+            // Populate the edit form basic fields
+            document.getElementById('edit_status_date').value = mockData.status_date;
+            document.getElementById('edit_status').value = mockData.status;
+            document.getElementById('edit_location').value = mockData.location || '';
+            document.getElementById('edit_comments').value = mockData.comments || '';
+            
+            // Update the info message based on approval status
+            const infoSpan = document.getElementById('editStatusInfo');
+            if (mockData.approval_status === 'rejected') {
+                infoSpan.innerHTML = 'This status was rejected. You can resubmit with corrections. Updated status will be reset to pending approval.';
+                infoSpan.parentElement.className = 'alert alert-warning';
+                log('Set rejection message and warning alert style');
+            } else {
+                infoSpan.innerHTML = 'You can edit pending statuses. Updated status will remain pending approval.';
+                infoSpan.parentElement.className = 'alert alert-info';
+                log('Set pending message and info alert style');
+            }
+            
+            // Set the form action URL (mock)
+            document.getElementById('editStatusForm').action = '/vendor/edit-status/' + mockData.id;
+            
+            // Initialize edit form with status-specific logic
+            handleEditStatusChange();
+            
+            // Show the modal
+            const editModal = new bootstrap.Modal(document.getElementById('editStatusModal'));
+            editModal.show();
+            log('Edit modal opened successfully');
+        }
+
+        // Copy all the edit form functions from vendor_dashboard.html
+        function handleEditStatusChange() {
+            const status = document.getElementById('edit_status').value;
+            log(`Handling edit status change: ${status}`);
+            
+            // Hide all sections initially
+            const timeSection = document.getElementById('editTimeTrackingSection');
+            const fullDayTiming = document.getElementById('editFullDayTiming');
+            const halfDayTiming = document.getElementById('editHalfDayTiming');
+            const halfDayCombo = document.getElementById('editHalfDayComboSection');
+            const timeSummary = document.getElementById('editTimeSummaryRow');
+            const officeHalf = document.getElementById('editOfficeHalf');
+            const wfhHalf = document.getElementById('editWfhHalf');
+            
+            [timeSection, fullDayTiming, halfDayTiming, halfDayCombo, timeSummary, officeHalf, wfhHalf].forEach(el => {
+                if (el) el.style.display = 'none';
+            });
+            
+            // Clear time fields
+            ['edit_in_time', 'edit_out_time', 'edit_office_in_time', 'edit_office_out_time', 
+             'edit_wfh_in_time', 'edit_wfh_out_time', 'edit_break_duration'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            
+            // Update location based on status
+            const locationField = document.getElementById('edit_location');
+            if (status.includes('wfh')) {
+                locationField.value = 'Home';
+                log('Set location to Home');
+            } else if (status.includes('in_office')) {
+                locationField.value = 'BL-A-5F';
+                log('Set location to BL-A-5F');
+            } else if (status.includes('leave') || status === 'absent') {
+                locationField.value = '';
+                log('Cleared location for leave/absent');
+            }
+            
+            // Show appropriate sections based on status
+            if (status === 'in_office_full' || status === 'wfh_full') {
+                if (timeSection) timeSection.style.display = 'block';
+                if (fullDayTiming) fullDayTiming.style.display = 'block';
+                if (timeSummary) timeSummary.style.display = 'block';
+                setEditDefaultsForFull(status);
+                log('Showing full day timing sections');
+            } else if (status === 'in_office_half' || status === 'wfh_half' || status === 'leave_half') {
+                if (halfDayCombo) halfDayCombo.style.display = 'block';
+                // Set default suggestions
+                if (status === 'in_office_half') {
+                    document.getElementById('edit_half_am_type').value = 'in_office';
+                    document.getElementById('edit_half_pm_type').value = 'wfh';
+                } else if (status === 'wfh_half') {
+                    document.getElementById('edit_half_am_type').value = 'wfh';
+                    document.getElementById('edit_half_pm_type').value = '';
+                } else if (status === 'leave_half') {
+                    document.getElementById('edit_half_am_type').value = 'leave';
+                    document.getElementById('edit_half_pm_type').value = '';
+                }
+                validateEditHalfDaySelection();
+                log('Showing half day combo sections');
+            }
+            
+            calculateEditTotalHours();
+        }
+
+        function setEditDefaultsForFull(status) {
+            const inTime = document.getElementById('edit_in_time');
+            const outTime = document.getElementById('edit_out_time');
+            if (inTime && !inTime.value) inTime.value = '09:00';
+            if (outTime && !outTime.value) outTime.value = '18:00';
+            calculateEditTotalHours();
+            log('Set full day defaults: 09:00 - 18:00');
+        }
+
+        function validateEditHalfDaySelection() {
+            const am = document.getElementById('edit_half_am_type').value;
+            const pm = document.getElementById('edit_half_pm_type').value;
+            const validationDiv = document.getElementById('editHalfDayValidation');
+            const messageSpan = document.getElementById('editHalfDayValidationMessage');
+            
+            if (!am || !pm) {
+                if (validationDiv) validationDiv.style.display = 'none';
+                return false;
+            }
+            
+            let msg = '';
+            if (am === 'absent' && pm === 'absent') msg = 'Both AM and PM cannot be absent. Use "Absent" status instead.';
+            else if (am === 'leave' && pm === 'leave') msg = 'Both are Leave. Use "On Leave - Full Day" instead.';
+            else if (am === 'wfh' && pm === 'wfh') msg = 'Both are WFH. Use "Work From Home - Full Day" instead.';
+            else if (am === 'in_office' && pm === 'in_office') msg = 'Both are In Office. Use "In Office - Full Day" instead.';
+            
+            if (msg) {
+                if (messageSpan) messageSpan.textContent = msg;
+                if (validationDiv) validationDiv.style.display = 'block';
+                log(`Half-day validation error: ${msg}`);
+                return false;
+            }
+            
+            if (validationDiv) validationDiv.style.display = 'none';
+            
+            // Show relevant timing sections
+            const timeSection = document.getElementById('editTimeTrackingSection');
+            const halfDayTiming = document.getElementById('editHalfDayTiming');
+            const timeSummary = document.getElementById('editTimeSummaryRow');
+            const officeHalf = document.getElementById('editOfficeHalf');
+            const wfhHalf = document.getElementById('editWfhHalf');
+            
+            const needsTime = (am === 'in_office' || am === 'wfh' || pm === 'in_office' || pm === 'wfh');
+            
+            if (needsTime) {
+                if (timeSection) timeSection.style.display = 'block';
+                if (halfDayTiming) halfDayTiming.style.display = 'block';
+                if (timeSummary) timeSummary.style.display = 'block';
+            }
+            
+            if (officeHalf) officeHalf.style.display = (am === 'in_office' || pm === 'in_office') ? 'block' : 'none';
+            if (wfhHalf) wfhHalf.style.display = (am === 'wfh' || pm === 'wfh') ? 'block' : 'none';
+            
+            setEditDefaultsForHalf(am, pm);
+            updateEditLocationFor('half', am, pm);
+            log(`Half-day validation passed: AM=${am}, PM=${pm}`);
+            return true;
+        }
+
+        function setEditDefaultsForHalf(amType, pmType) {
+            // Clear all time fields first
+            ['edit_office_in_time', 'edit_office_out_time', 'edit_wfh_in_time', 'edit_wfh_out_time'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            
+            if (amType === 'in_office') {
+                document.getElementById('edit_office_in_time').value = '09:00';
+                document.getElementById('edit_office_out_time').value = '13:00';
+            }
+            if (amType === 'wfh') {
+                document.getElementById('edit_wfh_in_time').value = '09:00';
+                document.getElementById('edit_wfh_out_time').value = '13:00';
+            }
+            if (pmType === 'in_office') {
+                document.getElementById('edit_office_in_time').value = '14:00';
+                document.getElementById('edit_office_out_time').value = '18:00';
+            }
+            if (pmType === 'wfh') {
+                document.getElementById('edit_wfh_in_time').value = '14:00';
+                document.getElementById('edit_wfh_out_time').value = '18:00';
+            }
+            
+            calculateEditTotalHours();
+            log(`Set half-day defaults: AM=${amType}, PM=${pmType}`);
+        }
+
+        function updateEditLocationFor(status, amType, pmType) {
+            const loc = document.getElementById('edit_location');
+            if (!loc) return;
+            
+            if (status === 'wfh_full') loc.value = 'Home';
+            else if (status === 'in_office_full') loc.value = 'BL-A-5F';
+            else if (status === 'leave_full' || status === 'absent') loc.value = '';
+            else if (status.includes('half')) {
+                if ((amType === 'in_office') || (pmType === 'in_office')) {
+                    if ((amType === 'wfh') || (pmType === 'wfh')) {
+                        loc.value = amType === 'in_office' ? 'BL-A-5F / Home' : 'Home / BL-A-5F';
+                    } else {
+                        loc.value = 'BL-A-5F';
+                    }
+                } else if ((amType === 'wfh') || (pmType === 'wfh')) {
+                    loc.value = 'Home';
+                } else {
+                    loc.value = '';
+                }
+            }
+            log(`Updated location: ${loc.value}`);
+        }
+
+        function calculateEditTotalHours() {
+            const status = document.getElementById('edit_status').value;
+            let minutes = 0;
+            const breakMin = parseInt(document.getElementById('edit_break_duration')?.value || '0', 10) || 0;
+            
+            if (status.includes('full')) {
+                const inTime = document.getElementById('edit_in_time')?.value;
+                const outTime = document.getElementById('edit_out_time')?.value;
+                minutes = minutesBetween(inTime, outTime) - breakMin;
+            } else if (status.includes('half')) {
+                const officeIn = document.getElementById('edit_office_in_time')?.value;
+                const officeOut = document.getElementById('edit_office_out_time')?.value;
+                const wfhIn = document.getElementById('edit_wfh_in_time')?.value;
+                const wfhOut = document.getElementById('edit_wfh_out_time')?.value;
+                
+                minutes += minutesBetween(officeIn, officeOut);
+                minutes += minutesBetween(wfhIn, wfhOut);
+                minutes -= breakMin;
+            }
+            
+            const hours = Math.max(0, minutes / 60);
+            const display = document.getElementById('editTotalHoursDisplay');
+            if (display) display.textContent = hours.toFixed(1);
+            
+            // Add hidden input for total hours
+            const form = document.getElementById('editStatusForm');
+            let hiddenInput = form.querySelector('input[name="total_hours"]');
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'total_hours';
+                form.appendChild(hiddenInput);
+            }
+            hiddenInput.value = hours.toFixed(2);
+            log(`Calculated total hours: ${hours.toFixed(1)}`);
+        }
+
+        function validateEditStatusForm() {
+            const status = document.getElementById('edit_status').value;
+            if (status === 'in_office_half' || status === 'wfh_half' || status === 'leave_half') {
+                if (!validateEditHalfDaySelection()) {
+                    log('Form validation failed - half day validation error');
+                    return false;
+                }
+            }
+            calculateEditTotalHours();
+            log('Form validation passed - would submit form');
+            showAlert('success', 'Form validation successful! (This is a test - form not actually submitted)');
+            return false; // Prevent actual submission in test
+        }
+
+        function minutesBetween(timeA, timeB) {
+            if (!timeA || !timeB) return 0;
+            const [hoursA, minutesA] = timeA.split(':').map(Number);
+            const [hoursB, minutesB] = timeB.split(':').map(Number);
+            const startMinutes = hoursA * 60 + minutesA;
+            let endMinutes = hoursB * 60 + minutesB;
+            if (endMinutes < startMinutes) endMinutes += 24 * 60; // Next day
+            return Math.max(0, endMinutes - startMinutes);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            log('Edit popup test page loaded successfully');
+            log('Bootstrap available: ' + (typeof bootstrap !== 'undefined'));
+            log('Bootstrap Modal available: ' + (typeof bootstrap.Modal !== 'undefined'));
+            
+            // Add event listeners for time tracking fields
+            ['edit_in_time', 'edit_out_time', 'edit_office_in_time', 'edit_office_out_time', 
+             'edit_wfh_in_time', 'edit_wfh_out_time', 'edit_break_duration'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', calculateEditTotalHours);
+                    element.addEventListener('input', calculateEditTotalHours);
+                }
+            });
+            
+            // Add event listeners for edit half-day selectors
+            const editAmType = document.getElementById('edit_half_am_type');
+            const editPmType = document.getElementById('edit_half_pm_type');
+            if (editAmType) editAmType.addEventListener('change', validateEditHalfDaySelection);
+            if (editPmType) editPmType.addEventListener('change', validateEditHalfDaySelection);
+            
+            log('Event listeners initialized successfully');
+        });
+    </script>
+</body>
+</html>

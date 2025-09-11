@@ -17,10 +17,23 @@ import threading
 import shutil
 import time
 from pathlib import Path
+from sqlalchemy.orm import joinedload
 
 # Initialize Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'hackathon-attendo-vendor-timesheet-2025'
+
+# Add JSON filter for templates
+import json
+@app.template_filter('fromjson')
+def fromjson_filter(value):
+    """Parse JSON string to Python object"""
+    if not value:
+        return {}
+    try:
+        return json.loads(value)
+    except (json.JSONDecodeError, TypeError):
+        return {}
 # Use absolute path for SQLite database to ensure it's created in the correct location
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.abspath("vendor_timesheet.db")}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -481,17 +494,56 @@ def admin_billing_corrections():
             if not vendor:
                 flash('Vendor not found', 'error')
                 return redirect(url_for('admin_billing_corrections'))
-            # Log correction in audit log (no new table)
+            
+            # Try to get existing hours for this vendor on this date
+            correction_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            existing_status = DailyStatus.query.filter_by(
+                vendor_id=vendor.id, 
+                status_date=correction_date
+            ).first()
+            
+            # Capture old values for comparison
+            old_values = {}
+            if existing_status and existing_status.total_hours:
+                old_values['previous_hours'] = existing_status.total_hours
+                old_values['vendor_id'] = vendor_id
+                old_values['date'] = date_str
+                old_values['status'] = existing_status.status.value if existing_status.status else None
+            else:
+                # Check swipe records for historical data
+                swipe_record = SwipeRecord.query.filter_by(
+                    vendor_id=vendor.id,
+                    attendance_date=correction_date
+                ).first()
+                if swipe_record and swipe_record.total_hours:
+                    old_values['previous_hours'] = swipe_record.total_hours
+                    old_values['source'] = 'swipe_record'
+                old_values['vendor_id'] = vendor_id
+                old_values['date'] = date_str
+            
+            # Log correction in audit log with proper old/new values comparison
+            new_values = {
+                'vendor_id': vendor_id,
+                'date': date_str,
+                'corrected_hours': corrected_hours,
+                'reason': reason,
+                'correction_type': 'manual_override'
+            }
+            
             create_audit_log(current_user.id,
                              'BILLING_CORRECTION',
                              'billing',
                              vendor.id,
-                             {},
-                             {'vendor_id': vendor_id,
-                              'date': date_str,
-                              'corrected_hours': corrected_hours,
-                              'reason': reason})
-            flash('Billing correction recorded', 'success')
+                             old_values,
+                             new_values)
+            
+            # Create informative success message
+            if old_values.get('previous_hours'):
+                success_msg = f'Billing correction recorded: {vendor_id} on {date_str} updated from {old_values["previous_hours"]} hrs to {corrected_hours} hrs'
+            else:
+                success_msg = f'Billing correction recorded: {vendor_id} on {date_str} set to {corrected_hours} hrs (new entry)'
+            
+            flash(success_msg, 'success')
         except Exception as e:
             flash(f'Error recording correction: {str(e)}', 'error')
     # Show last 50 corrections from audit logs
@@ -2004,9 +2056,11 @@ def manager_reports():
             'attendance_rate': round(attendance_rate, 1)
         })
     
-    # Get audit history for team
+    # Get audit history for team - show only meaningful manager actions (exclude logins/last_login updates)
     audit_logs = AuditLog.query.filter(
         AuditLog.user_id.in_([manager.user_id] + [v.user_id for v in team_vendors]),
+        AuditLog.action.notin_(['LOGIN', 'LOGOUT']),
+        AuditLog.table_name != 'users',
         AuditLog.created_at >= datetime.combine(start_date, datetime.min.time()),
         AuditLog.created_at <= datetime.combine(end_date, datetime.max.time())
     ).order_by(AuditLog.created_at.desc()).limit(50).all()
@@ -2017,12 +2071,17 @@ def manager_reports():
     avg_attendance_rate = sum([r['attendance_rate'] for r in report_data]) / len(report_data) if report_data else 0
     total_pending = sum([r['pending_days'] for r in report_data])
     
+    # Cap percentages to 100% to avoid values like 101.5%
+    submission_rate_raw = (total_submissions / total_working_days * 100) if total_working_days > 0 else 0
+    submission_rate_capped = round(min(100.0, submission_rate_raw), 1)
+    avg_attendance_capped = round(min(100.0, avg_attendance_rate), 1)
+
     summary_stats = {
         'total_submissions': total_submissions,
         'total_working_days': total_working_days,
-        'avg_attendance_rate': round(avg_attendance_rate, 1),
+        'avg_attendance_rate': avg_attendance_capped,
         'total_pending': total_pending,
-        'submission_rate': round(total_submissions / total_working_days * 100, 1) if total_working_days > 0 else 0
+        'submission_rate': submission_rate_capped
     }
     
     return render_template('manager_reports.html',
@@ -2506,8 +2565,8 @@ def api_approve_status(status_id):
             print(f"❌ Manager profile not found for user: {current_user.username}")
             return jsonify({'error': 'Manager profile not found'}), 404
         
-        # Get status record
-        daily_status = DailyStatus.query.get(status_id)
+        # Get status record with vendor eagerly loaded to avoid detached/expired issues
+        daily_status = DailyStatus.query.options(joinedload(DailyStatus.vendor)).get(status_id)
         if not daily_status:
             print(f"❌ Status record not found: {status_id}")
             return jsonify({'error': 'Status record not found'}), 404
@@ -2515,8 +2574,9 @@ def api_approve_status(status_id):
         # Verify vendor is in manager's team
         vendor = daily_status.vendor
         # Compare against manager.manager_id (string FK), not manager.id
-        if vendor.manager_id != manager.manager_id:
-            print(f"❌ Vendor {vendor.vendor_id} not in manager's team")
+        if not vendor or vendor.manager_id != manager.manager_id:
+            vid = vendor.vendor_id if vendor else 'UNKNOWN'
+            print(f"❌ Vendor {vid} not in manager's team")
             return jsonify({'error': 'You can only approve statuses for your team members'}), 403
         
         # Get action and reason
@@ -2525,14 +2585,19 @@ def api_approve_status(status_id):
         
         print(f"📝 Processing {action} for status {status_id} by {current_user.username}")
         
+        # Precompute values for response to avoid accessing expired ORM attributes after commit
         if action == 'approve':
             daily_status.approval_status = ApprovalStatus.APPROVED
-            daily_status.manager_comments = reason or 'Approved'
+            manager_comments_value = reason or 'Approved'
+            daily_status.manager_comments = manager_comments_value
+            approval_status_value = 'approved'
             message = 'Status approved successfully'
             print(f"✅ Approved status {status_id}")
         elif action == 'reject':
             daily_status.approval_status = ApprovalStatus.REJECTED
-            daily_status.manager_comments = reason or 'Rejected'
+            manager_comments_value = reason or 'Rejected'
+            daily_status.manager_comments = manager_comments_value
+            approval_status_value = 'rejected'
             message = 'Status rejected'
             print(f"❌ Rejected status {status_id} - Reason: {reason}")
         else:
@@ -2543,6 +2608,9 @@ def api_approve_status(status_id):
         daily_status.approved_at = datetime.utcnow()
         daily_status.approved_by = current_user.id
         
+        # Cache vendor_id for post-commit tasks
+        vendor_id_for_excel = vendor.vendor_id
+        
         # Commit to database
         db.session.commit()
         print(f"✅ Database updated successfully")
@@ -2552,29 +2620,29 @@ def api_approve_status(status_id):
                        {'approval_status': 'pending'}, 
                        {'approval_status': action, 'manager_comments': reason})
         
-        # 🆕 NEW: Update Excel sheets immediately for Power Automate (same logic as vendor submission)
+        # Update Excel sheets immediately for Power Automate (same logic as vendor submission)
         try:
             from scripts.daily_excel_updater import handle_vendor_status_submission
-            handle_vendor_status_submission(vendor.vendor_id)
-            print(f"✅ Excel sheets updated after manager {action} for vendor {vendor.vendor_id}")
+            handle_vendor_status_submission(vendor_id_for_excel)
+            print(f"✅ Excel sheets updated after manager {action} for vendor {vendor_id_for_excel}")
         except ImportError:
             try:
                 from scripts.power_automate_excel_refresh import power_automate_excel_refresh
                 power_automate_excel_refresh()
-                print(f"✅ Fallback Excel refresh completed after manager {action} for vendor {vendor.vendor_id}")
+                print(f"✅ Fallback Excel refresh completed after manager {action} for vendor {vendor_id_for_excel}")
             except Exception as fallback_error:
-                print(f"⚠️ Both Excel update methods failed after manager {action} for vendor {vendor.vendor_id}: {str(fallback_error)}")
+                print(f"⚠️ Both Excel update methods failed after manager {action} for vendor {vendor_id_for_excel}: {str(fallback_error)}")
         except Exception as excel_error:
             # Don't fail the main approval if Excel update fails
-            print(f"⚠️ Excel update failed after manager action for vendor {vendor.vendor_id}: {str(excel_error)}")
+            print(f"⚠️ Excel update failed after manager action for vendor {vendor_id_for_excel}: {str(excel_error)}")
         
         return jsonify({
             'status': 'success',
             'message': message,
             'action': action,
             'status_id': status_id,
-            'approval_status': daily_status.approval_status.value,
-            'manager_comments': daily_status.manager_comments
+            'approval_status': approval_status_value,
+            'manager_comments': manager_comments_value
         })
         
     except Exception as e:
@@ -2612,12 +2680,14 @@ def api_bulk_approve_status():
         if not team_vendor_ids:
             return jsonify({'error': 'No team members found'}), 400
         
-        statuses = DailyStatus.query.filter(
+        # Eager-load vendor to avoid detached instances
+        statuses = DailyStatus.query.options(joinedload(DailyStatus.vendor)).filter(
             DailyStatus.id.in_(status_ids),
             DailyStatus.vendor_id.in_(team_vendor_ids)
         ).all()
         
         updated = 0
+        affected_vendor_ids = set()
         for ds in statuses:
             old_status = ds.approval_status.value
             if action == 'approve':
@@ -2629,6 +2699,8 @@ def api_bulk_approve_status():
             ds.approved_at = datetime.utcnow()
             ds.approved_by = current_user.id
             updated += 1
+            if ds.vendor:
+                affected_vendor_ids.add(ds.vendor.vendor_id)
             # Audit log per record
             create_audit_log(current_user.id, action.upper(), 'daily_statuses', ds.id,
                              {'approval_status': old_status},
@@ -2636,10 +2708,9 @@ def api_bulk_approve_status():
         
         db.session.commit()
         
-        # 🆕 NEW: Update Excel sheets for all affected vendors (same logic as individual approvals)
+        # Update Excel sheets for all affected vendors (same logic as individual approvals)
         try:
             from scripts.daily_excel_updater import handle_vendor_status_submission
-            affected_vendor_ids = [ds.vendor.vendor_id for ds in statuses]
             for vendor_id in affected_vendor_ids:
                 try:
                     handle_vendor_status_submission(vendor_id)

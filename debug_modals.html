@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modal Debug Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Modal Debug Test</h1>
+        
+        <!-- Test buttons -->
+        <div class="row mb-4">
+            <div class="col">
+                <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#testModal1">
+                    <i class="fas fa-plus me-1"></i>Test Modal 1 (Bootstrap attributes)
+                </button>
+                
+                <button class="btn btn-warning me-2" id="testBtn2">
+                    <i class="fas fa-exclamation-circle me-1"></i>Test Modal 2 (JavaScript)
+                </button>
+                
+                <button class="btn btn-success me-2" onclick="openModal3()">
+                    <i class="fas fa-edit me-1"></i>Test Modal 3 (onclick)
+                </button>
+            </div>
+        </div>
+
+        <!-- Console log area -->
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">Debug Console</div>
+                    <div class="card-body">
+                        <pre id="debugLog" style="height: 200px; overflow-y: scroll; background: #f8f9fa; padding: 10px;"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Modal 1 -->
+    <div class="modal fade" id="testModal1" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Test Modal 1</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This modal should open via Bootstrap's data attributes.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Modal 2 -->
+    <div class="modal fade" id="testModal2" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Test Modal 2</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This modal should open via JavaScript event listener.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Modal 3 -->
+    <div class="modal fade" id="testModal3" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Test Modal 3</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>This modal should open via onclick function.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const debugLog = document.getElementById('debugLog');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.textContent += `[${timestamp}] ${message}\n`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+
+        log('Bootstrap loaded: ' + (typeof bootstrap !== 'undefined'));
+        log('Bootstrap Modal available: ' + (typeof bootstrap.Modal !== 'undefined'));
+
+        // Test method 2: JavaScript event listener
+        document.getElementById('testBtn2').addEventListener('click', function() {
+            log('Test button 2 clicked');
+            try {
+                const modal = document.getElementById('testModal2');
+                if (modal) {
+                    log('Modal element found');
+                    const bsModal = new bootstrap.Modal(modal);
+                    bsModal.show();
+                    log('Modal should be showing');
+                } else {
+                    log('Modal element not found!');
+                }
+            } catch (error) {
+                log('Error: ' + error.message);
+            }
+        });
+
+        // Test method 3: onclick function
+        function openModal3() {
+            log('openModal3 function called');
+            try {
+                const modal = document.getElementById('testModal3');
+                if (modal) {
+                    log('Modal 3 element found');
+                    const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+                    bsModal.show();
+                    log('Modal 3 should be showing');
+                } else {
+                    log('Modal 3 element not found!');
+                }
+            } catch (error) {
+                log('Error in openModal3: ' + error.message);
+            }
+        }
+
+        // Test Bootstrap's automatic modal handling
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('[data-bs-toggle="modal"]')) {
+                log('Bootstrap modal trigger clicked');
+            }
+        });
+
+        // Listen for Bootstrap modal events
+        document.addEventListener('show.bs.modal', function(e) {
+            log('Modal show event fired for: ' + e.target.id);
+        });
+
+        document.addEventListener('shown.bs.modal', function(e) {
+            log('Modal shown event fired for: ' + e.target.id);
+        });
+
+        document.addEventListener('hide.bs.modal', function(e) {
+            log('Modal hide event fired for: ' + e.target.id);
+        });
+
+        log('Debug script initialized');
+    </script>
+</body>
+</html>
